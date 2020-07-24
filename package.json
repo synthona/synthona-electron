@@ -1,0 +1,26 @@
+{
+  "name": "synthona-electron",
+  "version": "1.0.0",
+  "description": "synthona",
+  "main": "app.js",
+  "scripts": {
+    "client": "cd client && serve -s -l 3000",
+    "server": "cd server && npm start",
+    "electron": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --watch * --exec 'concurrently \"npm run server\" \"npm run client\" \"npm run electron\"'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "synthona"
+  },
+  "author": "synthona",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "concurrently": "^5.2.0",
+    "electron": "^9.1.1"
+  },
+  "dependencies": {
+    "serve": "^11.3.2"
+  }
+}

@@ -1,21 +1,59 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu, MenuItem } = require('electron');
+// const server = require('./server/app');
+let serverProcess = require('child_process').fork(require.resolve('./server/app.js'));
+serverProcess.on('exit', (code, sig) => {
+  // finishing
+});
+serverProcess.on('error', (error) => {
+  // error handling
+});
 
 function createWindow() {
   // Create the browser window.
-  const win = new BrowserWindow({
+  let win = new BrowserWindow({
     width: 1920,
     height: 1080,
     webPreferences: {
       nodeIntegration: true,
+      spellcheck: true,
     },
     fullscreen: true,
   });
+  // add the spellcheck context-menu
+  win.webContents.on('context-menu', (event, params) => {
+    const menu = new Menu();
 
-  // and load the index.html of the app.
-  // win.loadFile('./client/index.html');
-  win.loadURL('http://localhost:3000/');
+    // Add each spelling suggestion
+    for (const suggestion of params.dictionarySuggestions) {
+      menu.append(
+        new MenuItem({
+          label: suggestion,
+          click: () => win.webContents.replaceMisspelling(suggestion),
+        })
+      );
+    }
+    // Allow users to add the misspelled word to the dictionary
+    if (params.misspelledWord) {
+      menu.append(
+        new MenuItem({
+          label: 'Add to dictionary',
+          click: () =>
+            win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+        })
+      );
+    }
+
+    menu.popup();
+  });
   // match the background color to the app theme
   win.setBackgroundColor('#272727');
+  // and load the index.html of the app.
+  // win.loadFile('index.html');
+  win.loadURL('http://localhost:9000/');
+
+  win.once('ready-to-show', () => {
+    win.show();
+  });
 
   // Open the DevTools.
   // win.webContents.openDevTools();
@@ -25,7 +63,6 @@ app.disableHardwareAcceleration();
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(createWindow);
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -35,6 +72,8 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+
+app.on('ready', createWindow);
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the

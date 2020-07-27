@@ -31,13 +31,12 @@ const eraseDatabaseOnSync = false;
 global.__basedir = __dirname;
 
 // create data directory if it does not exist
-if (!fs.existsSync(`data`)) {
-  fs.mkdirSync(`data`);
+if (!fs.existsSync(__dirname, `data`)) {
+  fs.mkdirSync(__dirname, `data`);
 }
 
 // set up express app
 const app = express();
-
 // remove x-powered-by message for additional security.
 app.disable('x-powered-by');
 
@@ -75,6 +74,12 @@ app.use('/file', fileRoutes);
 app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file directory
 // app.use('/port', isAuth, express.static(path.join(__dirname, 'port'))); // downloads directory
 app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
+// Serve the static files from the React app
+app.use(express.static(path.join(__basedir, '../client')));
+// Handles any requests that don't match the ones above
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__basedir, '../client/index.html'));
+});
 
 if (debug) {
   // set up general error handling for dev.
@@ -86,7 +91,6 @@ if (debug) {
     res.status(status).json({ message: message, data: data });
   });
 }
-
 // TODO: i should not be calling sequelize.sync on every single server start.
 // it should only be called intentionally on like...setup? all other changes
 // should be applied via migrations

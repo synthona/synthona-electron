@@ -24,8 +24,8 @@ exports.exportAllUserData = async (req, res, next) => {
     // this comes from the is-auth middleware
     const userId = req.user.uid;
     // generate export directory if it does not exist
-    if (!fs.existsSync('data/' + userId + '/exports/')) {
-      fs.mkdirSync('data/' + userId + '/exports/');
+    if (!fs.existsSync(__basedir + '/data/' + userId + '/exports/')) {
+      fs.mkdirSync(__basedir + '/data/' + userId + '/exports/');
     }
     // set export name and extension
     const exportName = new Date().toDateString() + '.synth';
@@ -167,8 +167,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       throw error;
     }
     // generate export directory if it does not exist
-    if (!fs.existsSync('data/' + userId + '/exports/')) {
-      fs.mkdirSync('data/' + userId + '/exports/');
+    if (!fs.existsSync(__basedir + '/data/' + userId + '/exports/')) {
+      fs.mkdirSync(__basedir + '/data/' + userId + '/exports/');
     }
     // get the values out of the query
     const exportAnchorUUID = req.body.uuid;

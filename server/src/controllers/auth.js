@@ -46,11 +46,29 @@ exports.signup = async (req, res, next) => {
     const refreshToken = tokens.generateRefreshToken(account);
     // set the jwt cookie
     if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', token, { httpOnly: true, secure: true, sameSite: true });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: true });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     } else {
-      res.cookie('jwt', token, { httpOnly: true, sameSite: true });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: true });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     }
     // create node in the context system
     await node.create({
@@ -117,11 +135,29 @@ exports.login = async (req, res, next) => {
     const refreshToken = tokens.generateRefreshToken(account);
     // set the jwt cookie
     if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', token, { httpOnly: true, secure: true, sameSite: true });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: true });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     } else {
-      res.cookie('jwt', token, { httpOnly: true, sameSite: true });
-      res.cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: true });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     }
     // send response
     res.status(201).json({
@@ -181,11 +217,29 @@ exports.changePassword = async (req, res, next) => {
     const newRefreshToken = tokens.generateRefreshToken(account);
     // set the jwt cookie
     if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', newToken, { httpOnly: true, secure: true, sameSite: true });
-      res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: true });
+      res.cookie('jwt', newToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     } else {
-      res.cookie('jwt', newToken, { httpOnly: true, sameSite: true });
-      res.cookie('refreshToken', newRefreshToken, { httpOnly: true, sameSite: true });
+      res.cookie('jwt', newToken, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
+      res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true,
+        sameSite: true,
+        expires: new Date(Date.now() + 900000),
+      });
     }
     // send the response
     res.sendStatus(200);

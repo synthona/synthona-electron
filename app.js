@@ -1,11 +1,20 @@
 const { app, BrowserWindow, Menu, MenuItem } = require('electron');
+
 // const server = require('./server/app');
 let serverProcess = require('child_process').fork(require.resolve('./server/app.js'));
 serverProcess.on('exit', (code, sig) => {
-  // finishing
+  // finishing`
+  console.log('goodbye');
 });
+
+serverProcess.on('message', (message) => {
+  if (message === 'server-started') {
+    createWindow();
+  }
+});
+
 serverProcess.on('error', (error) => {
-  // error handling
+  console.log(error);
 });
 
 function createWindow() {
@@ -13,12 +22,22 @@ function createWindow() {
   let win = new BrowserWindow({
     width: 1920,
     height: 1080,
+    fullscreen: true,
     webPreferences: {
       nodeIntegration: true,
       spellcheck: true,
     },
-    fullscreen: true,
   });
+  // win.webContents.session.clearStorageData();
+  win.setBackgroundColor('#272727');
+  win.loadURL('http://localhost:9000');
+
+  // and load the index.html of the app.
+  // win.loadFile('index.html');
+
+  // win.webContents.on('did-finish-load', () => {
+  //   win.show();
+  // });
   // add the spellcheck context-menu
   win.webContents.on('context-menu', (event, params) => {
     const menu = new Menu();
@@ -46,14 +65,6 @@ function createWindow() {
     menu.popup();
   });
   // match the background color to the app theme
-  win.setBackgroundColor('#272727');
-  // and load the index.html of the app.
-  // win.loadFile('index.html');
-  win.loadURL('http://localhost:9000/');
-
-  win.once('ready-to-show', () => {
-    win.show();
-  });
 
   // Open the DevTools.
   // win.webContents.openDevTools();
@@ -73,7 +84,11 @@ app.on('window-all-closed', () => {
   }
 });
 
-app.on('ready', createWindow);
+// app.on('ready', createWindow);
+
+app.on('before-quit', () => {
+  serverProcess.kill('SIGINT');
+});
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the

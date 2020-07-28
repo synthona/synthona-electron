@@ -1,1 +1,4 @@
 node_modules
+database.sqlite3
+dist
+.env

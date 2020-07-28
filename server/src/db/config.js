@@ -1,16 +1,19 @@
+const path = require('path');
+
+const dbPath = path.join(__dirname, '../../database.sqlite3');
 module.exports = {
   development: {
-    storage: './server/database.sqlite3',
+    storage: dbPath,
     dialect: 'sqlite',
     logging: false,
   },
   test: {
-    storage: './server/database.sqlite3',
+    storage: dbPath,
     dialect: 'sqlite',
     logging: false,
   },
   production: {
-    storage: './server/database.sqlite3',
+    storage: dbPath,
     dialect: 'sqlite',
     logging: false,
     dialectOptions: {

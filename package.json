@@ -6,6 +6,8 @@
   "scripts": {
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "postinstall": "install-app-deps",
+    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=release-builds",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "nodemon --watch * --exec 'concurrently \"npm run server\"  \"npm run electron\"'"
@@ -23,6 +25,8 @@
   "dependencies": {
     "concurrently": "^5.2.0",
     "dotenv": "^8.2.0",
+    "electron-packager": "^15.0.0",
+    "electron-unhandled": "^3.0.2",
     "serve": "^11.3.2",
     "wait-on": "^5.1.0"
   },

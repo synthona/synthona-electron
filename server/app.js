@@ -88,6 +88,7 @@ if (debug) {
     const status = error.statusCode || 500;
     const message = error.message;
     const data = error.data;
+    process.send(error);
     res.status(status).json({ message: message, data: data });
   });
 }

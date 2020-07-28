@@ -10,7 +10,7 @@
     "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=release-builds",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "dev": "nodemon --watch * --exec 'concurrently \"npm run server\"  \"npm run electron\"'"
+    "dev": "nodemon --watch * --exec 'npm run start'"
   },
   "repository": {
     "type": "git",

@@ -7,8 +7,8 @@ module.exports = async (req, res, next) => {
   try {
     const token = req.cookies.jwt;
     const refreshToken = req.cookies.refreshToken;
-    // if either token is missing throw error
-    if (!token || !refreshToken) {
+    // if refresh token is missing throw error
+    if (!refreshToken) {
       res.clearCookie('jwt');
       res.clearCookie('refreshToken');
       const error = new Error('Not Authenticated');
@@ -17,7 +17,7 @@ module.exports = async (req, res, next) => {
     }
     let decodedToken;
     let decodedRefreshToken;
-    let uid = jwt.decode(token).uid;
+    let uid = jwt.decode(refreshToken).uid;
     // decode tokens
     try {
       decodedToken = jwt.verify(token, process.env.JWT_SECRET);
@@ -38,24 +38,24 @@ module.exports = async (req, res, next) => {
               httpOnly: true,
               secure: true,
               sameSite: true,
-              expires: new Date(Date.now() + 900000),
+              expires: new Date(Date.now() + 15 * 60000),
             });
             res.cookie('refreshToken', newRefreshToken, {
               httpOnly: true,
               secure: true,
               sameSite: true,
-              expires: new Date(Date.now() + 900000),
+              expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
             });
           } else {
             res.cookie('jwt', newToken, {
               httpOnly: true,
               sameSite: true,
-              expires: new Date(Date.now() + 900000),
+              expires: new Date(Date.now() + 15 * 60000),
             });
             res.cookie('refreshToken', newRefreshToken, {
               httpOnly: true,
               sameSite: true,
-              expires: new Date(Date.now() + 900000),
+              expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
             });
           }
         }

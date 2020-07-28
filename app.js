@@ -60,6 +60,14 @@ const mainWindow = () => {
   window.webContents.on('context-menu', (event, params) => {
     const menu = new Menu();
 
+    // add emoji picker
+    menu.append(
+      new MenuItem({
+        label: 'emoji',
+        click: () => app.showEmojiPanel(),
+      })
+    );
+
     // Add each spelling suggestion
     for (const suggestion of params.dictionarySuggestions) {
       menu.append(

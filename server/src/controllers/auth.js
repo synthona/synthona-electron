@@ -2,7 +2,6 @@
 require('dotenv').config();
 // import packages
 const { validationResult } = require('express-validator/check');
-const context = require('../util/context');
 // var cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 // custom code
@@ -50,24 +49,24 @@ exports.signup = async (req, res, next) => {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     } else {
       res.cookie('jwt', token, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     }
     // create node in the context system
@@ -139,24 +138,24 @@ exports.login = async (req, res, next) => {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     } else {
       res.cookie('jwt', token, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     }
     // send response
@@ -221,24 +220,24 @@ exports.changePassword = async (req, res, next) => {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     } else {
       res.cookie('jwt', newToken, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 15 * 60000),
       });
       res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
         sameSite: true,
-        expires: new Date(Date.now() + 900000),
+        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     }
     // send the response

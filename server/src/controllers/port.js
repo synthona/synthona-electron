@@ -111,10 +111,12 @@ exports.exportAllUserData = async (req, res, next) => {
       // add associated files to the export
       if (node.isFile) {
         let extension = node.preview.substr(node.preview.lastIndexOf('.'));
-        if (fs.existsSync(node.preview)) {
+        if (fs.existsSync(__basedir + '/' + node.preview)) {
           try {
             // append the associated file to the export
-            archive.append(fs.createReadStream(node.preview), { name: node.uuid + extension });
+            archive.append(fs.createReadStream(__basedir + '/' + node.preview), {
+              name: node.uuid + extension,
+            });
           } catch (err) {
             err.statusCode = 500;
             throw err;
@@ -361,10 +363,10 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
           if (leftNode.isFile) {
             let extension = leftNode.preview.substr(leftNode.preview.lastIndexOf('.'));
             // see if the file exists
-            if (fs.existsSync(leftNode.preview)) {
+            if (fs.existsSync(__basedir + '/' + leftNode.preview)) {
               try {
                 // append the associated file to the export
-                archive.append(fs.createReadStream(leftNode.preview), {
+                archive.append(fs.createReadStream(__basedir + '/' + leftNode.preview), {
                   name: leftNode.uuid + extension,
                 });
               } catch (err) {
@@ -384,10 +386,10 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
           if (rightNode.isFile) {
             let extension = rightNode.preview.substr(rightNode.preview.lastIndexOf('.'));
             // see if the file exists
-            if (fs.existsSync(rightNode.preview)) {
+            if (fs.existsSync(__basedir + '/' + rightNode.preview)) {
               try {
                 // append the associated file to the export
-                archive.append(fs.createReadStream(rightNode.preview), {
+                archive.append(fs.createReadStream(__basedir + '/' + rightNode.preview), {
                   name: rightNode.uuid + extension,
                 });
               } catch (err) {
@@ -407,10 +409,10 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
         if (anchorNode.isFile) {
           let extension = anchorNode.preview.substr(anchorNode.preview.lastIndexOf('.'));
           // see if the file exists
-          if (fs.existsSync(anchorNode.preview)) {
+          if (fs.existsSync(__basedir + '/' + anchorNode.preview)) {
             try {
               // append the associated file to the export
-              archive.append(fs.createReadStream(anchorNode.preview), {
+              archive.append(fs.createReadStream(__basedir + '/' + anchorNode.preview), {
                 name: anchorNode.uuid + extension,
               });
             } catch (err) {
@@ -484,7 +486,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       throw err;
     }
     // get the fileUrl
-    const packageUrl = packageNode.preview;
+    const packageUrl = __basedir + '/' + packageNode.preview;
     // check zip buffer size before unzipping
     var buffer = new admZip(packageUrl).toBuffer();
     const maxZipSize = 1000000000; // 1GB

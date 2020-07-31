@@ -31,8 +31,8 @@ const eraseDatabaseOnSync = false;
 global.__basedir = __dirname;
 
 // create data directory if it does not exist
-if (!fs.existsSync(__dirname, `data`)) {
-  fs.mkdirSync(__dirname, `data`);
+if (!fs.existsSync(__basedir + '/data/')) {
+  fs.mkdirSync(__basedir + '/data/');
 }
 
 // set up express app
@@ -51,7 +51,10 @@ app.use((req, res, next) => {
   // set which methods are allowed from outside
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
   // set which headers are allowed
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, Content-Security-Policy'
+  );
   next();
 });
 
@@ -74,12 +77,24 @@ app.use('/file', fileRoutes);
 app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file directory
 // app.use('/port', isAuth, express.static(path.join(__dirname, 'port'))); // downloads directory
 app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
+
 // Serve the static files from the React app
-app.use(express.static(path.join(__basedir, '../client')));
+// app.use(express.static(path.join(__basedir, '../client')));
+// app.get('*', (req, res) => {
+//   res.sendFile(path.resolve(__dirname, '../client/index.html'));
+// });
+const clientPath = path.join(__dirname, '../client');
+app.use(express.static(clientPath));
+app.use('*', express.static(clientPath));
+
 // Handles any requests that don't match the ones above
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__basedir, '../client/index.html'));
-});
+// app.use('/', (req, res) => {
+//   try {
+//     res.status(200).sendFile(path.join(__basedir, '../client/index.html'));
+//   } catch (err) {
+//     // console.log(err);
+//   }
+// });
 
 if (debug) {
   // set up general error handling for dev.
@@ -88,10 +103,12 @@ if (debug) {
     const status = error.statusCode || 500;
     const message = error.message;
     const data = error.data;
-    process.send(error);
-    res.status(status).json({ message: message, data: data });
+    process.send({ message: message, data: data });
+    // res.status(status).json({ message: message, data: data });
+    next();
   });
 }
+
 // TODO: i should not be calling sequelize.sync on every single server start.
 // it should only be called intentionally on like...setup? all other changes
 // should be applied via migrations

@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, BrowserWindow, Menu, MenuItem } = require('electron');
+const { app, session, BrowserWindow, Menu, MenuItem } = require('electron');
 
 let serverReady = false;
 let electronReady = false;
@@ -51,11 +51,14 @@ const mainWindow = () => {
     height: 1080,
     fullscreen: true,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegration: false,
       spellcheck: true,
+      enableRemoteModule: false,
     },
     show: false,
   });
+  // clear storage data
+  // window.webContents.session.clearStorageData();
   // add the spellcheck context-menu
   window.webContents.on('context-menu', (event, params) => {
     const menu = new Menu();
@@ -120,7 +123,14 @@ app.on('window-all-closed', () => {
 
 app.on('ready', () => {
   console.log('app is ready');
-  electronReady = true;
+  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  //   callback({
+  //     responseHeaders: {
+  //       ...details.responseHeaders,
+  //       'Content-Security-Policy': ["default-src 'self'; img-src *; object-src 'none';"],
+  //     },
+  //   });
+  // });
 });
 
 app.on('before-quit', () => {
@@ -137,6 +147,5 @@ app.on('activate', () => {
     console.log('create temporary window here');
   }
 });
-
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.

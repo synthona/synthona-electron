@@ -278,7 +278,7 @@ exports.setAvatar = async (req, res, next) => {
       throw error;
     }
     // delete the old file
-    var filePath = path.join(__basedir, userNode.avatar);
+    var filePath = path.join(__basedir, '/' + userNode.avatar);
     // remove the file if it exists
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
@@ -312,8 +312,8 @@ exports.setAvatar = async (req, res, next) => {
   }
 };
 
-// update user header
-exports.setHeader = async (req, res, next) => {
+// update user header image
+exports.setHeaderImage = async (req, res, next) => {
   try {
     // catch null errors
     if (!req.file) {
@@ -335,12 +335,12 @@ exports.setHeader = async (req, res, next) => {
       throw error;
     }
     // delete the old file
-    var filePath = path.join(__basedir, userNode.header);
+    var filePath = path.join(__basedir, '/' + userNode.header);
     // remove the file if it exists
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       // clean up any empty folders created by this deletion
-      fileData.cleanupDataDirectoryFromFilePath(filePath);
+      // fileData.cleanupDataDirectoryFromFilePath(filePath);
     }
     // update the header url
     userNode.header = imageUrl;

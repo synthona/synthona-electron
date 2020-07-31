@@ -80,7 +80,7 @@ exports.exportAllUserData = async (req, res, next) => {
     const nodeData = await node.findAll({
       where: {
         creator: userId,
-        [Op.and]: [{ [Op.not]: { type: 'package' } }],
+        [Op.and]: [{ [Op.not]: { type: 'package' } }, { [Op.not]: { type: 'user' } }],
       },
       order: [['updatedAt', 'DESC']],
       // attributes: ['id', 'uuid'],
@@ -508,6 +508,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         let newNodeIdList = [];
         // iterate through the JSON data
         for (let nodeImport of jsonData) {
+          console.log('importing ' + nodeImport.name);
           // if it's not a file just generate the node
           if (!nodeImport.isFile) {
             // generate node
@@ -532,27 +533,34 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             let extension = nodeImport.preview.substr(nodeImport.preview.lastIndexOf('.'));
             // use the uuid to recognize the file
             const fileEntry = zip.getEntry(nodeImport.uuid + extension);
-            // create a hash of the filename
-            const nameHash = crypto.createHash('md5').update(fileEntry.name).digest('hex');
-            // generate directories
-            const directoryLayer1 = __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
-            const directoryLayer2 =
-              __basedir +
-              '/data/' +
-              userId +
-              '/' +
-              nameHash.substring(0, 3) +
-              '/' +
-              nameHash.substring(3, 6);
-            // if new directories are needed generate them
-            if (!fs.existsSync(directoryLayer2)) {
-              if (!fs.existsSync(directoryLayer1)) {
-                fs.mkdirSync(directoryLayer1);
+            let nameHash = null;
+            if (fileEntry && fileEntry.name) {
+              // create a hash of the filename
+              nameHash = crypto.createHash('md5').update(fileEntry.name).digest('hex');
+              // generate directories
+              const directoryLayer1 =
+                __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
+              const directoryLayer2 =
+                __basedir +
+                '/data/' +
+                userId +
+                '/' +
+                nameHash.substring(0, 3) +
+                '/' +
+                nameHash.substring(3, 6);
+              // if new directories are needed generate them
+              if (!fs.existsSync(directoryLayer2)) {
+                if (!fs.existsSync(directoryLayer1)) {
+                  fs.mkdirSync(directoryLayer1);
+                }
+                fs.mkdirSync(directoryLayer2);
               }
-              fs.mkdirSync(directoryLayer2);
+              //extract file to the generated directory
+              zip.extractEntryTo(fileEntry, directoryLayer2, false, true);
+            } else {
+              console.log('file import error at: ');
+              console.log(nodeImport);
             }
-            //extract file to the generated directory
-            zip.extractEntryTo(fileEntry, directoryLayer2, false, true);
             // generate node
             newNode = await node.create(
               {
@@ -562,14 +570,17 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 type: nodeImport.type,
                 name: nodeImport.name,
                 preview:
-                  'data/' +
-                  userId +
-                  '/' +
-                  nameHash.substring(0, 3) +
-                  '/' +
-                  nameHash.substring(3, 6) +
-                  '/' +
-                  fileEntry.name,
+                  fileEntry && fileEntry.name
+                    ? 'data/' +
+                      userId +
+                      '/' +
+                      nameHash.substring(0, 3) +
+                      '/' +
+                      nameHash.substring(3, 6) +
+                      '/' +
+                      fileEntry.name.substr(0, fileEntry.name.lastIndexOf('.')) +
+                      extension.toLowerCase()
+                    : null,
                 content: nodeImport.content,
                 creator: userId,
                 createdAt: nodeImport.createdAt,
@@ -664,6 +675,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         },
       }
     );
+    console.log('import successfully completed');
     // send response
     res.sendStatus(200);
   } catch (err) {
@@ -675,6 +687,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 };
 
 exports.removeSynthonaImportsByPackage = async (req, res, next) => {
+  // TODO: this doesn't seem to delete the files. not good!
   try {
     // catch validation errors
     const errors = validationResult(req);

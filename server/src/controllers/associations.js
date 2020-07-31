@@ -300,7 +300,6 @@ exports.getAssociations = async (req, res, next) => {
     });
     // send response
     res.status(200).json({ associations: results, totalItems: totalItems });
-    next();
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

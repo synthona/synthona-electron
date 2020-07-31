@@ -75,7 +75,7 @@ router.patch(
 router.patch('/avatar', isAuth, fileUpload, userController.setAvatar);
 
 // need to update this so you can only update your own
-router.patch('/header', isAuth, fileUpload, userController.setHeader);
+router.patch('/header', isAuth, fileUpload, userController.setHeaderImage);
 
 // update the username
 router.patch(

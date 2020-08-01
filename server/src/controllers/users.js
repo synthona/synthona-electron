@@ -269,6 +269,7 @@ exports.setAvatar = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
+    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('/data/') + 1);
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -286,7 +287,7 @@ exports.setAvatar = async (req, res, next) => {
       fileData.cleanupDataDirectoryFromFilePath(filePath);
     }
     // update the header url
-    userNode.avatar = imageUrl;
+    userNode.avatar = fullImageUrl;
     const result = await userNode.save();
     // update the associated user node
     await node.update(
@@ -326,6 +327,7 @@ exports.setHeaderImage = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
+    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('/data/') + 1);
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -340,10 +342,10 @@ exports.setHeaderImage = async (req, res, next) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       // clean up any empty folders created by this deletion
-      // fileData.cleanupDataDirectoryFromFilePath(filePath);
+      fileData.cleanupDataDirectoryFromFilePath(filePath);
     }
     // update the header url
-    userNode.header = imageUrl;
+    userNode.header = fullImageUrl;
     const result = await userNode.save();
     const headerUrl = req.protocol + '://' + req.get('host') + '/' + result.header;
     // send response

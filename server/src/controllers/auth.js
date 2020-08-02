@@ -71,7 +71,7 @@ exports.signup = async (req, res, next) => {
     }
     // create node in the context system
     await node.create({
-      isFile: true,
+      isFile: false,
       type: 'user',
       hidden: false,
       searchable: true,

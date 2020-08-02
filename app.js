@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, session, BrowserWindow, Menu, MenuItem } = require('electron');
+const { app, session, globalShortcut, BrowserWindow, Menu, MenuItem } = require('electron');
 
 let serverReady = false;
 let electronReady = false;
@@ -123,6 +123,9 @@ app.on('window-all-closed', () => {
 
 app.on('ready', () => {
   console.log('app is ready');
+  globalShortcut.register('CommandOrControl+E', () => {
+    app.showEmojiPanel();
+  });
   // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
   //   callback({
   //     responseHeaders: {

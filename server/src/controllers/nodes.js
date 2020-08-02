@@ -247,7 +247,7 @@ exports.searchNodes = async (req, res, next) => {
       whereStatement.hidden = { [Op.not]: true };
     }
     // exclude user nodes from the explore page for now
-    whereStatement.type = { [Op.not]: 'user' };
+    // whereStatement.type = { [Op.not]: 'user' };
     if (type) whereStatement.type = type;
     // make sure the only nodes retrieved are from the logged in user
     whereStatement.creator = userId;

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 // custom code
 const { validationResult } = require('express-validator/check');
 // bring in data models.
@@ -9,6 +10,7 @@ const crypto = require('crypto');
 // set up archiver and unzip library
 const archiver = require('archiver');
 var admZip = require('adm-zip');
+const fileData = require('../util/filedata');
 
 // generate a data export for this user
 exports.exportAllUserData = async (req, res, next) => {
@@ -645,24 +647,57 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             { silent: true }
           );
         }
-      } else if (entry.name === 'user.json') {
-        // set up main variables for processing
-        let jsonData = JSON.parse(entry.getData());
-        let userImport = jsonData[0];
-        const updatedUser = await user.update(
-          {
-            displayName: userImport.displayName,
-            bio: userImport.bio,
-            avatar: userImport.avatar,
-            header: userImport.header,
-          },
-          {
-            where: {
-              id: userId,
-            },
-          }
-        );
       }
+      // else if (entry.name === 'user.json') {
+      //   // set up main variables for processing
+      //   let jsonData = JSON.parse(entry.getData());
+      //   let userImport = jsonData[0];
+      //   // load the avatar and header info
+      //   let avatarExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
+      //   let headerExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
+      //   // use the uuid to recognize the file
+      //   const fileEntry = zip.getEntry(nodeImport.uuid + extension);
+      //   let nameHash = null;
+      //   if (fileEntry && fileEntry.name) {
+      //     // create a hash of the filename
+      //     nameHash = crypto.createHash('md5').update(fileEntry.name).digest('hex');
+      //     // generate directories
+      //     const directoryLayer1 = __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
+      //     const directoryLayer2 =
+      //       __basedir +
+      //       '/data/' +
+      //       userId +
+      //       '/' +
+      //       nameHash.substring(0, 3) +
+      //       '/' +
+      //       nameHash.substring(3, 6);
+      //     // if new directories are needed generate them
+      //     if (!fs.existsSync(directoryLayer2)) {
+      //       if (!fs.existsSync(directoryLayer1)) {
+      //         fs.mkdirSync(directoryLayer1);
+      //       }
+      //       fs.mkdirSync(directoryLayer2);
+      //     }
+      //     //extract file to the generated directory
+      //     zip.extractEntryTo(fileEntry, directoryLayer2, false, true);
+      //   } else {
+      //     console.log('file import error at: ');
+      //     console.log(nodeImport);
+      //   }
+      //   const updatedUser = await user.update(
+      //     {
+      //       displayName: userImport.displayName,
+      //       bio: userImport.bio,
+      //       avatar: userImport.avatar,
+      //       header: userImport.header,
+      //     },
+      //     {
+      //       where: {
+      //         id: userId,
+      //       },
+      //     }
+      //   );
+      // }
     }
     // mark the import package as successfully expanded
     node.update(
@@ -701,6 +736,27 @@ exports.removeSynthonaImportsByPackage = async (req, res, next) => {
     const uid = req.user.uid;
     // uuid of the import package node
     const packageUUID = req.body.uuid;
+    // get a list of nodes which are files so the associated files can be removed
+    const nodelist = await node.findAll({
+      where: {
+        [Op.and]: [
+          { importId: packageUUID },
+          { creator: uid },
+          { isFile: true },
+          { [Op.not]: { type: 'user' } },
+        ],
+      },
+    });
+    // remove all the files
+    for (fileNode of nodelist) {
+      var filePath = path.join(__basedir, fileNode.preview);
+      // remove the file if it exists
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        // clean up any empty folders created by this deletion
+        fileData.cleanupDataDirectoryFromFilePath(filePath);
+      }
+    }
     // remove all the nodes and associations created by this package
     await node.destroy({
       where: {

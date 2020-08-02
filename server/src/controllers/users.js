@@ -290,6 +290,7 @@ exports.setAvatar = async (req, res, next) => {
     userNode.avatar = fullImageUrl;
     const result = await userNode.save();
     // update the associated user node
+    // this should be made more specific
     await node.update(
       {
         preview: result.avatar,

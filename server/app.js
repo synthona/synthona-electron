@@ -78,23 +78,10 @@ app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file 
 // app.use('/port', isAuth, express.static(path.join(__dirname, 'port'))); // downloads directory
 app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
 
-// Serve the static files from the React app
-// app.use(express.static(path.join(__basedir, '../client')));
-// app.get('*', (req, res) => {
-//   res.sendFile(path.resolve(__dirname, '../client/index.html'));
-// });
-const clientPath = path.join(__dirname, '../client');
+// serve the React interface
+const clientPath = path.join(__dirname, '../client/');
 app.use(express.static(clientPath));
 app.use('*', express.static(clientPath));
-
-// Handles any requests that don't match the ones above
-// app.use('/', (req, res) => {
-//   try {
-//     res.status(200).sendFile(path.join(__basedir, '../client/index.html'));
-//   } catch (err) {
-//     // console.log(err);
-//   }
-// });
 
 if (debug) {
   // set up general error handling for dev.

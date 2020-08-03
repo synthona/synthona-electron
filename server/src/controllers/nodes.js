@@ -120,7 +120,7 @@ exports.getNodeByUUID = async (req, res, next) => {
     }
     context.markNodeView(result.uuid);
     // add full file url
-    if (result.isFile) {
+    if (result.isFile || result.type === 'user') {
       result.preview = result.preview
         ? req.protocol + '://' + req.get('host') + '/' + result.preview
         : null;
@@ -192,7 +192,7 @@ exports.updateNode = async (req, res, next) => {
     // save and store result
     const result = await existingNode.save({ silent: true });
     // it's an file, re-apply the baseURL
-    if (result.isFile) {
+    if (result.isFile || result.type === 'user') {
       const fullUrl = result.preview
         ? req.protocol + '://' + req.get('host') + '/' + result.preview
         : null;
@@ -268,7 +268,7 @@ exports.searchNodes = async (req, res, next) => {
     // TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
     // i got way ahead of myself refactoring today and basically created a huge mess
     const results = result.map((item) => {
-      if (item.isFile) {
+      if (item.isFile || item.type === 'user') {
         const fullUrl = item.preview
           ? req.protocol + '://' + req.get('host') + '/' + item.preview
           : null;

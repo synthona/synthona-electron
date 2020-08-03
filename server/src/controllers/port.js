@@ -705,6 +705,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       where: {
         [Op.and]: [{ importId: packageUUID }, { creator: userId }, { type: 'collection' }],
       },
+      silent: true,
     });
     console.log('regenerating collection previews');
     for (collection of collectionList) {
@@ -714,6 +715,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           [Op.or]: [{ nodeId: collection.id }, { linkedNode: collection.id }],
         },
         limit: 4,
+        silent: true,
         // sort by linkStrength
         order: [['linkStrength', 'DESC']],
         attributes: [
@@ -748,6 +750,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         ],
       });
       var collectionPreview = [];
+      var nodePreview = null;
       // console.log(result);
       console.log('=================================');
       console.log(collection.name);
@@ -755,13 +758,31 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       for (value of result) {
         if (value.original) {
           console.log(value.original.name);
-          collectionPreview.push({ type: value.original.type, preview: value.original.preview });
+          // store instance url in the collection preview if it is a file
+          if (value.original.isFile) {
+            nodePreview = value.original.preview
+              ? req.protocol + '://' + req.get('host') + '/' + value.original.preview
+              : null;
+          } else {
+            nodePreview = value.original.preview;
+          }
+          // push the preview for this particular node onto the collection preview
+          collectionPreview.push({ type: value.original.type, preview: nodePreview });
         }
         if (value.associated) {
           console.log(value.associated.name);
+          // store instance url in the collection preview if it is a file
+          if (value.associated.isFile) {
+            nodePreview = value.associated.preview
+              ? req.protocol + '://' + req.get('host') + '/' + value.associated.preview
+              : null;
+          } else {
+            nodePreview = value.associated.preview;
+          }
+          // push the preview for this particular node onto the collection preview
           collectionPreview.push({
             type: value.associated.type,
-            preview: value.associated.preview,
+            preview: nodePreview,
           });
         }
       }
@@ -775,6 +796,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             id: collection.id,
             creator: userId,
           },
+          silent: true,
         }
       );
     }
@@ -789,6 +811,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         where: {
           uuid: packageUUID,
         },
+        silent: true,
       }
     );
     console.log('=================================');

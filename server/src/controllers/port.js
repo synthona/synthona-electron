@@ -699,6 +699,87 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       //   );
       // }
     }
+    // generate the collection previews for all imports
+    // get a list of nodes which are files so the associated files can be removed
+    const collectionList = await node.findAll({
+      where: {
+        [Op.and]: [{ importId: packageUUID }, { creator: userId }, { type: 'collection' }],
+      },
+    });
+    console.log('regenerating collection previews');
+    for (collection of collectionList) {
+      const result = await association.findAll({
+        where: {
+          creator: userId,
+          [Op.or]: [{ nodeId: collection.id }, { linkedNode: collection.id }],
+        },
+        limit: 4,
+        // sort by linkStrength
+        order: [['linkStrength', 'DESC']],
+        attributes: [
+          'id',
+          'nodeId',
+          'nodeType',
+          'linkedNode',
+          'linkedNodeType',
+          'linkStrength',
+          'updatedAt',
+        ],
+        // include whichever node is the associated one for
+        include: [
+          {
+            model: node,
+            where: {
+              [Op.and]: { id: { [Op.not]: collection.id }, type: { [Op.not]: 'collection' } },
+            },
+            required: false,
+            as: 'original',
+            attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
+          },
+          {
+            model: node,
+            where: {
+              [Op.and]: { id: { [Op.not]: collection.id }, type: { [Op.not]: 'collection' } },
+            },
+            required: false,
+            as: 'associated',
+            attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
+          },
+        ],
+      });
+      var collectionPreview = [];
+      // console.log(result);
+      console.log('=================================');
+      console.log(collection.name);
+      console.log('=================================');
+      for (value of result) {
+        if (value.original) {
+          console.log(value.original.name);
+          collectionPreview.push({ type: value.original.type, preview: value.original.preview });
+        }
+        if (value.associated) {
+          console.log(value.associated.name);
+          collectionPreview.push({
+            type: value.associated.type,
+            preview: value.associated.preview,
+          });
+        }
+      }
+      // update the preview
+      await node.update(
+        {
+          preview: JSON.stringify(collectionPreview),
+        },
+        {
+          where: {
+            id: collection.id,
+            creator: userId,
+          },
+        }
+      );
+    }
+    console.log('=================================');
+    console.log('marking package as imported');
     // mark the import package as successfully expanded
     node.update(
       {
@@ -710,7 +791,9 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         },
       }
     );
+    console.log('=================================');
     console.log('import successfully completed');
+    console.log('=================================');
     // send response
     res.sendStatus(200);
   } catch (err) {

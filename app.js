@@ -13,7 +13,7 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
     'ELECTRON_RUN_AS_NODE': '1',
     'PORT': '9000',
     'APP_NAME': 'synthona',
-    'CLIENT_URL': 'http://localhost:9000',
+    'CLIENT_URL': 'http://localhost:3000',
     'JWT_SECRET': 'sdlkasfhi5235hjh',
     'REFRESH_TOKEN_SECRET': 'asdkjkasdfhaskfh',
     'PRODUCTION': 'false',

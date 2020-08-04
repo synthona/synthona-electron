@@ -262,7 +262,7 @@ exports.searchNodes = async (req, res, next) => {
       offset: (currentPage - 1) * perPage,
       limit: perPage,
       order: [['updatedAt', 'DESC']],
-      attributes: ['uuid', 'isFile', 'name', 'type', 'preview', 'updatedAt'],
+      attributes: ['uuid', 'isFile', 'name', 'path', 'type', 'preview', 'updatedAt'],
       raw: true,
     });
     // TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)

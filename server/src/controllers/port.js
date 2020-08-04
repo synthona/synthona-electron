@@ -828,7 +828,6 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 };
 
 exports.removeSynthonaImportsByPackage = async (req, res, next) => {
-  // TODO: this doesn't seem to delete the files. not good!
   try {
     // catch validation errors
     const errors = validationResult(req);

@@ -2,7 +2,6 @@ const path = require('path');
 var fs = require('fs');
 // import packages
 const { validationResult } = require('express-validator/check');
-const context = require('../util/context');
 // bring in data models.
 const { user, node } = require('../db/models');
 // bring in util functions
@@ -184,7 +183,7 @@ exports.setUsername = async (req, res, next) => {
     if (req.body.username) {
       await node.update(
         {
-          comment: result.username,
+          path: result.username,
         },
         {
           where: {
@@ -294,7 +293,6 @@ exports.setAvatar = async (req, res, next) => {
     await node.update(
       {
         preview: result.avatar,
-        path: result.avatar,
       },
       {
         where: {

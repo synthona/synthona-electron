@@ -87,7 +87,7 @@ exports.createAssociation = async (req, res, next) => {
       ],
     });
     // re-apply baseURL if node is a file
-    if (result.associated.isFile) {
+    if (result.associated.isFile || result.associated.type === 'user') {
       const fullUrl = result.associated.preview
         ? req.protocol + '://' + req.get('host') + '/' + result.associated.preview
         : null;
@@ -266,14 +266,14 @@ exports.getAssociations = async (req, res, next) => {
           where: { id: { [Op.not]: nodeId } },
           required: false,
           as: 'original',
-          attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
+          attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
         },
         {
           model: node,
           where: { id: { [Op.not]: nodeId } },
           required: false,
           as: 'associated',
-          attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
+          attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
         },
       ],
     });
@@ -290,7 +290,7 @@ exports.getAssociations = async (req, res, next) => {
     // TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
     // i got way ahead of myself refactoring today and basically created a huge mess
     const results = associations.map((item) => {
-      if (item.isFile) {
+      if (item.isFile || item.type === 'user') {
         const fullUrl = item.preview
           ? req.protocol + '://' + req.get('host') + '/' + item.preview
           : null;
@@ -378,9 +378,15 @@ exports.updateLinkStrength = async (req, res, next) => {
         ],
       },
     });
-    // increment it by 1
-    result.linkStrength++;
-    result.save();
+    if (result) {
+      // increment it by 1
+      result.linkStrength++;
+      result.save();
+    } else {
+      const error = new Error('Could not find association');
+      error.statusCode = 422;
+      throw error;
+    }
     // send response with success message
     res.status(200).json({ message: 'updated link strength' });
   } catch (err) {

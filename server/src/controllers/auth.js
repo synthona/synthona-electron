@@ -77,8 +77,7 @@ exports.signup = async (req, res, next) => {
       searchable: true,
       name: account.displayName,
       preview: account.avatar,
-      path: account.avatar,
-      comment: account.username,
+      path: account.username,
       content: account.bio,
       creator: account.id,
     });

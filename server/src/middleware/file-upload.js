@@ -34,11 +34,14 @@ const fileStorage = multer.diskStorage({
     cb(null, directoryLayer2);
   },
   filename: (req, file, cb) => {
+    // load the fileEntry
+    let extension = file.originalname.substr(file.originalname.lastIndexOf('.'));
+    let name = file.originalname
+      .substr(0, file.originalname.lastIndexOf('.'))
+      .trim()
+      .replace(/\s/g, '');
     // second param is file name
-    cb(
-      null,
-      file.hash + '-' + shortId.generate() + '-' + file.originalname.trim().replace(/\s/g, '')
-    );
+    cb(null, file.hash + '-' + shortId.generate() + '-' + name + extension.toLowerCase());
   },
 });
 

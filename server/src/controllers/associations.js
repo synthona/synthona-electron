@@ -82,7 +82,7 @@ exports.createAssociation = async (req, res, next) => {
           where: {
             id: newAssociation.linkedNode,
           },
-          attributes: ['uuid', 'isFile', 'type', 'preview', 'name'],
+          attributes: ['uuid', 'isFile', 'path', 'type', 'preview', 'name'],
         },
       ],
     });

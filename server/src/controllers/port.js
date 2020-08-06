@@ -111,7 +111,7 @@ exports.exportAllUserData = async (req, res, next) => {
     // loop through all nodes
     await nodeData.forEach((node) => {
       // add associated files to the export
-      if (node.isFile) {
+      if (node.isFile || node.type === 'user') {
         let extension = node.preview.substr(node.preview.lastIndexOf('.'));
         if (fs.existsSync(__basedir + '/' + node.preview)) {
           try {
@@ -203,7 +203,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
     // create a list of exported IDS so incomplete
     // associations can be removed from the export
     const exportIdList = [];
-    let anchorNodeId = null;
+    // let anchorNodeId = null;
     let anchorNodeName = '';
     for (let node of nodeIdListQuery) {
       if (node.left) {
@@ -220,7 +220,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       anchorNodeName = node.name.trim();
       // add the anchorNode
       exportIdList.push(node.id);
-      anchorNodeId = node.id;
+      // anchorNodeId = node.id;
     }
     // set export name and extension
     const exportName = anchorNodeName + '.synth';

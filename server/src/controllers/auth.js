@@ -78,7 +78,8 @@ exports.signup = async (req, res, next) => {
       name: account.displayName,
       preview: account.avatar,
       path: account.username,
-      content: account.bio,
+      content: account.header,
+      comment: account.bio,
       creator: account.id,
     });
     // send the response

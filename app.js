@@ -1,5 +1,15 @@
 const path = require('path');
-const { app, session, globalShortcut, BrowserWindow, Menu, MenuItem } = require('electron');
+const {
+  app,
+  shell,
+  session,
+  globalShortcut,
+  BrowserWindow,
+  Menu,
+  MenuItem,
+  clipboard,
+} = require('electron');
+const contextMenu = require('electron-context-menu');
 
 let serverReady = false;
 let electronReady = false;
@@ -11,13 +21,13 @@ const { fork } = require('child_process');
 const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
   env: {
     'ELECTRON_RUN_AS_NODE': '1',
-    'PORT': '9000',
-    'APP_NAME': 'synthona',
-    'CLIENT_URL': 'http://localhost:3000',
-    'JWT_SECRET': 'sdlkasfhi5235hjh',
-    'REFRESH_TOKEN_SECRET': 'asdkjkasdfhaskfh',
-    'PRODUCTION': 'false',
-    'VERSION': '1.0',
+    'PORT': process.env.PORT,
+    'APP_NAME': process.env.APP_NAME,
+    'CLIENT_URL': process.env.CLIENT_URL,
+    'JWT_SECRET': process.env.JWT_SECRET,
+    'REFRESH_TOKEN_SECRET': process.env.REFRESH_TOKEN_SECRET,
+    'PRODUCTION': process.env.PRODUCTION,
+    'VERSION': process.env.VERSION,
   },
 });
 
@@ -57,42 +67,28 @@ const mainWindow = () => {
     },
     show: false,
   });
+
+  // add the context menu
+  contextMenu({
+    prepend: (defaultActions, params, browserWindow) => [
+      {
+        label: 'emoji',
+        click: () => {
+          app.showEmojiPanel();
+        },
+      },
+    ],
+    labels: {
+      copyImage: 'copy image',
+      paste: 'paste',
+      copy: 'copy',
+      cut: 'cut',
+    },
+    showSearchWithGoogle: false,
+    showInspectElement: false,
+  });
   // clear storage data
   // window.webContents.session.clearStorageData();
-  // add the spellcheck context-menu
-  window.webContents.on('context-menu', (event, params) => {
-    const menu = new Menu();
-
-    // add emoji picker
-    menu.append(
-      new MenuItem({
-        label: 'emoji',
-        click: () => app.showEmojiPanel(),
-      })
-    );
-
-    // Add each spelling suggestion
-    for (const suggestion of params.dictionarySuggestions) {
-      menu.append(
-        new MenuItem({
-          label: suggestion,
-          click: () => window.webContents.replaceMisspelling(suggestion),
-        })
-      );
-    }
-    // Allow users to add the misspelled word to the dictionary
-    if (params.misspelledWord) {
-      menu.append(
-        new MenuItem({
-          label: 'Add to dictionary',
-          click: () =>
-            window.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
-        })
-      );
-    }
-
-    menu.popup();
-  });
   // match the background color to the app theme
   window.setBackgroundColor('#272727');
   window.loadURL('http://localhost:9000');
@@ -143,11 +139,12 @@ app.on('before-quit', () => {
 
 app.on('activate', () => {
   console.log('activate');
+  console.log(BrowserWindow.getAllWindows().length);
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    // createLoadingWindow();
-    console.log('create temporary window here');
+    mainWindow();
+    window.show();
   }
 });
 // In this file you can include the rest of your app's specific main process

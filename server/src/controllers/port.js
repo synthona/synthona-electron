@@ -5,12 +5,10 @@ const { validationResult } = require('express-validator/check');
 // bring in data models.
 const { node, association, user } = require('../db/models');
 const { Op } = require('sequelize');
-// bring in libraries for file and directory name generation
-const crypto = require('crypto');
 // set up archiver and unzip library
 const archiver = require('archiver');
 var admZip = require('adm-zip');
-const fileData = require('../util/filedata');
+const fsUtil = require('../util/fsUtil');
 
 // generate a data export for this user
 exports.exportAllUserData = async (req, res, next) => {
@@ -82,7 +80,7 @@ exports.exportAllUserData = async (req, res, next) => {
     const nodeData = await node.findAll({
       where: {
         creator: userId,
-        [Op.and]: [{ [Op.not]: { type: 'package' } }, { [Op.not]: { type: 'user' } }],
+        [Op.and]: [{ [Op.not]: { type: 'package' } }],
       },
       order: [['updatedAt', 'DESC']],
       // attributes: ['id', 'uuid'],
@@ -108,7 +106,7 @@ exports.exportAllUserData = async (req, res, next) => {
         },
       ],
     });
-    // loop through all nodes
+    // loop through all nodes to add files into export
     await nodeData.forEach((node) => {
       // add associated files to the export
       if (node.isFile || node.type === 'user') {
@@ -137,6 +135,38 @@ exports.exportAllUserData = async (req, res, next) => {
       },
       raw: true,
     });
+    // get the json object for the logged in user
+    const userValues = userData[0];
+    // add avatar files to the export
+    if (userValues.avatar) {
+      let extension = userValues.avatar.substr(userValues.avatar.lastIndexOf('.'));
+      if (fs.existsSync(__basedir + '/' + userValues.avatar)) {
+        try {
+          // append the associated file to the export
+          archive.append(fs.createReadStream(__basedir + '/' + userValues.avatar), {
+            name: userValues.username + '-avatar' + extension,
+          });
+        } catch (err) {
+          err.statusCode = 500;
+          throw err;
+        }
+      }
+    }
+    // add header to export
+    if (userValues.header) {
+      let extension = userValues.header.substr(userValues.header.lastIndexOf('.'));
+      if (fs.existsSync(__basedir + '/' + userValues.header)) {
+        try {
+          // append the associated file to the export
+          archive.append(fs.createReadStream(__basedir + '/' + userValues.header), {
+            name: userValues.username + '-header' + extension,
+          });
+        } catch (err) {
+          err.statusCode = 500;
+          throw err;
+        }
+      }
+    }
     // stringify JSON
     const userString = JSON.stringify(userData);
     // append a file containing the userData
@@ -511,8 +541,8 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         // iterate through the JSON data
         for (let nodeImport of jsonData) {
           console.log('importing ' + nodeImport.name);
-          // if it's not a file just generate the node
-          if (!nodeImport.isFile) {
+          // if it's not a file or user just generate the node
+          if (!nodeImport.isFile && nodeImport.type !== 'user') {
             // generate node
             newNode = await node.create(
               {
@@ -535,34 +565,18 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             let extension = nodeImport.preview.substr(nodeImport.preview.lastIndexOf('.'));
             // use the uuid to recognize the file
             const fileEntry = zip.getEntry(nodeImport.uuid + extension);
-            let nameHash = null;
+            let filePath;
             if (fileEntry && fileEntry.name) {
-              // create a hash of the filename
-              nameHash = crypto.createHash('md5').update(fileEntry.name).digest('hex');
-              // generate directories
-              const directoryLayer1 =
-                __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
-              const directoryLayer2 =
-                __basedir +
-                '/data/' +
-                userId +
-                '/' +
-                nameHash.substring(0, 3) +
-                '/' +
-                nameHash.substring(3, 6);
-              // if new directories are needed generate them
-              if (!fs.existsSync(directoryLayer2)) {
-                if (!fs.existsSync(directoryLayer1)) {
-                  fs.mkdirSync(directoryLayer1);
-                }
-                fs.mkdirSync(directoryLayer2);
-              }
+              // generate the file location and get file path
+              filePath = await fsUtil.generateFileLocation(userId, fileEntry.name);
               //extract file to the generated directory
-              zip.extractEntryTo(fileEntry, directoryLayer2, false, true);
+              zip.extractEntryTo(fileEntry, filePath, false, true);
             } else {
               console.log('file import error at: ');
               console.log(nodeImport);
             }
+            const dbFilePath =
+              filePath.substr(filePath.lastIndexOf('/data/') + 1) + '/' + fileEntry.name;
             // generate node
             newNode = await node.create(
               {
@@ -571,18 +585,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 searchable: nodeImport.searchable,
                 type: nodeImport.type,
                 name: nodeImport.name,
-                preview:
-                  fileEntry && fileEntry.name
-                    ? 'data/' +
-                      userId +
-                      '/' +
-                      nameHash.substring(0, 3) +
-                      '/' +
-                      nameHash.substring(3, 6) +
-                      '/' +
-                      fileEntry.name.substr(0, fileEntry.name.lastIndexOf('.')) +
-                      extension.toLowerCase()
-                    : null,
+                preview: dbFilePath || null,
                 content: nodeImport.content,
                 creator: userId,
                 createdAt: nodeImport.createdAt,
@@ -647,57 +650,57 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             { silent: true }
           );
         }
+      } else if (entry.name === 'user.json') {
+        // set up main variables for processing
+        let jsonData = JSON.parse(entry.getData());
+        let userImport = jsonData[0];
+        // load the avatar and header info
+        let avatarExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
+        let headerExtension = userImport.header.substr(userImport.header.lastIndexOf('.'));
+        // load both file entries
+        const avatarFileEntry = zip.getEntry(userImport.username + '-avatar' + avatarExtension);
+        const headerFileEntry = zip.getEntry(userImport.username + '-header' + headerExtension);
+        // create empty variables for filepaths
+        let avatarFilePath;
+        let headerFilePath;
+        // import the avatar image
+        if (avatarFileEntry && avatarFileEntry.name) {
+          // avatarFilePath = await fsUtil.generateFileLocation(userId, avatarFileEntry.name);
+          avatarFilePath = './server/data/' + userId + '/user/';
+          //extract file to the generated directory
+          zip.extractEntryTo(avatarFileEntry, avatarFilePath, false, true);
+        }
+        // import the header image
+        if (headerFileEntry && headerFileEntry.name) {
+          // headerFilePath = await fsUtil.generateFileLocation(userId, headerFileEntry.name);
+          headerFilePath = './server/data/' + userId + '/user/';
+          //extract file to the generated directory
+          zip.extractEntryTo(headerFileEntry, headerFilePath, false, true);
+        }
+        // file paths for DB storage
+        const avatarDbPath =
+          avatarFilePath.substr(avatarFilePath.lastIndexOf('/data/') + 1) +
+          '/' +
+          avatarFileEntry.name;
+        const headerDbPath =
+          headerFilePath.substr(headerFilePath.lastIndexOf('/data/') + 1) +
+          '/' +
+          headerFileEntry.name;
+        // update the logged in user with the imported data
+        await user.update(
+          {
+            displayName: userImport.displayName,
+            bio: userImport.bio,
+            avatar: avatarDbPath || null,
+            header: headerDbPath || null,
+          },
+          {
+            where: {
+              id: userId,
+            },
+          }
+        );
       }
-      // else if (entry.name === 'user.json') {
-      //   // set up main variables for processing
-      //   let jsonData = JSON.parse(entry.getData());
-      //   let userImport = jsonData[0];
-      //   // load the avatar and header info
-      //   let avatarExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
-      //   let headerExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
-      //   // use the uuid to recognize the file
-      //   const fileEntry = zip.getEntry(nodeImport.uuid + extension);
-      //   let nameHash = null;
-      //   if (fileEntry && fileEntry.name) {
-      //     // create a hash of the filename
-      //     nameHash = crypto.createHash('md5').update(fileEntry.name).digest('hex');
-      //     // generate directories
-      //     const directoryLayer1 = __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
-      //     const directoryLayer2 =
-      //       __basedir +
-      //       '/data/' +
-      //       userId +
-      //       '/' +
-      //       nameHash.substring(0, 3) +
-      //       '/' +
-      //       nameHash.substring(3, 6);
-      //     // if new directories are needed generate them
-      //     if (!fs.existsSync(directoryLayer2)) {
-      //       if (!fs.existsSync(directoryLayer1)) {
-      //         fs.mkdirSync(directoryLayer1);
-      //       }
-      //       fs.mkdirSync(directoryLayer2);
-      //     }
-      //     //extract file to the generated directory
-      //     zip.extractEntryTo(fileEntry, directoryLayer2, false, true);
-      //   } else {
-      //     console.log('file import error at: ');
-      //     console.log(nodeImport);
-      //   }
-      //   const updatedUser = await user.update(
-      //     {
-      //       displayName: userImport.displayName,
-      //       bio: userImport.bio,
-      //       avatar: userImport.avatar,
-      //       header: userImport.header,
-      //     },
-      //     {
-      //       where: {
-      //         id: userId,
-      //       },
-      //     }
-      //   );
-      // }
     }
     // generate the collection previews for all imports
     // get a list of nodes which are files so the associated files can be removed
@@ -859,7 +862,7 @@ exports.removeSynthonaImportsByPackage = async (req, res, next) => {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         // clean up any empty folders created by this deletion
-        fileData.cleanupDataDirectoryFromFilePath(filePath);
+        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
       }
     }
     // remove all the nodes and associations created by this package

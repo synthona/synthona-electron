@@ -5,7 +5,7 @@ const { body, query } = require('express-validator/check');
 const userController = require('../controllers/users');
 // import route middleware
 const isAuth = require('../middleware/is-auth');
-const fileUpload = require('../middleware/file-upload');
+const userFileUpload = require('../middleware/user-file');
 // import data models
 const { user } = require('../db/models');
 // set up router
@@ -72,10 +72,10 @@ router.patch(
 );
 
 // need to update this so you can only update your own
-router.patch('/avatar', isAuth, fileUpload, userController.setAvatar);
+router.patch('/avatar', isAuth, userFileUpload, userController.setAvatar);
 
 // need to update this so you can only update your own
-router.patch('/header', isAuth, fileUpload, userController.setHeaderImage);
+router.patch('/header', isAuth, userFileUpload, userController.setHeaderImage);
 
 // update the username
 router.patch(

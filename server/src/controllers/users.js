@@ -5,7 +5,7 @@ const { validationResult } = require('express-validator/check');
 // bring in data models.
 const { user, node } = require('../db/models');
 // bring in util functions
-const fileData = require('../util/filedata');
+const fsUtil = require('../util/fsUtil');
 
 // load a single user by Username
 exports.getUserByUsername = async (req, res, next) => {
@@ -269,6 +269,7 @@ exports.setAvatar = async (req, res, next) => {
     // process request
     const imageUrl = req.file.path;
     const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('/data/') + 1);
+    console.log(fullImageUrl);
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -283,7 +284,7 @@ exports.setAvatar = async (req, res, next) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       // clean up any empty folders created by this deletion
-      fileData.cleanupDataDirectoryFromFilePath(filePath);
+      fsUtil.cleanupDataDirectoryFromFilePath(filePath);
     }
     // update the header url
     userNode.avatar = fullImageUrl;
@@ -341,7 +342,7 @@ exports.setHeaderImage = async (req, res, next) => {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       // clean up any empty folders created by this deletion
-      fileData.cleanupDataDirectoryFromFilePath(filePath);
+      fsUtil.cleanupDataDirectoryFromFilePath(filePath);
     }
     // update the header url
     userNode.header = fullImageUrl;

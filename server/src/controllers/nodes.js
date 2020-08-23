@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 // custom code
 const { validationResult } = require('express-validator/check');
 const context = require('../util/context');
-const fileData = require('../util/filedata');
+const fsUtil = require('../util/fsUtil');
 
 exports.createNode = async (req, res, next) => {
   const errors = validationResult(req);
@@ -317,7 +317,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         // clean up any empty folders created by this deletion
-        fileData.cleanupDataDirectoryFromFilePath(filePath);
+        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
       }
     }
     // delete associations

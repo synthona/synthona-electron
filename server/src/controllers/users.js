@@ -23,7 +23,7 @@ exports.getUserByUsername = async (req, res, next) => {
     // load user
     const userNode = await user.findOne({
       where: { username },
-      attributes: ['username', 'displayName', 'bio', 'avatar', 'header'],
+      attributes: ['username', 'nodeId', 'displayName', 'bio', 'avatar', 'header'],
     });
     // check for errors
     if (!userNode) {
@@ -31,13 +31,17 @@ exports.getUserByUsername = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // add server info to image urls
-    userNode.avatar = userNode.avatar
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
-      : null;
-    userNode.header = userNode.header
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.header
-      : null;
+    if (userNode.avatar) {
+      // add server info to image urls
+      userNode.avatar = userNode.avatar
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
+        : null;
+    }
+    if (userNode.header) {
+      userNode.header = userNode.header
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.header
+        : null;
+    }
     // send response
     res.status(200).json({ user: userNode });
     // res.sendStatus(200);
@@ -73,13 +77,17 @@ exports.getUserByEmail = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // add server info to image urls
-    userNode.avatar = userNode.avatar
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
-      : null;
-    userNode.header = userNode.header
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.header
-      : null;
+    if (userNode.avatar) {
+      // add server info to image urls
+      userNode.avatar = userNode.avatar
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
+        : null;
+    }
+    if (userNode.header) {
+      userNode.header = userNode.header
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.header
+        : null;
+    }
     // send response
     res.status(200).json({ user: userNode });
     // res.sendStatus(200);
@@ -135,13 +143,17 @@ exports.setUserInfo = async (req, res, next) => {
         }
       );
     }
-    // add server info to image urls
-    profile.avatar = profile.avatar
-      ? req.protocol + '://' + req.get('host') + '/' + profile.avatar
-      : null;
-    profile.header = profile.header
-      ? req.protocol + '://' + req.get('host') + '/' + profile.header
-      : null;
+    if (profile.avatar) {
+      // add server info to image urls
+      profile.avatar = profile.avatar
+        ? req.protocol + '://' + req.get('host') + '/' + profile.avatar
+        : null;
+    }
+    if (profile.header) {
+      profile.header = profile.header
+        ? req.protocol + '://' + req.get('host') + '/' + profile.header
+        : null;
+    }
     // return result
     res.status(200).json({ user: result });
   } catch (err) {
@@ -193,13 +205,17 @@ exports.setUsername = async (req, res, next) => {
         }
       );
     }
-    // add server info to image urls
-    userNode.avatar = userNode.avatar
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
-      : null;
-    userNode.header = userNode.header
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.header
-      : null;
+    if (userNode.avatar) {
+      // add server info to image urls
+      userNode.avatar = userNode.avatar
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
+        : null;
+    }
+    if (userNode.header) {
+      userNode.header = userNode.header
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.header
+        : null;
+    }
     // return result
     res.status(200).json({ user: result });
   } catch (err) {
@@ -238,12 +254,16 @@ exports.setEmail = async (req, res, next) => {
     userNode.email = email ? email : userNode.email;
     const result = await userNode.save();
     // add server info to image urls
-    userNode.avatar = userNode.avatar
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
-      : null;
-    userNode.header = userNode.header
-      ? req.protocol + '://' + req.get('host') + '/' + userNode.header
-      : null;
+    if (userNode.avatar) {
+      userNode.avatar = userNode.avatar
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.avatar
+        : null;
+    }
+    if (userNode.header) {
+      userNode.header = userNode.header
+        ? req.protocol + '://' + req.get('host') + '/' + userNode.header
+        : null;
+    }
     // return result
     res.status(200).json({ user: result });
   } catch (err) {

@@ -511,6 +511,12 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       where: { [Op.and]: [{ uuid: packageUUID }, { creator: userId }] },
       raw: true,
     });
+    // fetch the logged in user from the DB
+    const loggedInUser = await user.findOne({
+      where: {
+        id: userId,
+      },
+    });
     // check that the node is not already expanded
     if (packageNode.metadata && packageNode.metadata.expanded) {
       err = new Error('package is already expanded');
@@ -541,8 +547,11 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         // iterate through the JSON data
         for (let nodeImport of jsonData) {
           console.log('importing ' + nodeImport.name);
-          // if it's not a file or user just generate the node
-          if (!nodeImport.isFile && nodeImport.type !== 'user') {
+          // if it's not a file just generate the node
+          if (!nodeImport.isFile) {
+            if (nodeImport.type === 'user') {
+              nodeImport.path = loggedInUser.username;
+            }
             // generate node
             newNode = await node.create(
               {
@@ -553,6 +562,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 name: nodeImport.name,
                 preview: nodeImport.preview,
                 content: nodeImport.content,
+                path: nodeImport.path,
                 creator: userId,
                 createdAt: nodeImport.createdAt,
                 updatedAt: nodeImport.updatedAt,
@@ -587,6 +597,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 name: nodeImport.name,
                 preview: dbFilePath || null,
                 content: nodeImport.content,
+                path: nodeImport.path,
                 creator: userId,
                 createdAt: nodeImport.createdAt,
                 updatedAt: nodeImport.updatedAt,
@@ -697,6 +708,19 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           {
             where: {
               id: userId,
+            },
+          }
+        );
+        // update the logged in user node as well
+        await node.update(
+          {
+            preview: avatarDbPath,
+            content: userImport.bio,
+          },
+          {
+            where: {
+              creator: userId,
+              type: 'user',
             },
           }
         );

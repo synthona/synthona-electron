@@ -140,7 +140,7 @@ module.exports = (sequelize, DataTypes) => {
     //   foreignKey: 'id',
     //   targetKey: 'linkedNode',
     // });
-    node.hasOne(models.user, { foreignKey: 'nodeId', sourceKey: 'id' });
+    node.hasOne(models.user, { constraints: false, foreignKey: 'nodeId', sourceKey: 'uuid' });
   };
   return node;
 };

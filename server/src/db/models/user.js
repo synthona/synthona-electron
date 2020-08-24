@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         comment: 'The ID of the user',
       },
       nodeId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.UUID,
         comment: 'The context system id',
       },
       email: {
@@ -70,7 +70,7 @@ module.exports = (sequelize, DataTypes) => {
     user.belongsTo(models.node, {
       constraints: false,
       foreignKey: 'nodeId',
-      targetKey: 'id',
+      targetKey: 'uuid',
     });
     // user.belongsToMany(node, { through: UserHistory, constraints: false });
   };

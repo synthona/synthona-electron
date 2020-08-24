@@ -24,8 +24,6 @@ exports.signup = async (req, res, next) => {
     const username = req.body.username.trim();
     const password = req.body.password.trim();
     // set header, bio, and avatar defaults
-    const avatar = 'public/resources/default-avatar.png';
-    const header = 'public/resources/default-header.jpg';
     const bio = 'new user';
 
     // process request.
@@ -34,9 +32,7 @@ exports.signup = async (req, res, next) => {
     const account = await user.create({
       email: email,
       password: hash,
-      avatar: avatar,
       bio: bio,
-      header: header,
       displayName: username,
       username: username,
     });
@@ -70,26 +66,25 @@ exports.signup = async (req, res, next) => {
       });
     }
     // create node in the context system
-    await node.create({
+    const contextNode = await node.create({
       isFile: false,
       type: 'user',
       hidden: false,
       searchable: true,
       name: account.displayName,
-      preview: account.avatar,
       path: account.username,
-      content: account.header,
       comment: account.bio,
       creator: account.id,
     });
+    // set the nodeId
+    account.nodeId = contextNode.uuid;
+    await account.save();
     // send the response
     res.status(201).json({
       email: account.email,
       username: account.username,
       displayName: account.displayName,
-      avatar: req.protocol + '://' + req.get('host') + '/' + account.avatar,
       bio: account.bio,
-      header: req.protocol + '://' + req.get('host') + '/' + account.header,
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -158,14 +153,23 @@ exports.login = async (req, res, next) => {
         expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
       });
     }
+    // set the header and avatar urls if needed
+    let fullAvatarUrl;
+    let fullHeaderUrl;
+    if (account.avatar) {
+      fullAvatarUrl = req.protocol + '://' + req.get('host') + '/' + account.avatar;
+    }
+    if (account.header) {
+      fullHeaderUrl = req.protocol + '://' + req.get('host') + '/' + account.header;
+    }
     // send response
     res.status(201).json({
       email: account.email,
       username: account.username,
       displayName: account.displayName,
-      avatar: req.protocol + '://' + req.get('host') + '/' + account.avatar,
+      avatar: fullAvatarUrl,
       bio: account.bio,
-      header: req.protocol + '://' + req.get('host') + '/' + account.header,
+      header: fullHeaderUrl,
     });
   } catch (err) {
     if (!err.statusCode) {
@@ -261,14 +265,23 @@ exports.isAuthenticated = async (req, res, next) => {
       error.statusCode = 401;
       throw error;
     }
+    // set the header and avatar urls if needed
+    let fullAvatarUrl;
+    let fullHeaderUrl;
+    if (account.avatar) {
+      fullAvatarUrl = req.protocol + '://' + req.get('host') + '/' + account.avatar;
+    }
+    if (account.header) {
+      fullHeaderUrl = req.protocol + '://' + req.get('host') + '/' + account.header;
+    }
     // send reponse
     res.status(201).json({
       email: account.email,
       username: account.username,
       displayName: account.displayName,
-      avatar: req.protocol + '://' + req.get('host') + '/' + account.avatar,
+      avatar: fullAvatarUrl,
       bio: account.bio,
-      header: req.protocol + '://' + req.get('host') + '/' + account.header,
+      header: fullHeaderUrl,
     });
   } catch (err) {
     if (!err.statusCode) {

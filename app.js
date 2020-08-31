@@ -1,6 +1,8 @@
 const path = require('path');
 const { app, shell, session, globalShortcut, BrowserWindow } = require('electron');
 const contextMenu = require('electron-context-menu');
+// import config
+const config = require('./config');
 
 let serverReady = false;
 let electronReady = false;
@@ -12,11 +14,11 @@ const { fork } = require('child_process');
 const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
   env: {
     'ELECTRON_RUN_AS_NODE': '1',
-    'PORT': '9000',
-    'APP_NAME': 'synthona',
-    'CLIENT_URL': 'http://localhost:9000',
-    'JWT_SECRET': 'asdk3fahaie68whih',
-    'REFRESH_TOKEN_SECRET': 'dkk3h98kashgasadg',
+    'PORT': config.PORT,
+    'APP_NAME': config.APP_NAME,
+    'CLIENT_URL': config.CLIENT_URL,
+    'JWT_SECRET': config.JWT_SECRET,
+    'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
     'PRODUCTION': 'false',
     'VERSION': '1',
   },

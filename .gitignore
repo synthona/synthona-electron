@@ -3,3 +3,4 @@ database.sqlite3
 dist
 .env
 release-builds
+config.json

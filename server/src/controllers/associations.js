@@ -383,7 +383,7 @@ exports.updateLinkStrength = async (req, res, next) => {
       result.linkStrength++;
       result.save();
     } else {
-      const error = new Error('Could not find association');
+      const error = new Error('Could not find association between ' + nodeA + ' and ' + nodeB);
       error.statusCode = 422;
       throw error;
     }

@@ -210,3 +210,64 @@ exports.maintainAssociationStrengthValues = async () => {
 //   console.log('done');
 //   return;
 // };
+
+exports.clearBrokenAssociations = async () => {
+  console.log('clearing broken associations');
+  // load all associations into a variable
+  const result = await association.findAll({
+    order: [['updatedAt', 'ASC']],
+  });
+  // iterate through the associations
+  for (value of result) {
+    const anchorNode = await node.findOne({
+      where: {
+        id: value.nodeId,
+      },
+    });
+    const linkedNode = await node.findOne({
+      where: {
+        id: value.linkedNode,
+      },
+    });
+    // if one of them is missing, clear the association
+    if (!anchorNode || !linkedNode) {
+      console.log(
+        'id: ' + value.id + ', nodeId: ' + value.nodeId + ', linkedNode: ' + value.linkedNode
+      );
+      value.destroy();
+    }
+  }
+  console.log('done');
+  return;
+};
+
+exports.countBrokenAssociations = async () => {
+  console.log('counting broken associations');
+  let count = 0;
+  // load all associations into a variable
+  const result = await association.findAll({
+    order: [['updatedAt', 'ASC']],
+  });
+  // iterate through the associations
+  for (value of result) {
+    const anchorNode = await node.findOne({
+      where: {
+        id: value.nodeId,
+      },
+    });
+    const linkedNode = await node.findOne({
+      where: {
+        id: value.linkedNode,
+      },
+    });
+    // if one of them is missing, count it as broken
+    if (!anchorNode || !linkedNode) {
+      console.log(
+        'id: ' + value.id + ', nodeId: ' + value.nodeId + ', linkedNode: ' + value.linkedNode
+      );
+      count++;
+    }
+  }
+  console.log('there are ' + count + ' broken associations');
+  return;
+};

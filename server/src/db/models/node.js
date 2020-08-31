@@ -128,18 +128,6 @@ module.exports = (sequelize, DataTypes) => {
       otherKey: 'nodeId',
       constraints: false,
     });
-    // node.belongsTo(models.association, {
-    //   as: 'original',
-    //   constraints: false,
-    //   foreignKey: 'id',
-    //   targetKey: 'nodeId',
-    // });
-    // node.belongsTo(models.association, {
-    //   as: 'associated',
-    //   constraints: false,
-    //   foreignKey: 'id',
-    //   targetKey: 'linkedNode',
-    // });
     node.hasOne(models.user, { constraints: false, foreignKey: 'nodeId', sourceKey: 'uuid' });
   };
   return node;

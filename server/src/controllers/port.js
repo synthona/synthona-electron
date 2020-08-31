@@ -6,6 +6,7 @@ const { validationResult } = require('express-validator/check');
 const { node, association, user } = require('../db/models');
 const { Op } = require('sequelize');
 // set up archiver and unzip library
+const portUtil = require('../util/portUtil');
 const archiver = require('archiver');
 var admZip = require('adm-zip');
 const fsUtil = require('../util/fsUtil');
@@ -28,7 +29,7 @@ exports.exportAllUserData = async (req, res, next) => {
       fs.mkdirSync(__basedir + '/data/' + userId + '/exports/');
     }
     // set export name and extension
-    const exportName = new Date().toDateString() + '.synth';
+    const exportName = new Date().toUTCString() + '.synth';
     const exportDest = __basedir + '/data/' + userId + '/exports/' + exportName;
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportDest);
@@ -517,6 +518,14 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         id: userId,
       },
     });
+    // get the node for the logged in user
+    const loggedInUserNode = await node.findOne({
+      where: {
+        path: loggedInUser.username,
+        creator: userId,
+        type: 'user',
+      },
+    });
     // check that the node is not already expanded
     if (packageNode.metadata && packageNode.metadata.expanded) {
       err = new Error('package is already expanded');
@@ -547,30 +556,8 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         // iterate through the JSON data
         for (let nodeImport of jsonData) {
           console.log('importing ' + nodeImport.name);
-          // if it's not a file just generate the node
-          if (!nodeImport.isFile) {
-            if (nodeImport.type === 'user') {
-              nodeImport.path = loggedInUser.username;
-            }
-            // generate node
-            newNode = await node.create(
-              {
-                isFile: nodeImport.isFile,
-                hidden: nodeImport.hidden,
-                searchable: nodeImport.searchable,
-                type: nodeImport.type,
-                name: nodeImport.name,
-                preview: nodeImport.preview,
-                content: nodeImport.content,
-                path: nodeImport.path,
-                creator: userId,
-                createdAt: nodeImport.createdAt,
-                updatedAt: nodeImport.updatedAt,
-                importId: packageUUID,
-              },
-              { silent: true }
-            );
-          } else {
+          // handle file node imports
+          if (nodeImport.isFile) {
             // load the fileEntry
             let extension = nodeImport.preview.substr(nodeImport.preview.lastIndexOf('.'));
             // use the uuid to recognize the file
@@ -606,6 +593,30 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               { silent: true }
             );
           }
+          // default import code
+          else {
+            if (nodeImport.type === 'user') {
+              nodeImport.path = loggedInUser.username;
+            }
+            // generate node
+            newNode = await node.create(
+              {
+                isFile: nodeImport.isFile,
+                hidden: nodeImport.hidden,
+                searchable: nodeImport.searchable,
+                type: nodeImport.type,
+                name: nodeImport.name,
+                preview: nodeImport.preview,
+                content: nodeImport.content,
+                path: nodeImport.path,
+                creator: userId,
+                createdAt: nodeImport.createdAt,
+                updatedAt: nodeImport.updatedAt,
+                importId: packageUUID,
+              },
+              { silent: true }
+            );
+          }
           // if the node in question has associations, process them
           if (nodeImport.original) {
             // loop through the associations for the current node from the JSON file
@@ -631,15 +642,15 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 { silent: true }
               );
             }
+            // store the old and new UUIDs and IDs here to be re-processed
+            // with the linkedNode and linkedNodeUUID columns at the end
+            newNodeIdList.push({
+              oldId: nodeImport.id,
+              oldUUID: nodeImport.uuid,
+              newId: newNode.id,
+              newUUID: newNode.uuid,
+            });
           }
-          // store the old and new UUIDs and IDs here to be re-processed
-          // with the linkedNode and linkedNodeUUID columns at the end
-          newNodeIdList.push({
-            oldId: nodeImport.id,
-            oldUUID: nodeImport.uuid,
-            newId: newNode.id,
-            newUUID: newNode.uuid,
-          });
         }
         // process the linkedNode and linkedNodeUUID columns
         for (let value of newNodeIdList) {
@@ -661,6 +672,8 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             { silent: true }
           );
         }
+        // synthesize the imported user information with the loggedInUser
+        await portUtil.transferImportedUserData(packageUUID, loggedInUserNode);
       } else if (entry.name === 'user.json') {
         // set up main variables for processing
         let jsonData = JSON.parse(entry.getData());
@@ -690,14 +703,11 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         }
         // file paths for DB storage
         const avatarDbPath =
-          avatarFilePath.substr(avatarFilePath.lastIndexOf('/data/') + 1) +
-          '/' +
-          avatarFileEntry.name;
+          avatarFilePath.substr(avatarFilePath.lastIndexOf('/data/') + 1) + avatarFileEntry.name;
         const headerDbPath =
-          headerFilePath.substr(headerFilePath.lastIndexOf('/data/') + 1) +
-          '/' +
-          headerFileEntry.name;
+          headerFilePath.substr(headerFilePath.lastIndexOf('/data/') + 1) + headerFileEntry.name;
         // update the logged in user with the imported data
+        console.log('update logged in user object');
         await user.update(
           {
             displayName: userImport.displayName,
@@ -711,6 +721,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
             },
           }
         );
+        console.log('update logged in user node');
         // update the logged in user node as well
         await node.update(
           {
@@ -779,7 +790,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       var collectionPreview = [];
       var nodePreview = null;
       // console.log(result);
-      console.log('=================================');
+      console.log('\n' + '=================================');
       console.log(collection.name);
       console.log('=================================');
       for (value of result) {
@@ -827,7 +838,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         }
       );
     }
-    console.log('=================================');
+    console.log('\n' + '=================================');
     console.log('marking package as imported');
     // mark the import package as successfully expanded
     node.update(
@@ -841,6 +852,9 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         silent: true,
       }
     );
+    const bulkUtil = require('../util/bulkUtil');
+    await bulkUtil.countBrokenAssociations();
+    console.log('\n');
     console.log('=================================');
     console.log('import successfully completed');
     console.log('=================================');

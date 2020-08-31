@@ -1,14 +1,5 @@
 const path = require('path');
-const {
-  app,
-  shell,
-  session,
-  globalShortcut,
-  BrowserWindow,
-  Menu,
-  MenuItem,
-  clipboard,
-} = require('electron');
+const { app, shell, session, globalShortcut, BrowserWindow } = require('electron');
 const contextMenu = require('electron-context-menu');
 
 let serverReady = false;
@@ -21,13 +12,13 @@ const { fork } = require('child_process');
 const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
   env: {
     'ELECTRON_RUN_AS_NODE': '1',
-    'PORT': process.env.PORT,
-    'APP_NAME': process.env.APP_NAME,
-    'CLIENT_URL': process.env.CLIENT_URL,
-    'JWT_SECRET': process.env.JWT_SECRET,
-    'REFRESH_TOKEN_SECRET': process.env.REFRESH_TOKEN_SECRET,
-    'PRODUCTION': process.env.PRODUCTION,
-    'VERSION': process.env.VERSION,
+    'PORT': '9000',
+    'APP_NAME': 'synthona',
+    'CLIENT_URL': 'http://localhost:9000',
+    'JWT_SECRET': 'asdk3fahaie68whih',
+    'REFRESH_TOKEN_SECRET': 'dkk3h98kashgasadg',
+    'PRODUCTION': 'false',
+    'VERSION': '1',
   },
 });
 
@@ -93,6 +84,11 @@ const mainWindow = () => {
   window.setBackgroundColor('#272727');
   window.loadURL('http://localhost:9000');
 
+  window.webContents.on('new-window', function (e, url) {
+    e.preventDefault();
+    require('electron').shell.openExternal(url);
+  });
+
   electronReady = true;
   if (serverReady && electronReady && !mainWindowCreated) {
     mainWindowCreated = true;
@@ -122,14 +118,14 @@ app.on('ready', () => {
   globalShortcut.register('CommandOrControl+E', () => {
     app.showEmojiPanel();
   });
-  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-  //   callback({
-  //     responseHeaders: {
-  //       ...details.responseHeaders,
-  //       'Content-Security-Policy': ["default-src 'self'; img-src *; object-src 'none';"],
-  //     },
-  //   });
-  // });
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ["default-src 'self'; img-src *; object-src 'none';"],
+      },
+    });
+  });
 });
 
 app.on('before-quit', () => {
@@ -138,11 +134,9 @@ app.on('before-quit', () => {
 });
 
 app.on('activate', () => {
-  console.log('activate');
-  console.log(BrowserWindow.getAllWindows().length);
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
+  if (BrowserWindow.getAllWindows().length === 0 && serverReady && electronReady) {
     mainWindow();
     window.show();
   }

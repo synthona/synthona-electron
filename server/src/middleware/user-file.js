@@ -16,7 +16,6 @@ const fileStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // load the fileEntry
-    console.log(req);
     let extension = file.originalname.substr(file.originalname.lastIndexOf('.'));
     let name = file.originalname
       .substr(0, file.originalname.lastIndexOf('.'))

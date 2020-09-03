@@ -376,3 +376,28 @@ exports.setHeaderImage = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.clearAllNodesByUser = async (req, res, next) => {
+  // NOTE: this info is generated server side in is-auth.js
+  // so doesn't need to be validated here
+  const uid = req.user.uid;
+  try {
+    // catch validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation Failed');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    // remove all nodes which are not of type user
+    await node.destroy({ where: { [Op.and]: { creator: uid, [Op.not]: { type: 'user' } } } });
+    // send response
+    res.sendStatus(200);
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};

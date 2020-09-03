@@ -81,10 +81,10 @@ const mainWindow = () => {
     showInspectElement: false,
   });
   // clear storage data
-  // window.webContents.session.clearStorageData();
+  window.webContents.session.clearStorageData();
   // match the background color to the app theme
   window.setBackgroundColor('#272727');
-  window.loadURL('http://localhost:9000');
+  window.loadURL('http://localhost:' + config.PORT);
 
   window.webContents.on('new-window', function (e, url) {
     e.preventDefault();
@@ -120,14 +120,21 @@ app.on('ready', () => {
   globalShortcut.register('CommandOrControl+E', () => {
     app.showEmojiPanel();
   });
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; img-src *; object-src 'none';"],
-      },
-    });
+  globalShortcut.register('CommandOrControl+H', () => {
+    window.loadURL('http://localhost:' + config.PORT);
   });
+  globalShortcut.register('CommandOrControl+1', () => {
+    window.loadURL('http://localhost:' + config.PORT);
+  });
+  // userKeyMaps();
+  // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  //   callback({
+  //     responseHeaders: {
+  //       ...details.responseHeaders,
+  //       'Content-Security-Policy': ["default-src 'self'; img-src *; object-src 'none';"],
+  //     },
+  //   });
+  // });
 });
 
 app.on('before-quit', () => {
@@ -143,5 +150,64 @@ app.on('activate', () => {
     window.show();
   }
 });
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+
+// let key1Url;
+// let key2Url;
+// let key3Url;
+// let key4Url;
+// let key5Url;
+// let key6Url;
+// let key7Url;
+// let key8Url;
+// let key9Url;
+// let key0Url;
+
+// const userKeyMaps = () => {
+//   console.log('userkeymaps');
+//   // key 2 mappings
+//   globalShortcut.register('CommandOrControl+Option+2', () => {
+//     let newUrl = window.webContents.getURL();
+//     if (key2Url !== newUrl) {
+//       key2Url = newUrl;
+//     }
+//   });
+//   globalShortcut.register('CommandOrControl+2', () => {
+//     if (key2Url) {
+//       window.loadURL(key2Url);
+//     }
+//   });
+//   // // key 3 mappings
+//   globalShortcut.register('CommandOrControl+Option+3', () => {
+//     let newUrl = window.webContents.getURL();
+//     if (key3Url !== newUrl) {
+//       key3Url = newUrl;
+//     }
+//   });
+//   globalShortcut.register('CommandOrControl+3', () => {
+//     if (key3Url) {
+//       window.loadURL(key3Url);
+//     }
+//   });
+//   // // key 4 mappings
+//   globalShortcut.register('CommandOrControl+Option+4', () => {
+//     let newUrl = window.webContents.getURL();
+//     if (key4Url !== newUrl) {
+//       key4Url = newUrl;
+//     }
+//   });
+//   globalShortcut.register('CommandOrControl+4', () => {
+//     if (key4Url) {
+//       window.loadURL(key4Url);
+//     }
+//   });
+//   // // key 5 mappings
+//   // globalShortcut.register('CommandOrControl+Shift+5', () => {
+//   //   key5Url = window.webContents.getURL();
+//   //   console.log(key5Url);
+//   // });
+//   // globalShortcut.register('CommandOrControl+5', () => {
+//   //   if (key5Url) {
+//   //     window.loadURL(key5Url);
+//   //   }
+//   // });
+// };

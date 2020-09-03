@@ -1,27 +1,27 @@
 {
   "files": {
     "main.css": "/static/css/main.350dae74.chunk.css",
-    "main.js": "/static/js/main.daaa5992.chunk.js",
-    "main.js.map": "/static/js/main.daaa5992.chunk.js.map",
-    "runtime-main.js": "/static/js/runtime-main.b1c37a44.js",
-    "runtime-main.js.map": "/static/js/runtime-main.b1c37a44.js.map",
-    "static/css/2.0185684c.chunk.css": "/static/css/2.0185684c.chunk.css",
-    "static/js/2.92915a62.chunk.js": "/static/js/2.92915a62.chunk.js",
-    "static/js/2.92915a62.chunk.js.map": "/static/js/2.92915a62.chunk.js.map",
+    "main.js": "/static/js/main.b7824dbb.chunk.js",
+    "main.js.map": "/static/js/main.b7824dbb.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.08bbf159.js",
+    "runtime-main.js.map": "/static/js/runtime-main.08bbf159.js.map",
+    "static/css/2.f6eb05d5.chunk.css": "/static/css/2.f6eb05d5.chunk.css",
+    "static/js/2.808725cf.chunk.js": "/static/js/2.808725cf.chunk.js",
+    "static/js/2.808725cf.chunk.js.map": "/static/js/2.808725cf.chunk.js.map",
     "index.html": "/index.html",
-    "precache-manifest.8ab381110f7641fc1f505b635f50fd80.js": "/precache-manifest.8ab381110f7641fc1f505b635f50fd80.js",
+    "precache-manifest.0772852abc4e312ecaf97db41011a058.js": "/precache-manifest.0772852abc4e312ecaf97db41011a058.js",
     "service-worker.js": "/service-worker.js",
-    "static/css/2.0185684c.chunk.css.map": "/static/css/2.0185684c.chunk.css.map",
+    "static/css/2.f6eb05d5.chunk.css.map": "/static/css/2.f6eb05d5.chunk.css.map",
     "static/css/main.350dae74.chunk.css.map": "/static/css/main.350dae74.chunk.css.map",
-    "static/js/2.92915a62.chunk.js.LICENSE.txt": "/static/js/2.92915a62.chunk.js.LICENSE.txt",
-    "static/media/synthona-login.png": "/static/media/synthona-login.2ef8290c.png",
-    "static/media/synthona-logo.png": "/static/media/synthona-logo.ce872aeb.png"
+    "static/js/2.808725cf.chunk.js.LICENSE.txt": "/static/js/2.808725cf.chunk.js.LICENSE.txt",
+    "static/media/synthona-header.png": "/static/media/synthona-header.2a4785ed.png",
+    "static/media/synthona-logo.png": "/static/media/synthona-logo.bd307f5e.png"
   },
   "entrypoints": [
-    "static/js/runtime-main.b1c37a44.js",
-    "static/css/2.0185684c.chunk.css",
-    "static/js/2.92915a62.chunk.js",
+    "static/js/runtime-main.08bbf159.js",
+    "static/css/2.f6eb05d5.chunk.css",
+    "static/js/2.808725cf.chunk.js",
     "static/css/main.350dae74.chunk.css",
-    "static/js/main.daaa5992.chunk.js"
+    "static/js/main.b7824dbb.chunk.js"
   ]
 }

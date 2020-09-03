@@ -126,5 +126,13 @@ router.patch(
   userController.setEmail
 );
 
+// router.patch(
+//   'clear',
+//   isAuth,
+//   [
+//     body('')
+//   ]
+// )
+
 // return the router
 module.exports = router;

@@ -78,10 +78,13 @@ app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file 
 // app.use('/port', isAuth, express.static(path.join(__dirname, 'port'))); // downloads directory
 app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
 
-// serve the React interface
-const clientPath = path.join(__dirname, '../client/');
-app.use(express.static(clientPath));
-app.use('*', express.static(clientPath));
+if (process.env.FRONTEND_DEV_MODE) {
+  console.log('serving pre-built client');
+  // serve the React interface
+  const clientPath = path.join(__dirname, '../client/');
+  app.use(express.static(clientPath));
+  app.use('*', express.static(clientPath));
+}
 
 if (debug) {
   // set up general error handling for dev.

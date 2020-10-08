@@ -1,5 +1,5 @@
 const path = require('path');
-const { app, shell, session, globalShortcut, BrowserWindow } = require('electron');
+const { app, session, shell, globalShortcut, BrowserWindow } = require('electron');
 const contextMenu = require('electron-context-menu');
 // import config
 const config = require('./config');
@@ -9,14 +9,15 @@ let electronReady = false;
 let mainWindowCreated = false;
 let window;
 
-console.log('creating child process');
+console.log('creating server process');
 const { fork } = require('child_process');
 const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
   env: {
     'ELECTRON_RUN_AS_NODE': '1',
-    'PORT': config.PORT,
+    'PORT': config.SERVER_PORT,
     'APP_NAME': config.APP_NAME,
-    'CLIENT_URL': config.CLIENT_URL,
+    'CLIENT_URL': 'http://localhost:' + config.CLIENT_PORT,
+    'FRONTEND_DEV_MODE': config.CLIENT_PORT === config.SERVER_PORT,
     'JWT_SECRET': config.JWT_SECRET,
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
     'PRODUCTION': 'false',
@@ -81,14 +82,14 @@ const mainWindow = () => {
     showInspectElement: false,
   });
   // clear storage data
-  window.webContents.session.clearStorageData();
+  // window.webContents.session.clearStorageData();
   // match the background color to the app theme
   window.setBackgroundColor('#272727');
-  window.loadURL('http://localhost:' + config.PORT);
+  window.loadURL('http://localhost:' + config.CLIENT_PORT);
 
   window.webContents.on('new-window', function (e, url) {
     e.preventDefault();
-    require('electron').shell.openExternal(url);
+    shell.openExternal(url);
   });
 
   electronReady = true;
@@ -121,12 +122,11 @@ app.on('ready', () => {
     app.showEmojiPanel();
   });
   globalShortcut.register('CommandOrControl+H', () => {
-    window.loadURL('http://localhost:' + config.PORT);
+    window.loadURL('http://localhost:' + config.CLIENT_PORT);
   });
   globalShortcut.register('CommandOrControl+1', () => {
-    window.loadURL('http://localhost:' + config.PORT);
+    window.loadURL('http://localhost:' + config.CLIENT_PORT);
   });
-  // userKeyMaps();
   // session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
   //   callback({
   //     responseHeaders: {
@@ -150,64 +150,3 @@ app.on('activate', () => {
     window.show();
   }
 });
-
-// let key1Url;
-// let key2Url;
-// let key3Url;
-// let key4Url;
-// let key5Url;
-// let key6Url;
-// let key7Url;
-// let key8Url;
-// let key9Url;
-// let key0Url;
-
-// const userKeyMaps = () => {
-//   console.log('userkeymaps');
-//   // key 2 mappings
-//   globalShortcut.register('CommandOrControl+Option+2', () => {
-//     let newUrl = window.webContents.getURL();
-//     if (key2Url !== newUrl) {
-//       key2Url = newUrl;
-//     }
-//   });
-//   globalShortcut.register('CommandOrControl+2', () => {
-//     if (key2Url) {
-//       window.loadURL(key2Url);
-//     }
-//   });
-//   // // key 3 mappings
-//   globalShortcut.register('CommandOrControl+Option+3', () => {
-//     let newUrl = window.webContents.getURL();
-//     if (key3Url !== newUrl) {
-//       key3Url = newUrl;
-//     }
-//   });
-//   globalShortcut.register('CommandOrControl+3', () => {
-//     if (key3Url) {
-//       window.loadURL(key3Url);
-//     }
-//   });
-//   // // key 4 mappings
-//   globalShortcut.register('CommandOrControl+Option+4', () => {
-//     let newUrl = window.webContents.getURL();
-//     if (key4Url !== newUrl) {
-//       key4Url = newUrl;
-//     }
-//   });
-//   globalShortcut.register('CommandOrControl+4', () => {
-//     if (key4Url) {
-//       window.loadURL(key4Url);
-//     }
-//   });
-//   // // key 5 mappings
-//   // globalShortcut.register('CommandOrControl+Shift+5', () => {
-//   //   key5Url = window.webContents.getURL();
-//   //   console.log(key5Url);
-//   // });
-//   // globalShortcut.register('CommandOrControl+5', () => {
-//   //   if (key5Url) {
-//   //     window.loadURL(key5Url);
-//   //   }
-//   // });
-// };

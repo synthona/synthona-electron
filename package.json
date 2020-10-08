@@ -7,7 +7,8 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "install-app-deps",
-    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=release-builds",
+    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=mac-builds",
+    "windows": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=build/synthona_1024x1024.ico --prune=true --out=windows-builds",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "nodemon --watch * --exec 'npm run start'"

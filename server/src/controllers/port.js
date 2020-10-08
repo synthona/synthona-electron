@@ -89,7 +89,7 @@ exports.exportAllUserData = async (req, res, next) => {
       include: [
         {
           model: association,
-          where: { creator: userId },
+          where: { [Op.and]: [{ [Op.not]: { linkedNodeType: 'package' } }, { creator: userId }] },
           required: false,
           as: 'original',
           attributes: [

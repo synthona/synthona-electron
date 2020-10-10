@@ -361,6 +361,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
                 [Op.and]: [
                   { nodeId: { [Op.in]: exportIdList } },
                   { linkedNode: { [Op.in]: exportIdList } },
+                  { [Op.not]: { nodeType: 'package' } },
+                  { [Op.not]: { linkedNodeType: 'package' } },
                 ],
               },
             },

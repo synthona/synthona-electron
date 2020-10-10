@@ -83,6 +83,7 @@ module.exports = async (req, res, next) => {
     }
     res.clearCookie('jwt');
     res.clearCookie('refreshToken');
+    res.redirect('/');
     next(err);
   }
 };

@@ -31,6 +31,7 @@ serverProcess.on('message', (message) => {
     serverReady = true;
     if (serverReady && electronReady && !mainWindowCreated) {
       mainWindowCreated = true;
+      console.log('show main window');
       window.reload();
     }
   } else {
@@ -58,6 +59,8 @@ const mainWindow = () => {
       nodeIntegration: false,
       spellcheck: true,
       enableRemoteModule: false,
+      worldSafeExecuteJavaScript: true,
+      contextIsolation: true,
     },
     show: false,
   });
@@ -73,10 +76,11 @@ const mainWindow = () => {
       },
     ],
     labels: {
-      copyImage: 'copy image',
+      copyImage: 'copy',
       paste: 'paste',
       copy: 'copy',
       cut: 'cut',
+      inspect: 'inspect',
     },
     showSearchWithGoogle: false,
     showInspectElement: false,
@@ -95,7 +99,8 @@ const mainWindow = () => {
   electronReady = true;
   if (serverReady && electronReady && !mainWindowCreated) {
     mainWindowCreated = true;
-    window.show();
+    console.log('show main window');
+    window.reload();
   }
 
   // Open the DevTools.

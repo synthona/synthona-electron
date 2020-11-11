@@ -480,7 +480,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
   }
 };
 
-exports.unpackImport = async (req, res, next) => {
+exports.unpackSynthonaImport = async (req, res, next) => {
   try {
     // catch validation errors
     const errors = validationResult(req);

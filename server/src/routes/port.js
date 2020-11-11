@@ -45,8 +45,13 @@ router.patch(
   portController.removeImportsByPackage
 );
 
-// import a hyperpoint package
-router.put('/import', isAuth, [body('uuid').exists().isUUID()], portController.unpackImport);
+// import a synthona package
+router.put(
+  '/import',
+  isAuth,
+  [body('uuid').exists().isUUID()],
+  portController.unpackSynthonaImport
+);
 
 // return the router
 module.exports = router;

@@ -1,5 +1,5 @@
 {
-  "name": "hyperpoint-server",
+  "name": "synthona-server",
   "version": "1.0.0",
   "description": "server",
   "main": "app.js",
@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js"
   },
-  "author": "hyperpoints",
+  "author": "synthona",
   "license": "GPL-3.0-or-later",
   "dependencies": {
     "adm-zip": "^0.4.16",

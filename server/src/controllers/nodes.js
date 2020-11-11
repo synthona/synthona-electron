@@ -110,6 +110,7 @@ exports.getNodeByUUID = async (req, res, next) => {
         'name',
         'preview',
         'content',
+        'path',
         'updatedAt',
       ],
     });

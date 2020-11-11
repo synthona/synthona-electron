@@ -213,7 +213,7 @@ exports.associationAutocomplete = async (req, res, next) => {
 };
 
 // get associations for a given node
-exports.getAssociations = async (req, res, next) => {
+exports.getAssociationsByUUID = async (req, res, next) => {
   // this comes from the is-auth middleware
   const userId = req.user.uid;
   try {
@@ -306,6 +306,10 @@ exports.getAssociations = async (req, res, next) => {
     }
     next(err);
   }
+};
+
+exports.getGraphData = async (req, res, next) => {
+  // hmm. how does this work? going to reflect on this
 };
 
 exports.deleteAssociation = async (req, res, next) => {

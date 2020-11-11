@@ -17,20 +17,12 @@ router.put(
   associationController.createAssociation
 );
 
-// Get associations
+// Get associations by UUID
 router.get(
   '/',
   isAuth,
   [query('nodeUUID').exists().isUUID(), query('page').optional().isNumeric()],
-  associationController.getAssociations
-);
-
-// delete association
-router.delete(
-  '/',
-  isAuth,
-  [query('nodeA').exists().isUUID(), query('nodeB').exists().isUUID()],
-  associationController.deleteAssociation
+  associationController.getAssociationsByUUID
 );
 
 // autocomplete for creating associations
@@ -39,6 +31,22 @@ router.get(
   isAuth,
   [query('nodeUUID').exists().isUUID(), query('searchQuery').optional().isString()],
   associationController.associationAutocomplete
+);
+
+// get association and node data for network visualizer
+router.get(
+  '/graph',
+  isAuth,
+  [query('nodeUUID').exists().isUUID(), query('searchQuery').optional().isString()],
+  associationController.getGraphData
+);
+
+// delete association
+router.delete(
+  '/',
+  isAuth,
+  [query('nodeA').exists().isUUID(), query('nodeB').exists().isUUID()],
+  associationController.deleteAssociation
 );
 
 // update link strength

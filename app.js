@@ -129,6 +129,9 @@ app.on('ready', () => {
   globalShortcut.register('CommandOrControl+H', () => {
     window.loadURL('http://localhost:' + config.CLIENT_PORT);
   });
+  globalShortcut.register('CommandOrControl+G', () => {
+    window.loadURL('http://localhost:' + config.CLIENT_PORT + '/graphspace');
+  });
   globalShortcut.register('CommandOrControl+1', () => {
     window.loadURL('http://localhost:' + config.CLIENT_PORT);
   });

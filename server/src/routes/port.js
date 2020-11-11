@@ -42,16 +42,11 @@ router.patch(
           });
       }),
   ],
-  portController.removeSynthonaImportsByPackage
+  portController.removeImportsByPackage
 );
 
-// import a synthona package
-router.put(
-  '/import',
-  isAuth,
-  [body('uuid').exists().isUUID()],
-  portController.unpackSynthonaImport
-);
+// import a hyperpoint package
+router.put('/import', isAuth, [body('uuid').exists().isUUID()], portController.unpackImport);
 
 // return the router
 module.exports = router;

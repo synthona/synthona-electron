@@ -1,23 +1,23 @@
 {
-  "name": "synthona",
+  "name": "hyperpoint",
   "version": "1.0.0",
-  "description": "synthona",
+  "description": "hyperpoint",
   "main": "app.js",
   "scripts": {
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "install-app-deps",
-    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=mac-builds",
-    "windows": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=build/synthona_1024x1024.ico --prune=true --out=windows-builds",
+    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/hyperpoint.icns --prune=true --out=mac-builds",
+    "windows": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=build/hyperpoint_1024x1024.ico --prune=true --out=windows-builds",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "nodemon --watch * --exec 'npm run start'"
   },
   "repository": {
     "type": "git",
-    "url": "synthona"
+    "url": "hyperpoints"
   },
-  "author": "synthona",
+  "author": "hyperpoints",
   "license": "GPL-2.0-or-later",
   "devDependencies": {
     "electron": "^9.3.2",
@@ -33,10 +33,10 @@
     "wait-on": "^5.2.0"
   },
   "build": {
-    "productName": "synthona",
-    "appId": "com.synthona.app",
+    "productName": "hyperpoint",
+    "appId": "com.hyperpoint.app",
     "mac": {
-      "icon": "./build/synthona.icns",
+      "icon": "./build/hyperpoint.icns",
       "category": "public.app-category.utilities"
     }
   }

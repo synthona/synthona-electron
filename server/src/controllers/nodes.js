@@ -348,7 +348,7 @@ exports.getGraphData = async (req, res, next) => {
       throw error;
     }
     // process request
-    var perPage = 60;
+    var perPage = 77;
 
     // fetch the nodelist
     const nodeList = await node.findAll({

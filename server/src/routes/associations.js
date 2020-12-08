@@ -33,14 +33,6 @@ router.get(
   associationController.associationAutocomplete
 );
 
-// get association and node data for network visualizer
-router.get(
-  '/graph',
-  isAuth,
-  [query('nodeUUID').exists().isUUID(), query('searchQuery').optional().isString()],
-  associationController.getGraphData
-);
-
 // delete association
 router.delete(
   '/',

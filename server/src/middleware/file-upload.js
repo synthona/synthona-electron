@@ -46,8 +46,8 @@ const fileStorage = multer.diskStorage({
 });
 
 // determine which mimeTypes match with which nodeTypes
-const imageMimetypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif'];
-const audioMimetypes = ['audio/mpeg', 'audio/x-m4a'];
+const imageMimetypes = ['image/png', 'image/jpg', 'image/jpeg', 'image/gif', 'image/webp'];
+const audioMimetypes = ['audio/mpeg', 'audio/x-m4a', 'audio/wav'];
 
 // set up allowed mimetype config and prepare nodeType for controller
 const fileFilter = (req, file, cb) => {

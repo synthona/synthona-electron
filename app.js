@@ -130,7 +130,7 @@ app.on('ready', () => {
     window.loadURL('http://localhost:' + config.CLIENT_PORT);
   });
   globalShortcut.register('CommandOrControl+G', () => {
-    window.loadURL('http://localhost:' + config.CLIENT_PORT + '/graphspace');
+    window.loadURL('http://localhost:' + config.CLIENT_PORT + '/graph');
   });
   globalShortcut.register('CommandOrControl+1', () => {
     window.loadURL('http://localhost:' + config.CLIENT_PORT);

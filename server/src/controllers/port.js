@@ -29,7 +29,21 @@ exports.exportAllUserData = async (req, res, next) => {
       fs.mkdirSync(__basedir + '/data/' + userId + '/exports/');
     }
     // set export name and extension
-    const exportName = new Date().toUTCString() + '.synth';
+    const currentDate = new Date();
+    const exportName =
+      currentDate.getMonth() +
+      1 +
+      '-' +
+      currentDate.getDate() +
+      '-' +
+      currentDate.getFullYear() +
+      ' @ ' +
+      currentDate.getHours() +
+      ':' +
+      currentDate.getMinutes() +
+      ':' +
+      currentDate.getSeconds() +
+      '.synth';
     const exportDest = __basedir + '/data/' + userId + '/exports/' + exportName;
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportDest);

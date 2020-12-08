@@ -58,6 +58,18 @@ router.get(
   nodeController.searchNodes
 );
 
+// get association and node data for network visualizer
+router.get(
+  '/graph',
+  isAuth,
+  [
+    query('page').optional().isNumeric(),
+    query('type').optional().isString(),
+    query('searchQuery').optional().isString(),
+  ],
+  nodeController.getGraphData
+);
+
 // Delete node by id
 router.delete('/', isAuth, [query('uuid').exists().isUUID()], nodeController.deleteNodeByUUID);
 

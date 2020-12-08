@@ -245,6 +245,7 @@ exports.getAssociationsByUUID = async (req, res, next) => {
       where: {
         creator: userId,
         [Op.or]: [{ nodeId: nodeId }, { linkedNode: nodeId }],
+        // nodeId: nodeId,
       },
       offset: (currentPage - 1) * perPage,
       limit: perPage,
@@ -306,10 +307,6 @@ exports.getAssociationsByUUID = async (req, res, next) => {
     }
     next(err);
   }
-};
-
-exports.getGraphData = async (req, res, next) => {
-  // hmm. how does this work? going to reflect on this
 };
 
 exports.deleteAssociation = async (req, res, next) => {

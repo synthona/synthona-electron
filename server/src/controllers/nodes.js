@@ -333,3 +333,90 @@ exports.deleteNodeByUUID = async (req, res, next) => {
     next(err);
   }
 };
+
+// get the data for the graph display
+exports.getGraphData = async (req, res, next) => {
+  // this comes from the is-auth middleware
+  const userId = req.user.uid;
+  try {
+    // catch validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation Failed');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    // process request
+    var perPage = 60;
+
+    // fetch the nodelist
+    const nodeList = await node.findAll({
+      // where: whereStatement,
+      // offset: (currentPage - 1) * perPage,
+      // limit: perPage,
+      // order: [['updatedAt', 'DESC']],
+      // attributes: ['uuid', 'name', 'path', 'type', 'updatedAt'],
+      // raw: true,
+      // include
+      where: {
+        // uuid: exportAnchorUUID,
+        creator: userId,
+      },
+      limit: perPage,
+      raw: true,
+      order: [['updatedAt', 'DESC']],
+      attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
+      // include: [
+      //   {
+      //     model: node,
+      //     as: 'left',
+      //     attributes: ['id', 'name'],
+      //     // include: [{ model: association, as: 'associated', required: false }],
+      //   },
+      //   {
+      //     model: node,
+      //     as: 'right',
+      //     attributes: ['id', 'name'],
+      //     // include: [{ model: association, as: 'original', required: false }],
+      //   },
+      // ],
+    });
+    const nodeIdList = [];
+    // 2. turn the nodelist into an array to be passed into the second query
+    nodeList.map((node) => {
+      if (!nodeIdList.includes(node.id)) {
+        nodeIdList.push(node.id);
+      }
+    });
+    // console.log(nodeIdList);
+    // 3. retrieve the list of associations
+    const associations = await association.findAll({
+      where: {
+        creator: userId,
+        [Op.and]: [{ nodeId: { [Op.in]: nodeIdList } }, { linkedNode: { [Op.in]: nodeIdList } }],
+      },
+      raw: true,
+      order: [['linkStrength', 'DESC']],
+      attributes: [
+        'id',
+        'nodeId',
+        'nodeType',
+        'linkedNode',
+        'linkedNodeType',
+        'linkStrength',
+        'updatedAt',
+      ],
+    });
+    // 4. return both lists as JSON data
+    // send the response
+    // console.log('sending graph data');
+    // send response
+    res.status(200).json({ nodes: nodeList, associations: associations });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};

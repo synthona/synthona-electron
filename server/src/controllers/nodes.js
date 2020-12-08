@@ -352,35 +352,13 @@ exports.getGraphData = async (req, res, next) => {
 
     // fetch the nodelist
     const nodeList = await node.findAll({
-      // where: whereStatement,
-      // offset: (currentPage - 1) * perPage,
-      // limit: perPage,
-      // order: [['updatedAt', 'DESC']],
-      // attributes: ['uuid', 'name', 'path', 'type', 'updatedAt'],
-      // raw: true,
-      // include
       where: {
-        // uuid: exportAnchorUUID,
         creator: userId,
       },
       limit: perPage,
       raw: true,
       order: [['updatedAt', 'DESC']],
       attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
-      // include: [
-      //   {
-      //     model: node,
-      //     as: 'left',
-      //     attributes: ['id', 'name'],
-      //     // include: [{ model: association, as: 'associated', required: false }],
-      //   },
-      //   {
-      //     model: node,
-      //     as: 'right',
-      //     attributes: ['id', 'name'],
-      //     // include: [{ model: association, as: 'original', required: false }],
-      //   },
-      // ],
     });
     const nodeIdList = [];
     // 2. turn the nodelist into an array to be passed into the second query
@@ -389,7 +367,6 @@ exports.getGraphData = async (req, res, next) => {
         nodeIdList.push(node.id);
       }
     });
-    // console.log(nodeIdList);
     // 3. retrieve the list of associations
     const associations = await association.findAll({
       where: {
@@ -408,10 +385,7 @@ exports.getGraphData = async (req, res, next) => {
         'updatedAt',
       ],
     });
-    // 4. return both lists as JSON data
-    // send the response
-    // console.log('sending graph data');
-    // send response
+    // 4. send response, return both lists as JSON data
     res.status(200).json({ nodes: nodeList, associations: associations });
   } catch (err) {
     if (!err.statusCode) {

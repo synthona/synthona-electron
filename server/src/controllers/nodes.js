@@ -415,6 +415,8 @@ exports.getGraphData = async (req, res, next) => {
       // add the anchorNode to the nodeIdList and nodeList as well
       nodeIdList.push(anchor.dataValues.id);
       nodeList.push(anchor.dataValues);
+      // // mark the anchorNode as viewed also
+      // context.markNodeView(anchor.dataValues.uuid);
     } else {
       // 1. fetch the nodelist
       nodeList = await node.findAll({

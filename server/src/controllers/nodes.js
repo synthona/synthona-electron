@@ -335,6 +335,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 };
 
 // get the data for the graph display
+// TODO: there is probably room for optimization here
 exports.getGraphData = async (req, res, next) => {
   // this comes from the is-auth middleware
   const userId = req.user.uid;
@@ -348,25 +349,90 @@ exports.getGraphData = async (req, res, next) => {
       throw error;
     }
     // process request
-    var perPage = 77;
-
-    // fetch the nodelist
-    const nodeList = await node.findAll({
-      where: {
-        creator: userId,
-      },
-      limit: perPage,
-      raw: true,
-      order: [['updatedAt', 'DESC']],
-      attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
-    });
-    const nodeIdList = [];
-    // 2. turn the nodelist into an array to be passed into the second query
-    nodeList.map((node) => {
-      if (!nodeIdList.includes(node.id)) {
-        nodeIdList.push(node.id);
-      }
-    });
+    const perPage = 77;
+    const anchorNode = req.query.anchorNode;
+    let nodeList;
+    let nodeIdList = [];
+    // depending on if an anchorNode is passed in, fetch the data
+    if (anchorNode) {
+      nodeList = [];
+      // grab the anchornode
+      const anchor = await node.findOne({
+        where: {
+          creator: userId,
+          uuid: anchorNode,
+        },
+      });
+      // 1. fetch the nodes
+      const oringalList = await association.findAll({
+        where: {
+          creator: userId,
+          [Op.or]: [{ nodeUUID: anchorNode }, { linkedNodeUUID: anchorNode }],
+        },
+        limit: perPage,
+        // sort by linkStrength
+        order: [['linkStrength', 'DESC']],
+        attributes: [
+          'id',
+          'nodeId',
+          'nodeType',
+          'linkedNode',
+          'linkedNodeType',
+          'linkStrength',
+          'updatedAt',
+        ],
+        // include whichever node is the associated one for each
+        include: [
+          {
+            model: node,
+            where: { id: { [Op.not]: anchorNode } },
+            required: false,
+            as: 'original',
+            attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+          },
+          {
+            model: node,
+            where: { id: { [Op.not]: anchorNode } },
+            required: false,
+            as: 'associated',
+            attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+          },
+        ],
+      });
+      // 2. turn the nodelist into an array to be passed into the second query
+      oringalList.map((node) => {
+        // grab the left associated nodes
+        if (node.original.dataValues.uuid !== anchor.uuid) {
+          nodeIdList.push(node.original.dataValues.id);
+          nodeList.push(node.original.dataValues);
+        }
+        // grab the right associated nodes
+        if (node.associated.dataValues.uuid !== anchor.uuid) {
+          nodeIdList.push(node.associated.dataValues.id);
+          nodeList.push(node.associated.dataValues);
+        }
+      });
+      // add the anchorNode to the nodeIdList and nodeList as well
+      nodeIdList.push(anchor.dataValues.id);
+      nodeList.push(anchor.dataValues);
+    } else {
+      // 1. fetch the nodelist
+      nodeList = await node.findAll({
+        where: {
+          creator: userId,
+        },
+        limit: perPage,
+        raw: true,
+        order: [['updatedAt', 'DESC']],
+        attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
+      });
+      // 2. turn the nodelist into an array to be passed into the second query
+      nodeList.map((node) => {
+        if (!nodeIdList.includes(node.id)) {
+          nodeIdList.push(node.id);
+        }
+      });
+    }
     // 3. retrieve the list of associations
     const associations = await association.findAll({
       where: {

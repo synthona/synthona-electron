@@ -63,7 +63,7 @@ router.get(
   '/graph',
   isAuth,
   [
-    query('page').optional().isNumeric(),
+    query('anchorNode').optional().isUUID(),
     query('type').optional().isString(),
     query('searchQuery').optional().isString(),
   ],

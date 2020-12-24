@@ -363,6 +363,9 @@ exports.getGraphData = async (req, res, next) => {
           uuid: anchorNode,
         },
       });
+      // add the anchorNode to the nodeIdList and nodeList as well
+      nodeIdList.push(anchor.dataValues.id);
+      nodeList.push(anchor.dataValues);
       // 1. fetch the nodes
       const oringalList = await association.findAll({
         where: {
@@ -412,9 +415,6 @@ exports.getGraphData = async (req, res, next) => {
           nodeList.push(node.associated.dataValues);
         }
       });
-      // add the anchorNode to the nodeIdList and nodeList as well
-      nodeIdList.push(anchor.dataValues.id);
-      nodeList.push(anchor.dataValues);
       // // mark the anchorNode as viewed also
       // context.markNodeView(anchor.dataValues.uuid);
     } else {

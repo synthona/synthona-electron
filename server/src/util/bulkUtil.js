@@ -271,3 +271,32 @@ exports.countBrokenAssociations = async () => {
   console.log('there are ' + count + ' broken associations');
   return;
 };
+
+// update url nodes to leave preview blank unless there is an image
+// exports.fixUrlValues = async () => {
+//   const result = await node.findAll({
+//     where: {
+//       type: 'url',
+//     },
+//     order: [['updatedAt', 'ASC']],
+//   });
+//   result.forEach((value) => {
+//     console.log(value.preview);
+//     node.update(
+//       {
+//         path: value.preview,
+//       },
+//       { where: { id: value.id } },
+//       { silent: true }
+//     );
+//     node.update(
+//       {
+//         preview: null,
+//       },
+//       { where: { id: value.id } },
+//       { silent: true }
+//     );
+//   });
+//   console.log('done');
+//   return;
+// };

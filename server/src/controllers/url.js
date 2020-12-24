@@ -5,6 +5,7 @@ const { node } = require('../db/models');
 
 // create new url node
 exports.createUrl = async (req, res, next) => {
+  console.log('creating url');
   // this comes from the is-auth middleware
   const userId = req.user.uid;
   const errors = validationResult(req);
@@ -23,6 +24,7 @@ exports.createUrl = async (req, res, next) => {
     const content = req.body.content;
     const name = req.body.name || 'untitled';
     const preview = req.body.content;
+    const path = req.body.path;
     // create text node
     const urlNode = await node.create({
       isFile: false,
@@ -30,13 +32,13 @@ exports.createUrl = async (req, res, next) => {
       searchable: true,
       type: 'url',
       name: name,
-      preview: preview,
-      path: preview,
+      preview: null,
+      path: path,
       content: content,
       creator: userId,
     });
     // send response
-    res.status(200).json({ uuid: urlNode.uuid });
+    res.status(200).json({ node: urlNode });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

@@ -13,6 +13,17 @@ const router = express.Router();
 router.put(
   '/',
   isAuth,
-  [body('url').exists().isURL, body('name').optional().isString()],
+  [
+    body('isFile').exists().isBoolean(),
+    body('type').exists().isString(),
+    body('name').exists().isString(),
+    body('preview').exists().isString(),
+    body('path').exists().isString(),
+    body('content').exists().isString(),
+    body('linkedNode').optional().isJSON(),
+  ],
   urlController.createUrl
 );
+
+// return the router
+module.exports = router;

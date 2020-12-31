@@ -300,3 +300,46 @@ exports.countBrokenAssociations = async () => {
 //   console.log('done');
 //   return;
 // };
+
+// const scraper = require('./scraper');
+
+// // WARNING: this may actually take a little while to run
+// exports.rescrapeAllUrlNodes = async () => {
+//   const result = await node.findAll({
+//     where: {
+//       type: 'url',
+//     },
+//     order: [['updatedAt', 'ASC']],
+//     // limit: 1,
+//     silent: true,
+//   });
+//   for (value of result) {
+//     try {
+//       // console.log(value.path);
+//       const openGraphData = await scraper.scrapeOpenGraph(value.path);
+//       console.log(openGraphData);
+//       const name = openGraphData.title || openGraphData.og_title || value.name || 'untitled';
+//       const preview = openGraphData.og_image || openGraphData.image || null;
+//       console.log(name);
+//       console.log(preview);
+//       node.update(
+//         {
+//           preview: preview,
+//           name: name,
+//         },
+//         { where: { id: value.id }, silent: true }
+//       );
+//     } catch (err) {
+//       console.log(
+//         'there was an error updating node of id: ' +
+//           value.id +
+//           ', uuid: ' +
+//           value.uuid +
+//           ', and name: ' +
+//           value.name
+//       );
+//     }
+//   }
+//   console.log('done rescraping url nodes');
+//   return;
+// };

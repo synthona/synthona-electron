@@ -1,5 +1,6 @@
 // custom code
 const { validationResult } = require('express-validator/check');
+const scraper = require('../util/scraper');
 // bring in data models.
 const { node } = require('../db/models');
 
@@ -17,13 +18,12 @@ exports.createUrl = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
-
-    // HAVE TO SCRAPE THE URL HERE>>>!!!!!
-
+    // scrape the url
+    const openGraphData = await scraper.scrapeOpenGraph(req.body.path);
     // process request
     const content = req.body.content;
-    const name = req.body.name || 'untitled';
-    const preview = req.body.content;
+    const name = openGraphData.title || openGraphData.og_title || req.body.name || 'untitled';
+    const preview = openGraphData.og_image || openGraphData.image || null;
     const path = req.body.path;
     // create text node
     const urlNode = await node.create({
@@ -32,7 +32,7 @@ exports.createUrl = async (req, res, next) => {
       searchable: true,
       type: 'url',
       name: name,
-      preview: null,
+      preview: preview,
       path: path,
       content: content,
       creator: userId,

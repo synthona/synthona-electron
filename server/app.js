@@ -29,7 +29,7 @@ const eraseDatabaseOnSync = false;
 
 // set up 1 and only 1 dreaded "global variable"
 // to store the base directory of the app when it is run
-global.__basedir = __dirname;
+global.__basedir = path.resolve(__dirname);
 
 // create data directory if it does not exist
 if (!fs.existsSync(__basedir + '/data/')) {

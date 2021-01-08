@@ -29,11 +29,12 @@ const eraseDatabaseOnSync = false;
 
 // set up 1 and only 1 dreaded "global variable"
 // to store the base directory of the app when it is run
-global.__basedir = path.resolve(__dirname);
+global.__basedir = __dirname;
 
 // create data directory if it does not exist
-if (!fs.existsSync(__basedir + '/data/')) {
-  fs.mkdirSync(__basedir + '/data/');
+let dataDirectory = path.join(__basedir, 'data');
+if (!fs.existsSync(dataDirectory)) {
+  fs.mkdirSync(dataDirectory);
 }
 
 // set up express app
@@ -69,7 +70,6 @@ app.use('/text', textRoutes);
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
 app.use('/url', urlRoutes);
-// app.use('/image', imageRoutes);
 app.use('/collection', collectionRoutes);
 app.use('/association', associationRoutes);
 app.use('/port', portRoutes);

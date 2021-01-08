@@ -1,12 +1,13 @@
 // imports
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 const shortId = require('shortid');
 
 // set up multer config for file uploads
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const userDir = __basedir + '/data/' + req.user.uid + '/user/';
+    const userDir = path.join(__basedir, 'data', req.user.uid, 'user');
     // generate user data directory if it does not exist
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir);

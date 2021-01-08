@@ -23,7 +23,7 @@ exports.createFile = async (req, res, next) => {
     }
     // process request
     const fileUrl = req.file.path;
-    const dbFileUrl = fileUrl.substring(fileUrl.lastIndexOf('/data/') + 1);
+    const dbFileUrl = fileUrl.substring(fileUrl.lastIndexOf('data'));
     const nodeType = req.file.nodeType;
     const originalName = req.body.name || req.file.originalname;
     const linkedNode = req.body.linkedNode ? JSON.parse(req.body.linkedNode) : null;

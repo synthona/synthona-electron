@@ -9,8 +9,10 @@ const crypto = require('crypto');
 // TODO - refactor this to come in from the top level of the data directory and clear out empty directories
 // just prefer this to recursion probably since this can possibly be called on files stored outside the app
 exports.cleanupDataDirectoryFromFilePath = async (filePath) => {
-  var parentDirectory = filePath.substring(0, filePath.lastIndexOf('/'));
-  var dataDirectory = __basedir + '/data/';
+  // directory the passed-in file is located within
+  var parentDirectory = path.dirname(filePath);
+  // app data directory
+  var dataDirectory = path.join(__basedir, 'data');
   // if the filepath does not include the data directory path
   // it should not recursively delete anything
   if (!filePath.includes(dataDirectory)) {
@@ -20,7 +22,7 @@ exports.cleanupDataDirectoryFromFilePath = async (filePath) => {
   if (parentDirectory === dataDirectory) {
     return;
   }
-  // make sure the parent directory...exists
+  // make sure the parent directory to the passed-in file exists
   if (fs.existsSync(parentDirectory)) {
     fs.readdir(parentDirectory, (err, files) => {
       if (err) {
@@ -33,7 +35,7 @@ exports.cleanupDataDirectoryFromFilePath = async (filePath) => {
           // recursively check to see if the directory above it is also empty
           this.cleanupDataDirectoryFromFilePath(parentDirectory);
         } else {
-          // if there are still files stop recursion
+          // if there is other data, we are done cleaning up
           return;
         }
       }
@@ -45,9 +47,14 @@ exports.generateFileLocation = async (userId, fileName) => {
   // create a hash of the filename
   const nameHash = crypto.createHash('md5').update(fileName).digest('hex');
   // generate directories
-  const directoryLayer1 = __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3);
-  const fileLocation =
-    __basedir + '/data/' + userId + '/' + nameHash.substring(0, 3) + '/' + nameHash.substring(3, 6);
+  const directoryLayer1 = path.join(__basedir, 'data', userId, nameHash.substring(0, 3));
+  const fileLocation = path.join(
+    __basedir,
+    'data',
+    userId,
+    nameHash.substring(0, 3),
+    nameHash.substring(3, 6)
+  );
   // if new directories are needed generate them
   if (!fs.existsSync(fileLocation)) {
     if (!fs.existsSync(directoryLayer1)) {

@@ -288,7 +288,7 @@ exports.setAvatar = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
-    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('/data') + 1);
+    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('data'));
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -346,7 +346,7 @@ exports.setHeaderImage = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
-    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('/data') + 1);
+    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('data'));
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors

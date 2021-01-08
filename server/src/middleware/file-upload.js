@@ -1,6 +1,7 @@
 // imports
 const multer = require('multer');
 const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
 const shortId = require('shortid');
 
@@ -8,21 +9,20 @@ const shortId = require('shortid');
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     // generate user directory if it does not exist
-    if (!fs.existsSync(__basedir + '/data/' + req.user.uid)) {
-      fs.mkdirSync(__basedir + '/data/' + req.user.uid);
+    if (!fs.existsSync(path.join(__basedir, 'data', req.user.uid))) {
+      fs.mkdirSync(path.join(__basedir, 'data', req.user.uid));
     }
     // create a hash of the filename
     file.hash = crypto.createHash('md5').update(file.originalname).digest('hex');
     // generate directories
-    const directoryLayer1 = __basedir + '/data/' + req.user.uid + '/' + file.hash.substring(0, 3);
-    const directoryLayer2 =
-      __basedir +
-      '/data/' +
-      req.user.uid +
-      '/' +
-      file.hash.substring(0, 3) +
-      '/' +
-      file.hash.substring(3, 6);
+    const directoryLayer1 = path.join(__basedir, 'data', req.user.uid, file.hash.substring(0, 3));
+    const directoryLayer2 = path.join(
+      __basedir,
+      'data',
+      req.user.uid,
+      file.hash.substring(0, 3),
+      file.hash.substring(3, 6)
+    );
     // if new directories are needed generate them
     if (!fs.existsSync(directoryLayer2)) {
       if (!fs.existsSync(directoryLayer1)) {

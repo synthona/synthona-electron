@@ -16,7 +16,7 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
     'ELECTRON_RUN_AS_NODE': '1',
     'PORT': config.SERVER_PORT,
     'APP_NAME': config.APP_NAME,
-    'CLIENT_URL': 'http://localhost:' + config.CLIENT_PORT,
+    'CLIENT_URL': 'http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT,
     'FRONTEND_DEV_MODE': config.CLIENT_PORT === config.SERVER_PORT,
     'JWT_SECRET': config.JWT_SECRET,
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,

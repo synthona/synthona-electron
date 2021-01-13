@@ -54,7 +54,7 @@ const mainWindow = () => {
   window = new BrowserWindow({
     width: 1920,
     height: 1080,
-    fullscreen: true,
+    fullscreen: config.FULLSCREEN,
     webPreferences: {
       nodeIntegration: false,
       spellcheck: true,
@@ -123,6 +123,7 @@ app.on('window-all-closed', () => {
 
 app.on('ready', () => {
   console.log('app is ready');
+  window.show();
   globalShortcut.register('CommandOrControl+E', () => {
     app.showEmojiPanel();
   });
@@ -155,6 +156,5 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (/*BrowserWindow.getAllWindows().length === 0 && */ serverReady && electronReady) {
     mainWindow();
-    window.show();
   }
 });

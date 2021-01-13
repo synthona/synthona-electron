@@ -47,6 +47,12 @@ exports.createUrl = async (req, res, next) => {
         },
       });
       // throw error if it is empty
+      if (!nodeB) {
+        const error = new Error('Could not find both nodes');
+        error.statusCode = 404;
+        throw error;
+      }
+      // throw error if it is empty
       if (nodeB) {
         // create association
         await association.create({

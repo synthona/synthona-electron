@@ -2,7 +2,7 @@
 const { validationResult } = require('express-validator/check');
 const scraper = require('../util/scraper');
 // bring in data models.
-const { node } = require('../db/models');
+const { node, association } = require('../db/models');
 
 // create new url node
 exports.createUrl = async (req, res, next) => {
@@ -25,6 +25,7 @@ exports.createUrl = async (req, res, next) => {
     const name = openGraphData.title || openGraphData.og_title || req.body.name || 'untitled';
     const preview = openGraphData.og_image || openGraphData.image || null;
     const path = req.body.path;
+    const linkedNode = req.body.linkedNode ? JSON.parse(req.body.linkedNode) : null;
     // create text node
     const urlNode = await node.create({
       isFile: false,
@@ -37,6 +38,29 @@ exports.createUrl = async (req, res, next) => {
       content: content,
       creator: userId,
     });
+    // if there is a linkedNode passed in, associate it
+    if (linkedNode) {
+      // make sure linkedNode exists
+      const nodeB = await node.findOne({
+        where: {
+          uuid: linkedNode.uuid,
+        },
+      });
+      // throw error if it is empty
+      if (nodeB) {
+        // create association
+        await association.create({
+          nodeId: urlNode.dataValues.id,
+          nodeUUID: urlNode.dataValues.uuid,
+          nodeType: urlNode.dataValues.type,
+          linkedNode: nodeB.id,
+          linkedNodeUUID: nodeB.uuid,
+          linkedNodeType: nodeB.type,
+          linkStrength: 1,
+          creator: userId,
+        });
+      }
+    }
     // send response
     res.status(200).json({ node: urlNode });
   } catch (err) {

@@ -422,6 +422,7 @@ exports.getGraphData = async (req, res, next) => {
       nodeList = await node.findAll({
         where: {
           creator: userId,
+          hidden: { [Op.not]: true },
         },
         limit: perPage,
         raw: true,

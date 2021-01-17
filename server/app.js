@@ -7,6 +7,7 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 // import database info.
 const db = require('./src/db/models');
 // import routes
@@ -23,8 +24,9 @@ const fileRoutes = require('./src/routes/file');
 // import auth middleware
 const isAuth = require('./src/middleware/is-auth');
 
-const debug = true;
-// DEV variable to erase or not erase DB
+const debug = false;
+// WARNING: setting this to TRUE will erase the
+// database on the next server restart
 const eraseDatabaseOnSync = false;
 
 // set up 1 and only 1 dreaded "global variable"
@@ -42,12 +44,43 @@ const app = express();
 // remove x-powered-by message for additional security.
 app.disable('x-powered-by');
 
+// var whitelist = ['http://localhost:3000', process.env.CLIENT_URL];
+// var corsOptions = {
+//   origin: function (origin, callback) {
+//     console.log(origin);
+//     if (whitelist.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+//   credentials: true,
+//   allowedHeaders: [
+//     'Access-Control-Allow-Headers',
+//     'Content-Type, Authorization, Content-Security-Policy',
+//   ],
+// };
+// app.use(cors(corsOptions));
+
 // Add headers (NOTE!!!!!! I should probably be using the CORS middleware package for this instead of what im doing here)
 app.use((req, res, next) => {
   // disable cors (second parameter is a string for which URLs. * is for all, possible to seperate with commas within the string)
   // IDEA: so right now i have the client stored in URL but eventually it will probably be * or at least optional
   // res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
+  const whitelist = [
+    process.env.CLIENT_URL,
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:9000',
+    'http://localhost:3000',
+    'http://localhost:9000',
+  ];
+  let reqOrigin = req.get('origin');
+  let origin = process.env.CLIENT_URL;
+  if (whitelist.includes(reqOrigin)) {
+    origin = reqOrigin;
+  }
+  res.setHeader('Access-Control-Allow-Origin', origin);
   // set this to true to allow cookies to be sent in.
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   // set which methods are allowed from outside

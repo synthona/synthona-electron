@@ -89,7 +89,7 @@ const mainWindow = () => {
   // window.webContents.session.clearStorageData();
   // match the background color to the app theme
   window.setBackgroundColor('#272727');
-  window.loadURL('http://localhost:' + config.CLIENT_PORT);
+  window.loadURL('http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT);
 
   window.webContents.on('new-window', function (e, url) {
     e.preventDefault();

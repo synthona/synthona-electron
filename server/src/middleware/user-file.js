@@ -9,6 +9,9 @@ const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const userDir = path.join(__basedir, 'data', req.user.uid, 'user');
     // generate user data directory if it does not exist
+    if (!fs.existsSync(path.join(__basedir, 'data', req.user.uid))) {
+      fs.mkdirSync(path.join(__basedir, 'data', req.user.uid));
+    }
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir);
     }

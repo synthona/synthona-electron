@@ -21,7 +21,7 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
     'JWT_SECRET': config.JWT_SECRET,
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
     'PRODUCTION': 'false',
-    'VERSION': '1',
+    'VERSION': config.VERSION,
   },
 });
 

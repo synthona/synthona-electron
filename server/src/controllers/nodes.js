@@ -349,7 +349,7 @@ exports.getGraphData = async (req, res, next) => {
       throw error;
     }
     // process request
-    const perPage = 77;
+    const perPage = 50;
     const anchorNode = req.query.anchorNode;
     let nodeList;
     let nodeIdList = [];
@@ -391,14 +391,14 @@ exports.getGraphData = async (req, res, next) => {
             where: { id: { [Op.not]: anchorNode } },
             required: false,
             as: 'original',
-            attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'preview', 'name'],
           },
           {
             model: node,
             where: { id: { [Op.not]: anchorNode } },
             required: false,
             as: 'associated',
-            attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'preview', 'name'],
           },
         ],
       });
@@ -427,7 +427,7 @@ exports.getGraphData = async (req, res, next) => {
         limit: perPage,
         raw: true,
         order: [['updatedAt', 'DESC']],
-        attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
+        attributes: ['id', 'uuid', 'preview', 'name', 'path', 'type', 'updatedAt'],
       });
       // 2. turn the nodelist into an array to be passed into the second query
       nodeList.map((node) => {
@@ -454,8 +454,21 @@ exports.getGraphData = async (req, res, next) => {
         'updatedAt',
       ],
     });
+    const results = nodeList.map((item) => {
+      if (item.isFile || item.type === 'user') {
+        const fullUrl = item.preview
+          ? req.protocol + '://' + req.get('host') + '/' + item.preview
+          : null;
+        const fullPath = item.path
+          ? req.protocol + '://' + req.get('host') + '/' + item.path
+          : null;
+        item.path = fullPath;
+        item.preview = fullUrl;
+      }
+      return item;
+    });
     // 4. send response, return both lists as JSON data
-    res.status(200).json({ nodes: nodeList, associations: associations });
+    res.status(200).json({ nodes: results, associations: associations });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

@@ -7,7 +7,6 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const cors = require('cors');
 // import database info.
 const db = require('./src/db/models');
 // import routes

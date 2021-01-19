@@ -6,7 +6,6 @@ const { node, association } = require('../db/models');
 
 // create new url node
 exports.createUrl = async (req, res, next) => {
-  console.log('creating url');
   // this comes from the is-auth middleware
   const userId = req.user.uid;
   const errors = validationResult(req);

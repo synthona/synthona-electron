@@ -1,27 +1,28 @@
 {
   "files": {
-    "main.css": "/static/css/main.e4a683f0.chunk.css",
-    "main.js": "/static/js/main.21c5200c.chunk.js",
-    "main.js.map": "/static/js/main.21c5200c.chunk.js.map",
+    "main.css": "/static/css/main.2dae752f.chunk.css",
+    "main.js": "/static/js/main.2a7a269b.chunk.js",
+    "main.js.map": "/static/js/main.2a7a269b.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.08bbf159.js",
     "runtime-main.js.map": "/static/js/runtime-main.08bbf159.js.map",
-    "static/css/2.82f54d27.chunk.css": "/static/css/2.82f54d27.chunk.css",
-    "static/js/2.2845228a.chunk.js": "/static/js/2.2845228a.chunk.js",
-    "static/js/2.2845228a.chunk.js.map": "/static/js/2.2845228a.chunk.js.map",
+    "static/css/2.482bf02b.chunk.css": "/static/css/2.482bf02b.chunk.css",
+    "static/js/2.59523912.chunk.js": "/static/js/2.59523912.chunk.js",
+    "static/js/2.59523912.chunk.js.map": "/static/js/2.59523912.chunk.js.map",
     "index.html": "/index.html",
-    "precache-manifest.2298675d7674f79516c82554f705fb4f.js": "/precache-manifest.2298675d7674f79516c82554f705fb4f.js",
+    "precache-manifest.13ec9ebfb53c87bcc3dcb04586e8105f.js": "/precache-manifest.13ec9ebfb53c87bcc3dcb04586e8105f.js",
     "service-worker.js": "/service-worker.js",
-    "static/css/2.82f54d27.chunk.css.map": "/static/css/2.82f54d27.chunk.css.map",
-    "static/css/main.e4a683f0.chunk.css.map": "/static/css/main.e4a683f0.chunk.css.map",
-    "static/js/2.2845228a.chunk.js.LICENSE.txt": "/static/js/2.2845228a.chunk.js.LICENSE.txt",
+    "static/css/2.482bf02b.chunk.css.map": "/static/css/2.482bf02b.chunk.css.map",
+    "static/css/main.2dae752f.chunk.css.map": "/static/css/main.2dae752f.chunk.css.map",
+    "static/js/2.59523912.chunk.js.LICENSE.txt": "/static/js/2.59523912.chunk.js.LICENSE.txt",
+    "static/media/GraphBrowser.less": "/static/media/stars4.a5922919.jpg",
     "static/media/synthona-header.png": "/static/media/synthona-header.2a4785ed.png",
-    "static/media/synthona-logo.png": "/static/media/synthona-logo.bd307f5e.png"
+    "static/media/synthona-logo.png": "/static/media/synthona-logo.b740604b.png"
   },
   "entrypoints": [
     "static/js/runtime-main.08bbf159.js",
-    "static/css/2.82f54d27.chunk.css",
-    "static/js/2.2845228a.chunk.js",
-    "static/css/main.e4a683f0.chunk.css",
-    "static/js/main.21c5200c.chunk.js"
+    "static/css/2.482bf02b.chunk.css",
+    "static/js/2.59523912.chunk.js",
+    "static/css/main.2dae752f.chunk.css",
+    "static/js/main.2a7a269b.chunk.js"
   ]
 }

@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "pack": "electron-builder --dir",
-    "dist": "electron-builder",
+    "dist": "electron-builder build",
     "postinstall": "install-app-deps",
     "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=mac-builds",
     "windows": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=build/synthona_1024x1024.ico --prune=true --out=windows-builds",
@@ -34,10 +34,15 @@
   },
   "build": {
     "productName": "synthona",
+    "buildVersion": "1.7",
     "appId": "com.synthona.app",
     "mac": {
       "icon": "./build/synthona.icns",
       "category": "public.app-category.utilities"
+    },
+    "win": {
+      "icon": "build/synthona.ico",
+      "target": "nsis"
     }
   }
 }

@@ -27,9 +27,7 @@
     "request-promise": "^4.2.6",
     "sequelize": "^5.22.3",
     "shortid": "^2.2.16",
-    "sqlite3": "^5.0.1"
-  },
-  "devDependencies": {
+    "sqlite3": "^5.0.0",
     "mysql2": "^1.7.0",
     "sequelize-cli": "^5.5.1"
   }

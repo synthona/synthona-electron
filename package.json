@@ -8,7 +8,7 @@
     "dist": "electron-builder build",
     "postinstall": "install-app-deps",
     "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=dist/mac --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
-    "windows": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=build/synthona_1024x1024.ico --prune=true --out=dist/windows --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
+    "windows": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=build/synthona.ico --prune=true --out=dist/windows --ignore=\"/server/data|/server/database.sqlite3|/node_modules/electron-packager\"",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "nodemon --watch * --exec 'npm run start'"

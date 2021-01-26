@@ -40,9 +40,9 @@ exports.exportAllUserData = async (req, res, next) => {
       currentDate.getFullYear() +
       ' @ ' +
       currentDate.getHours() +
-      ':' +
+      '-' +
       currentDate.getMinutes() +
-      ':' +
+      '-' +
       currentDate.getSeconds() +
       '.synth';
     const exportDest = path.join(__basedir, 'data', userId, 'exports', exportName);

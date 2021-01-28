@@ -113,7 +113,7 @@ app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file 
 app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
 
 if (process.env.FRONTEND_DEV_MODE) {
-  console.log('serving pre-built client');
+  console.log('✔ serving pre-built client');
   // serve the React interface
   const clientPath = path.join(__dirname, '../client/');
   app.use(express.static(clientPath));
@@ -141,7 +141,7 @@ db.sequelize
   .sync({ force: eraseDatabaseOnSync })
   .then(async () => {
     app.listen(process.env.PORT, () => {
-      console.log(`${process.env.APP_NAME} is listening on port ${process.env.PORT}!`);
+      console.log(`✔ ${process.env.APP_NAME} is listening on port ${process.env.PORT}!`);
       process.send('server-started');
     });
   })

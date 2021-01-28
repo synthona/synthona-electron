@@ -9,7 +9,7 @@ let electronReady = false;
 let mainWindowCreated = false;
 let window;
 
-console.log('creating server process');
+console.log('✔ creating server process');
 const { fork } = require('child_process');
 const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
   env: {
@@ -27,11 +27,10 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
 
 serverProcess.on('message', (message) => {
   if (message === 'server-started') {
-    console.log('server started');
+    console.log('✔ started app');
     serverReady = true;
     if (serverReady && electronReady && !mainWindowCreated) {
       mainWindowCreated = true;
-      console.log('show main window');
       window.reload();
     }
   } else {
@@ -49,7 +48,7 @@ serverProcess.on('error', (error) => {
 });
 
 const mainWindow = () => {
-  console.log('creating window');
+  console.log('✔ creating window');
   // Create the browser window.
   window = new BrowserWindow({
     width: 1920,
@@ -122,7 +121,6 @@ app.on('window-all-closed', () => {
 });
 
 app.on('ready', () => {
-  console.log('app is ready');
   window.show();
   globalShortcut.register('CommandOrControl+E', () => {
     app.showEmojiPanel();

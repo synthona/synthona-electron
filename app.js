@@ -124,10 +124,14 @@ app.on('ready', () => {
     app.showEmojiPanel();
   });
   globalShortcut.register('CommandOrControl+H', () => {
-    BrowserWindow.getFocusedWindow().loadURL('http://localhost:' + config.CLIENT_PORT);
+    if (BrowserWindow.getFocusedWindow()) {
+      BrowserWindow.getFocusedWindow().loadURL('http://localhost:' + config.CLIENT_PORT);
+    }
   });
   globalShortcut.register('CommandOrControl+G', () => {
-    BrowserWindow.getFocusedWindow().loadURL('http://localhost:' + config.CLIENT_PORT + '/graph');
+    if (BrowserWindow.getFocusedWindow()) {
+      BrowserWindow.getFocusedWindow().loadURL('http://localhost:' + config.CLIENT_PORT + '/graph');
+    }
   });
   // register the quickmen system
   registerQuickMenu();
@@ -163,7 +167,7 @@ registerQuickMenu = () => {
   // 1 key
   let key1 = null;
   globalShortcut.register('CommandOrControl+1', () => {
-    if (key1 !== null) {
+    if (key1 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key1);
     }
   });
@@ -173,7 +177,7 @@ registerQuickMenu = () => {
   // 2 key
   let key2 = null;
   globalShortcut.register('CommandOrControl+2', () => {
-    if (key2 !== null) {
+    if (key2 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key2);
     }
   });
@@ -183,7 +187,7 @@ registerQuickMenu = () => {
   // 3 key
   let key3 = null;
   globalShortcut.register('CommandOrControl+3', () => {
-    if (key3 !== null) {
+    if (key3 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key3);
     }
   });
@@ -193,7 +197,7 @@ registerQuickMenu = () => {
   // 4 key
   let key4 = null;
   globalShortcut.register('CommandOrControl+4', () => {
-    if (key4 !== null) {
+    if (key4 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key4);
     }
   });
@@ -203,7 +207,7 @@ registerQuickMenu = () => {
   // 5 key
   let key5 = null;
   globalShortcut.register('CommandOrControl+5', () => {
-    if (key5 !== null) {
+    if (key5 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key5);
     }
   });
@@ -213,7 +217,7 @@ registerQuickMenu = () => {
   // 6 key
   let key6 = null;
   globalShortcut.register('CommandOrControl+6', () => {
-    if (key6 !== null) {
+    if (key6 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key6);
     }
   });
@@ -223,7 +227,7 @@ registerQuickMenu = () => {
   // 7 key
   let key7 = null;
   globalShortcut.register('CommandOrControl+7', () => {
-    if (key7 !== null) {
+    if (key7 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key7);
     }
   });
@@ -233,7 +237,7 @@ registerQuickMenu = () => {
   // 8 key
   let key8 = null;
   globalShortcut.register('CommandOrControl+8', () => {
-    if (key8 !== null) {
+    if (key8 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key8);
     }
   });
@@ -243,7 +247,7 @@ registerQuickMenu = () => {
   // 9 key
   let key9 = null;
   globalShortcut.register('CommandOrControl+9', () => {
-    if (key9 !== null) {
+    if (key9 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key9);
     }
   });
@@ -253,7 +257,7 @@ registerQuickMenu = () => {
   // 0 key
   let key0 = null;
   globalShortcut.register('CommandOrControl+0', () => {
-    if (key0 !== null) {
+    if (key0 !== null && BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(key0);
     }
   });

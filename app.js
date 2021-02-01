@@ -1,8 +1,35 @@
 const path = require('path');
+const fs = require('fs');
+const crytpo = require('crypto');
 const { app, session, shell, globalShortcut, BrowserWindow, webContents } = require('electron');
 const contextMenu = require('electron-context-menu');
-// import config
-const config = require('./config');
+
+// load configuration data
+let config;
+let configDirPath = app.getPath('userData');
+let configPath = path.join(configDirPath, 'config.json');
+if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
+  config = require(configPath);
+} else {
+  console.log('✔ generating configuration file');
+  const configJSON = JSON.stringify({
+    'VERSION': 1.0,
+    'SERVER_PORT': 9004,
+    'CLIENT_PORT': 9004,
+    'CLIENT_BASE': 'localhost',
+    'APP_NAME': 'synthona',
+    'JWT_SECRET': crytpo.randomBytes(100).toString('base64'),
+    'REFRESH_TOKEN_SECRET': crytpo.randomBytes(100).toString('base64'),
+    'FULLSCREEN': true,
+    'PRODUCTION': false,
+  });
+  if (!fs.existsSync(configDirPath)) {
+    fs.mkdirSync(configDirPath);
+  }
+  fs.writeFileSync(configPath, configJSON);
+  config = require(configPath);
+}
+console.log('✔ loaded configuration data');
 
 // prevent squirrel installer bug on windows that makes app start during installation
 if (require('electron-squirrel-startup')) return app.quit();

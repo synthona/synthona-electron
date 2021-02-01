@@ -16,6 +16,7 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
     'VERSION': 1,
     'FULLSCREEN': true,
     'HTTP_CACHE': false,
+    'CLEAR_CACHE': false,
     'DEBUG': false,
     'SERVER_PORT': 9004,
     'CLIENT_PORT': 9004,
@@ -271,7 +272,9 @@ const mainWindow = () => {
   electronReady = true;
   mainWindowCreated = true;
   // clear the webcontents
-  // newWindow.webContents.session.clearStorageData();
+  if (config.CLEAR_CACHE) {
+    newWindow.webContents.session.clearStorageData();
+  }
   // show the window
   newWindow.show();
 };

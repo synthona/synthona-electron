@@ -33,31 +33,16 @@ module.exports = async (req, res, next) => {
           const newToken = tokens.generateToken(profile);
           const newRefreshToken = tokens.generateRefreshToken(profile);
           // update the token
-          if (process.env.PRODUCTION === 'true') {
-            res.cookie('jwt', newToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: true,
-              expires: new Date(Date.now() + 15 * 60000),
-            });
-            res.cookie('refreshToken', newRefreshToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: true,
-              expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-            });
-          } else {
-            res.cookie('jwt', newToken, {
-              httpOnly: true,
-              sameSite: true,
-              expires: new Date(Date.now() + 15 * 60000),
-            });
-            res.cookie('refreshToken', newRefreshToken, {
-              httpOnly: true,
-              sameSite: true,
-              expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-            });
-          }
+          res.cookie('jwt', newToken, {
+            httpOnly: true,
+            sameSite: true,
+            expires: new Date(Date.now() + 15 * 60000),
+          });
+          res.cookie('refreshToken', newRefreshToken, {
+            httpOnly: true,
+            sameSite: true,
+            expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
+          });
         }
       } catch (err) {
         res.clearCookie('jwt');

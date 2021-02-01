@@ -39,32 +39,17 @@ exports.signup = async (req, res, next) => {
     // generate token
     const token = tokens.generateToken(account);
     const refreshToken = tokens.generateRefreshToken(account);
-    // set the jwt cookie
-    if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    } else {
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    }
+    // set the jwt cookies
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 15 * 60000),
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
+    });
     // create node in the context system
     const contextNode = await node.create({
       isFile: false,
@@ -128,31 +113,16 @@ exports.login = async (req, res, next) => {
     const token = tokens.generateToken(account);
     const refreshToken = tokens.generateRefreshToken(account);
     // set the jwt cookie
-    if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    } else {
-      res.cookie('jwt', token, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    }
+    res.cookie('jwt', token, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 15 * 60000),
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
+    });
     // set the header and avatar urls if needed
     let fullAvatarUrl;
     let fullHeaderUrl;
@@ -219,31 +189,16 @@ exports.changePassword = async (req, res, next) => {
     const newToken = tokens.generateToken(result);
     const newRefreshToken = tokens.generateRefreshToken(account);
     // set the jwt cookie
-    if (process.env.PRODUCTION === 'true') {
-      res.cookie('jwt', newToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    } else {
-      res.cookie('jwt', newToken, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 15 * 60000),
-      });
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        sameSite: true,
-        expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
-      });
-    }
+    res.cookie('jwt', newToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 15 * 60000),
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
+    });
     // send the response
     res.sendStatus(200);
   } catch (err) {

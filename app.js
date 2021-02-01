@@ -13,15 +13,16 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
 } else {
   console.log('✔ generating configuration file');
   const configJSON = JSON.stringify({
-    'VERSION': 1.0,
+    'VERSION': 1,
+    'FULLSCREEN': true,
+    'HTTP_CACHE': false,
+    'DEBUG': false,
     'SERVER_PORT': 9004,
     'CLIENT_PORT': 9004,
     'CLIENT_BASE': 'localhost',
     'APP_NAME': 'synthona',
     'JWT_SECRET': crytpo.randomBytes(100).toString('base64'),
     'REFRESH_TOKEN_SECRET': crytpo.randomBytes(100).toString('base64'),
-    'FULLSCREEN': true,
-    'PRODUCTION': true,
   });
   if (!fs.existsSync(configDirPath)) {
     fs.mkdirSync(configDirPath);
@@ -30,6 +31,17 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
   config = require(configPath);
 }
 console.log('✔ loaded configuration data');
+
+if (!config.HTTP_CACHE) {
+  console.log('✔ disabled http cache');
+  // http cache is disabled by default since it interferes with the import/export system
+  // but still allow "power-users" to edit the config file to make it "always on" until it breaks
+  // for them. eventually i'll allow editing the config in-app and this will not be an issue hopefully
+  // TODO: allow in-app config editing and allow setting a flag to disable cache on next restart only
+  app.commandLine.appendSwitch('disable-http-cache');
+} else {
+  console.log('✔ starting with HTTP caching enabled');
+}
 
 // prevent squirrel installer bug on windows that makes app start during installation
 if (require('electron-squirrel-startup')) return app.quit();
@@ -50,7 +62,6 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
     'FRONTEND_DEV_MODE': config.CLIENT_PORT === config.SERVER_PORT,
     'JWT_SECRET': config.JWT_SECRET,
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
-    'PRODUCTION': 'false',
     'VERSION': config.VERSION,
   },
 });
@@ -214,7 +225,7 @@ const mainWindow = () => {
             shell.showItemInFolder(configPath);
           },
         },
-        { role: 'toggledevtools' },
+        { role: 'toggledevtools', visible: false },
       ],
     },
     {
@@ -233,13 +244,6 @@ const mainWindow = () => {
           click: async () => {
             const { shell } = require('electron');
             await shell.openExternal('https://www.patreon.com/synthona');
-          },
-        },
-        {
-          label: 'Twitter',
-          click: async () => {
-            const { shell } = require('electron');
-            await shell.openExternal('https://www.twitter.com/synthona');
           },
         },
         {
@@ -267,7 +271,7 @@ const mainWindow = () => {
   electronReady = true;
   mainWindowCreated = true;
   // clear the webcontents
-  // window.webContents.session.clearStorageData();
+  // newWindow.webContents.session.clearStorageData();
   // show the window
   newWindow.show();
 };
@@ -307,7 +311,7 @@ app.on('ready', () => {
   });
   // register the quickmen system
   registerQuickMenu();
-  if (config.PRODUCTION) {
+  if (!config.DEBUG) {
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       callback({
         responseHeaders: {

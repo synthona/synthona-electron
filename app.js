@@ -206,6 +206,17 @@ const mainWindow = () => {
       ],
     },
     {
+      label: 'Advanced',
+      submenu: [
+        {
+          label: 'Edit Config File',
+          click: async () => {
+            shell.showItemInFolder(configPath);
+          },
+        },
+      ],
+    },
+    {
       label: 'Info',
       submenu: [
         {
@@ -235,17 +246,6 @@ const mainWindow = () => {
           click: async () => {
             const { shell } = require('electron');
             await shell.openExternal('https://www.github.com/synthona');
-          },
-        },
-      ],
-    },
-    {
-      label: 'Advanced',
-      submenu: [
-        {
-          label: 'Edit Config File',
-          click: async () => {
-            shell.showItemInFolder(configPath);
           },
         },
       ],

@@ -214,6 +214,7 @@ const mainWindow = () => {
             shell.showItemInFolder(configPath);
           },
         },
+        { role: 'toggledevtools' },
       ],
     },
     {

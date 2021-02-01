@@ -50,7 +50,8 @@
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "name": "synthona",
-            "icon": "build/synthona.ico"
+            "icon": "build/synthona.ico",
+            "loadingGif": "build/initializing.gif"
           }
         },
         {

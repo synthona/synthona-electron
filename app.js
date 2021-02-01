@@ -130,12 +130,6 @@ const mainWindow = () => {
               { role: 'hideothers' },
               { role: 'unhide' },
               { type: 'separator' },
-              {
-                label: 'Open Config File',
-                click: async () => {
-                  shell.showItemInFolder(configPath);
-                },
-              },
               { role: 'quit' },
             ],
           },
@@ -241,6 +235,17 @@ const mainWindow = () => {
           click: async () => {
             const { shell } = require('electron');
             await shell.openExternal('https://www.github.com/synthona');
+          },
+        },
+      ],
+    },
+    {
+      label: 'Advanced',
+      submenu: [
+        {
+          label: 'Edit Config File',
+          click: async () => {
+            shell.showItemInFolder(configPath);
           },
         },
       ],

@@ -349,7 +349,7 @@ exports.getGraphData = async (req, res, next) => {
       throw error;
     }
     // process request
-    const perPage = 50;
+    const perPage = 100;
     const anchorNode = req.query.anchorNode;
     let nodeList;
     let nodeIdList = [];

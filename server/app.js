@@ -1,3 +1,6 @@
+// set up dreaded "global variables"! BOO!
+global.__basedir = __dirname;
+global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 // import node dependencies
 const path = require('path');
 const fs = require('fs');
@@ -27,11 +30,6 @@ const debug = false;
 // WARNING: setting this to TRUE will erase the
 // database on the next server restart
 const eraseDatabaseOnSync = false;
-
-// set up 1 and only 1 dreaded "global variable"
-// to store the base directory of the app when it is run
-global.__basedir = __dirname;
-global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 
 // create data directory if it does not exist
 let dataDirectory = path.join(__coreDataDir, 'data');

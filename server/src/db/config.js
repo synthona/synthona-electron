@@ -1,6 +1,6 @@
 const path = require('path');
 
-const dbPath = path.join(__dirname, '../../database.sqlite3');
+const dbPath = path.join(__coreDataDir, 'database.sqlite3');
 module.exports = {
   development: {
     storage: dbPath,

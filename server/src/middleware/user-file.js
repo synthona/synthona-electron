@@ -7,10 +7,10 @@ const shortId = require('shortid');
 // set up multer config for file uploads
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const userDir = path.join(__basedir, 'data', req.user.uid, 'user');
+    const userDir = path.join(__coreDataDir, 'data', req.user.uid, 'user');
     // generate user data directory if it does not exist
-    if (!fs.existsSync(path.join(__basedir, 'data', req.user.uid))) {
-      fs.mkdirSync(path.join(__basedir, 'data', req.user.uid));
+    if (!fs.existsSync(path.join(__coreDataDir, 'data', req.user.uid))) {
+      fs.mkdirSync(path.join(__coreDataDir, 'data', req.user.uid));
     }
     if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir);
@@ -20,9 +20,9 @@ const fileStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // load the fileEntry
-    let extension = file.originalname.substr(file.originalname.lastIndexOf('.'));
+    let extension = file.originalname.substring(file.originalname.lastIndexOf('.'));
     let name = file.originalname
-      .substr(0, file.originalname.lastIndexOf('.'))
+      .substring(0, file.originalname.lastIndexOf('.'))
       .trim()
       .replace(/\s/g, '');
     // second param is file name

@@ -24,7 +24,7 @@ exports.exportAllUserData = async (req, res, next) => {
     }
     // this comes from the is-auth middleware
     const userId = req.user.uid;
-    const exportDir = path.join(__basedir, 'data', userId, 'exports');
+    const exportDir = path.join(__coreDataDir, 'data', userId, 'exports');
     // generate export directory if it does not exist
     if (!fs.existsSync(exportDir)) {
       fs.mkdirSync(exportDir);
@@ -45,7 +45,7 @@ exports.exportAllUserData = async (req, res, next) => {
       '-' +
       currentDate.getSeconds() +
       '.synth';
-    const exportDest = path.join(__basedir, 'data', userId, 'exports', exportName);
+    const exportDest = path.join(__coreDataDir, 'data', userId, 'exports', exportName);
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportDest);
     var archive = archiver('zip', {
@@ -126,8 +126,8 @@ exports.exportAllUserData = async (req, res, next) => {
     await nodeData.forEach((node) => {
       // add associated files to the export
       if (node.isFile || node.type === 'user') {
-        let extension = node.preview.substr(node.preview.lastIndexOf('.'));
-        let previewDir = path.join(__basedir, node.preview);
+        let extension = node.preview.substring(node.preview.lastIndexOf('.'));
+        let previewDir = path.join(__coreDataDir, node.preview);
         if (fs.existsSync(previewDir)) {
           try {
             // append the associated file to the export
@@ -156,8 +156,8 @@ exports.exportAllUserData = async (req, res, next) => {
     const userValues = userData[0];
     // add avatar files to the export
     if (userValues.avatar) {
-      let extension = userValues.avatar.substr(userValues.avatar.lastIndexOf('.'));
-      let avatarPath = path.join(__basedir, userValues.avatar);
+      let extension = userValues.avatar.substring(userValues.avatar.lastIndexOf('.'));
+      let avatarPath = path.join(__coreDataDir, userValues.avatar);
       if (fs.existsSync(avatarPath)) {
         try {
           // append the associated file to the export
@@ -172,8 +172,8 @@ exports.exportAllUserData = async (req, res, next) => {
     }
     // add header to export
     if (userValues.header) {
-      let extension = userValues.header.substr(userValues.header.lastIndexOf('.'));
-      let headerPath = path.join(__basedir, userValues.header);
+      let extension = userValues.header.substring(userValues.header.lastIndexOf('.'));
+      let headerPath = path.join(__coreDataDir, userValues.header);
       if (fs.existsSync(headerPath)) {
         try {
           // append the associated file to the export
@@ -219,7 +219,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
-    let exportDirectory = path.join(__basedir, 'data', userId, 'exports');
+    let exportDirectory = path.join(__coreDataDir, 'data', userId, 'exports');
     // generate export directory if it does not exist
     if (!fs.existsSync(exportDirectory)) {
       fs.mkdirSync(exportDirectory);
@@ -274,7 +274,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
     }
     // set export name and extension
     const exportName = anchorNodeName + '.synth';
-    const exportDest = path.join(__basedir, 'data', userId, 'exports', exportName);
+    const exportDest = path.join(__coreDataDir, 'data', userId, 'exports', exportName);
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportDest);
     var archive = archiver('zip', {
@@ -415,8 +415,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       if (node.left) {
         for (let leftNode of node.left) {
           if (leftNode.isFile) {
-            let extension = leftNode.preview.substr(leftNode.preview.lastIndexOf('.'));
-            let leftPreviewPath = path.join(__basedir, leftNode.preview);
+            let extension = leftNode.preview.substring(leftNode.preview.lastIndexOf('.'));
+            let leftPreviewPath = path.join(__coreDataDir, leftNode.preview);
             // see if the file exists
             if (fs.existsSync(leftPreviewPath)) {
               try {
@@ -439,8 +439,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       if (node.right) {
         for (let rightNode of node.right) {
           if (rightNode.isFile) {
-            let extension = rightNode.preview.substr(rightNode.preview.lastIndexOf('.'));
-            let rightPreviewPath = path.join(__basedir, rightNode.preview);
+            let extension = rightNode.preview.substring(rightNode.preview.lastIndexOf('.'));
+            let rightPreviewPath = path.join(__coreDataDir, rightNode.preview);
             // see if the file exists
             if (fs.existsSync(rightPreviewPath)) {
               try {
@@ -463,8 +463,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       // add the anchor node
       if (includeAnchorNode) {
         if (anchorNode.isFile) {
-          let extension = anchorNode.preview.substr(anchorNode.preview.lastIndexOf('.'));
-          let anchorNodePreviewPath = path.join(__basedir, anchorNode.preview);
+          let extension = anchorNode.preview.substring(anchorNode.preview.lastIndexOf('.'));
+          let anchorNodePreviewPath = path.join(__coreDataDir, anchorNode.preview);
           // see if the file exists
           if (fs.existsSync(anchorNodePreviewPath)) {
             try {
@@ -527,7 +527,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         },
       }
     );
-    let userDirectoryPath = path.join(__basedir, 'data', userId);
+    let userDirectoryPath = path.join(__coreDataDir, 'data', userId);
     // generate user data directory if it does not exist
     if (!fs.existsSync(userDirectoryPath)) {
       fs.mkdirSync(userDirectoryPath);
@@ -558,15 +558,15 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       throw err;
     }
     // get the fileUrl
-    const packageUrl = path.join(__basedir, packageNode.preview);
+    const packageUrl = path.join(__coreDataDir, packageNode.preview);
     // check zip buffer size before unzipping
-    var buffer = new admZip(packageUrl).toBuffer();
-    const maxZipSize = 1000000000; // 1GB
-    if (buffer.byteLength > maxZipSize) {
-      err = new Error('zip buffer exceeds max allowed size');
-      err.statusCode = 500;
-      throw err;
-    }
+    // var buffer = new admZip(packageUrl).toBuffer();
+    // const maxZipSize = 1000000000; // 1GB
+    // if (buffer.byteLength > maxZipSize) {
+    //   err = new Error('zip buffer exceeds max allowed size');
+    //   err.statusCode = 500;
+    //   throw err;
+    // }
     // create new reference to zip
     var zip = new admZip(packageUrl);
     var zipEntries = zip.getEntries();
@@ -584,7 +584,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           // handle file node imports
           if (nodeImport.isFile) {
             // load the fileEntry
-            let extension = nodeImport.preview.substr(nodeImport.preview.lastIndexOf('.'));
+            let extension = nodeImport.preview.substring(nodeImport.preview.lastIndexOf('.'));
             // use the uuid to recognize the file
             const fileEntry = zip.getEntry(nodeImport.uuid + extension);
             let filePath;
@@ -598,7 +598,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               console.log(nodeImport);
             }
             const dbFilePath = path.join(
-              filePath.substr(filePath.lastIndexOf('data')),
+              filePath.substring(filePath.lastIndexOf('data')),
               fileEntry.name
             );
             // generate node
@@ -706,8 +706,8 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         let jsonData = JSON.parse(entry.getData());
         let userImport = jsonData[0];
         // load the avatar and header info
-        let avatarExtension = userImport.avatar.substr(userImport.avatar.lastIndexOf('.'));
-        let headerExtension = userImport.header.substr(userImport.header.lastIndexOf('.'));
+        let avatarExtension = userImport.avatar.substring(userImport.avatar.lastIndexOf('.'));
+        let headerExtension = userImport.header.substring(userImport.header.lastIndexOf('.'));
         // load both file entries
         const avatarFileEntry = zip.getEntry(userImport.username + '-avatar' + avatarExtension);
         const headerFileEntry = zip.getEntry(userImport.username + '-header' + headerExtension);
@@ -716,23 +716,23 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         let headerFilePath;
         // import the avatar image
         if (avatarFileEntry && avatarFileEntry.name) {
-          avatarFilePath = path.join(__basedir, 'data', userId, 'user');
+          avatarFilePath = path.join(__coreDataDir, 'data', userId, 'user');
           //extract file
           zip.extractEntryTo(avatarFileEntry, avatarFilePath, false, true);
         }
         // import the header image
         if (headerFileEntry && headerFileEntry.name) {
-          headerFilePath = path.join(__basedir, 'data', userId, 'user');
+          headerFilePath = path.join(__coreDataDir, 'data', userId, 'user');
           //extract file
           zip.extractEntryTo(headerFileEntry, headerFilePath, false, true);
         }
         // file paths for DB storage
         const avatarDbPath = path.join(
-          avatarFilePath.substr(avatarFilePath.lastIndexOf('data')),
+          avatarFilePath.substring(avatarFilePath.lastIndexOf('data')),
           avatarFileEntry.name
         );
         const headerDbPath = path.join(
-          headerFilePath.substr(headerFilePath.lastIndexOf('data')),
+          headerFilePath.substring(headerFilePath.lastIndexOf('data')),
           headerFileEntry.name
         );
         // update the logged in user with the imported data
@@ -924,7 +924,7 @@ exports.removeImportsByPackage = async (req, res, next) => {
     });
     // remove all the files
     for (fileNode of nodelist) {
-      var filePath = path.join(__basedir, fileNode.preview);
+      var filePath = path.join(__coreDataDir, fileNode.preview);
       // remove the file if it exists
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

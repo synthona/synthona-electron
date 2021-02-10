@@ -64,6 +64,7 @@ const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
     'JWT_SECRET': config.JWT_SECRET,
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
     'VERSION': config.VERSION,
+    'CORE_DATA_DIRECTORY': app.getPath('userData'),
   },
 });
 
@@ -81,7 +82,7 @@ serverProcess.on('message', (message) => {
 
 serverProcess.on('exit', (code, sig) => {
   // finishing`
-  console.log('goodbye');
+  console.log('✔ goodnight!');
 });
 
 serverProcess.on('error', (error) => {

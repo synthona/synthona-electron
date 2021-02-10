@@ -298,7 +298,7 @@ exports.setAvatar = async (req, res, next) => {
       throw error;
     }
     // delete the old file
-    var filePath = path.join(__basedir, '/' + userNode.avatar);
+    var filePath = path.join(__coreDataDir, userNode.avatar);
     // remove the file if it exists
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
@@ -356,7 +356,7 @@ exports.setHeaderImage = async (req, res, next) => {
       throw error;
     }
     // delete the old file
-    var filePath = path.join(__basedir, '/' + userNode.header);
+    var filePath = path.join(__coreDataDir, userNode.header);
     // remove the file if it exists
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

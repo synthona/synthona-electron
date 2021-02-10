@@ -9,15 +9,20 @@ const shortId = require('shortid');
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     // generate user directory if it does not exist
-    if (!fs.existsSync(path.join(__basedir, 'data', req.user.uid))) {
-      fs.mkdirSync(path.join(__basedir, 'data', req.user.uid));
+    if (!fs.existsSync(path.join(__coreDataDir, 'data', req.user.uid))) {
+      fs.mkdirSync(path.join(__coreDataDir, 'data', req.user.uid));
     }
     // create a hash of the filename
     file.hash = crypto.createHash('md5').update(file.originalname).digest('hex');
     // generate directories
-    const directoryLayer1 = path.join(__basedir, 'data', req.user.uid, file.hash.substring(0, 3));
+    const directoryLayer1 = path.join(
+      __coreDataDir,
+      'data',
+      req.user.uid,
+      file.hash.substring(0, 3)
+    );
     const directoryLayer2 = path.join(
-      __basedir,
+      __coreDataDir,
       'data',
       req.user.uid,
       file.hash.substring(0, 3),
@@ -35,9 +40,9 @@ const fileStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // load the fileEntry
-    let extension = file.originalname.substr(file.originalname.lastIndexOf('.'));
+    let extension = file.originalname.substring(file.originalname.lastIndexOf('.'));
     let name = file.originalname
-      .substr(0, file.originalname.lastIndexOf('.'))
+      .substring(0, file.originalname.lastIndexOf('.'))
       .trim()
       .replace(/\s/g, '');
     // second param is file name

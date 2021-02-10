@@ -12,7 +12,7 @@ exports.cleanupDataDirectoryFromFilePath = async (filePath) => {
   // directory the passed-in file is located within
   var parentDirectory = path.dirname(filePath);
   // app data directory
-  var dataDirectory = path.join(__basedir, 'data');
+  var dataDirectory = path.join(__coreDataDir, 'data');
   // if the filepath does not include the data directory path
   // it should not recursively delete anything
   if (!filePath.includes(dataDirectory)) {
@@ -47,9 +47,9 @@ exports.generateFileLocation = async (userId, fileName) => {
   // create a hash of the filename
   const nameHash = crypto.createHash('md5').update(fileName).digest('hex');
   // generate directories
-  const directoryLayer1 = path.join(__basedir, 'data', userId, nameHash.substring(0, 3));
+  const directoryLayer1 = path.join(__coreDataDir, 'data', userId, nameHash.substring(0, 3));
   const fileLocation = path.join(
-    __basedir,
+    __coreDataDir,
     'data',
     userId,
     nameHash.substring(0, 3),

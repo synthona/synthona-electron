@@ -31,9 +31,10 @@ const eraseDatabaseOnSync = false;
 // set up 1 and only 1 dreaded "global variable"
 // to store the base directory of the app when it is run
 global.__basedir = __dirname;
+global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 
 // create data directory if it does not exist
-let dataDirectory = path.join(__basedir, 'data');
+let dataDirectory = path.join(__coreDataDir, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory);
 }
@@ -43,27 +44,9 @@ const app = express();
 // remove x-powered-by message for additional security.
 app.disable('x-powered-by');
 
-// var whitelist = ['http://localhost:3000', process.env.CLIENT_URL];
-// var corsOptions = {
-//   origin: function (origin, callback) {
-//     console.log(origin);
-//     if (whitelist.indexOf(origin) !== -1) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-//   credentials: true,
-//   allowedHeaders: [
-//     'Access-Control-Allow-Headers',
-//     'Content-Type, Authorization, Content-Security-Policy',
-//   ],
-// };
-// app.use(cors(corsOptions));
-
 // Add headers (NOTE!!!!!! I should probably be using the CORS middleware package for this instead of what im doing here)
 app.use((req, res, next) => {
+  // https://medium.com/@ashaymurceilago/how-to-broadcast-your-nodejs-server-across-your-lan-2ae93af01626
   // disable cors (second parameter is a string for which URLs. * is for all, possible to seperate with commas within the string)
   // IDEA: so right now i have the client stored in URL but eventually it will probably be * or at least optional
   // res.setHeader('Access-Control-Allow-Origin', '*');
@@ -108,9 +91,7 @@ app.use('/port', portRoutes);
 app.use('/file', fileRoutes);
 
 // TODO: the file directory should probably require permissions per image? not sure how that should work
-app.use('/data', isAuth, express.static(path.join(__dirname, 'data'))); // file directory
-// app.use('/port', isAuth, express.static(path.join(__dirname, 'port'))); // downloads directory
-app.use('/public', isAuth, express.static(path.join(__dirname, 'public')));
+app.use('/data', isAuth, express.static(path.join(__coreDataDir, 'data'))); // file directory
 
 if (process.env.FRONTEND_DEV_MODE) {
   console.log('✔ serving pre-built client');

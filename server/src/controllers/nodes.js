@@ -313,7 +313,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
     }
     // if the node is a file, delete from the file system
     if (nodeToDelete.isFile) {
-      var filePath = path.join(__basedir, nodeToDelete.preview);
+      var filePath = path.join(__coreDataDir, nodeToDelete.preview);
       // remove the file if it exists
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

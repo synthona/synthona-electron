@@ -8,9 +8,11 @@ const contextMenu = require('electron-context-menu');
 let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');
+// check if config already exists and if it does load it
 if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
   config = require(configPath);
 } else {
+  // if there's no config file yet, make sure to generate one
   console.log('✔ generating configuration file');
   const configJSON = JSON.stringify({
     'VERSION': 1,
@@ -222,7 +224,7 @@ const mainWindow = () => {
       label: 'Advanced',
       submenu: [
         {
-          label: 'Edit Config File',
+          label: 'Show Config File',
           click: async () => {
             shell.showItemInFolder(configPath);
           },
@@ -328,7 +330,7 @@ app.on('ready', () => {
 });
 
 app.on('before-quit', () => {
-  console.log('before quit');
+  console.log('✔ winding down');
   serverProcess.kill('SIGINT');
 });
 

@@ -1,17 +1,18 @@
+// import environment variables
+require('dotenv').config();
 // set up dreaded "global variables"! BOO!
 global.__basedir = __dirname;
 global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 // import node dependencies
 const path = require('path');
 const fs = require('fs');
-// import environment variables
-require('dotenv').config();
 // import additional dependencies
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-// import database info.
+// import database code.
 const db = require('./src/db/models');
+const dbUpdater = require('./src/db/updater');
 // import routes
 const nodeRoutes = require('./src/routes/nodes');
 const authRoutes = require('./src/routes/auth');
@@ -36,6 +37,8 @@ let dataDirectory = path.join(__coreDataDir, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory);
 }
+// check for database updates
+dbUpdater.checkForDatabaseUpdates(db);
 
 // set up express app
 const app = express();

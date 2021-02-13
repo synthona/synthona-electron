@@ -391,14 +391,14 @@ exports.getGraphData = async (req, res, next) => {
             where: { id: { [Op.not]: anchorNode } },
             required: false,
             as: 'original',
-            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'preview', 'name'],
+            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'name'],
           },
           {
             model: node,
             where: { id: { [Op.not]: anchorNode } },
             required: false,
             as: 'associated',
-            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'preview', 'name'],
+            attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'name'],
           },
         ],
       });

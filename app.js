@@ -56,7 +56,7 @@ let windowList = [];
 
 console.log('✔ creating server process');
 const { fork } = require('child_process');
-const serverProcess = fork(path.join(__dirname, './server/app.js'), ['args'], {
+const serverProcess = fork(path.join(__dirname, './src/server/app.js'), ['args'], {
   env: {
     'ELECTRON_RUN_AS_NODE': '1',
     'PORT': config.SERVER_PORT,

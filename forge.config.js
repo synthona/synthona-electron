@@ -1,6 +1,6 @@
 module.exports = {
   packagerConfig: {
-    ignore: '/config.json|/server/data|/node_modules/electron-packager|/server/database.sqlite3',
+    ignore: '/node_modules/electron-packager|/server/database.sqlite3',
     prune: true,
     icon: 'build/synthona.icns',
     overwrite: true,

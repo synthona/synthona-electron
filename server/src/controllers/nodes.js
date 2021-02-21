@@ -227,18 +227,29 @@ exports.searchNodes = async (req, res, next) => {
     var type = req.query.type || null;
     var searchQuery = req.query.searchQuery || '';
 
+    var splitQuery = searchQuery.split(' ');
+    var fuzzySearch = '%';
+    // TODO. i can make this even better by adding an additional OR query to the whereStatement
+    // and just passing in the array there instead of into this cycler
+    if (splitQuery.length > 0) {
+      splitQuery.forEach((word) => {
+        if (word) {
+          fuzzySearch = fuzzySearch + word + '%';
+        }
+      });
+    }
     // create WHERE statement
     var whereStatement = {};
     if (searchQuery) {
       whereStatement[Op.or] = [
         {
-          name: { [Op.like]: '%' + searchQuery + '%' },
+          name: { [Op.like]: fuzzySearch },
         },
         {
-          preview: { [Op.like]: '%' + searchQuery + '%' },
+          preview: { [Op.like]: fuzzySearch },
         },
         {
-          content: { [Op.like]: '%' + searchQuery + '%' },
+          content: { [Op.like]: fuzzySearch },
         },
       ];
       // if there is a search query only return searchable items

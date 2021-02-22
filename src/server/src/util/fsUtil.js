@@ -2,6 +2,7 @@ const path = require('path');
 var fs = require('fs');
 // bring in libraries for file and directory name generation
 const crypto = require('crypto');
+const shortId = require('shortid');
 
 // function to delete empty directories in the data folder from a file
 // NOTE: use caution editing this one
@@ -44,8 +45,9 @@ exports.cleanupDataDirectoryFromFilePath = async (filePath) => {
 };
 
 exports.generateFileLocation = async (userId, fileName) => {
+  const uniqueFileName = this.generateUniqueFileString(fileName);
   // create a hash of the filename
-  const nameHash = crypto.createHash('md5').update(fileName).digest('hex');
+  const nameHash = crypto.createHash('md5').update(uniqueFileName).digest('hex');
   // generate directories
   const directoryLayer1 = path.join(__coreDataDir, 'data', userId, nameHash.substring(0, 3));
   const fileLocation = path.join(
@@ -63,4 +65,11 @@ exports.generateFileLocation = async (userId, fileName) => {
     fs.mkdirSync(fileLocation);
   }
   return fileLocation;
+};
+
+exports.generateUniqueFileString = (fileName) => {
+  let extension = fileName.substring(fileName.lastIndexOf('.'));
+  let name = fileName.substring(0, fileName.lastIndexOf('.')).trim().replace(/\s/g, '');
+  let timestamp = new Date().getTime();
+  return name + '-' + shortId.generate() + '-' + timestamp + extension;
 };

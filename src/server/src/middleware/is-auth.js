@@ -11,6 +11,7 @@ module.exports = async (req, res, next) => {
     if (!refreshToken) {
       res.clearCookie('jwt');
       res.clearCookie('refreshToken');
+      res.redirect('/');
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;
@@ -47,6 +48,7 @@ module.exports = async (req, res, next) => {
       } catch (err) {
         res.clearCookie('jwt');
         res.clearCookie('refreshToken');
+        res.redirect('/');
         err.statusCode = 500;
         throw err;
       }
@@ -55,6 +57,7 @@ module.exports = async (req, res, next) => {
     if (!decodedToken && !decodedRefreshToken) {
       res.clearCookie('jwt');
       res.clearCookie('refreshToken');
+      res.redirect('/');
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;

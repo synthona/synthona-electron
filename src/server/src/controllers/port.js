@@ -24,11 +24,6 @@ exports.exportAllUserData = async (req, res, next) => {
     }
     // this comes from the is-auth middleware
     const userId = req.user.uid;
-    const exportDir = path.join(__coreDataDir, 'data', userId, 'exports');
-    // generate export directory if it does not exist
-    if (!fs.existsSync(exportDir)) {
-      fs.mkdirSync(exportDir);
-    }
     // set export name and extension
     const currentDate = new Date();
     const exportName =
@@ -45,9 +40,12 @@ exports.exportAllUserData = async (req, res, next) => {
       '-' +
       currentDate.getSeconds() +
       '.synth';
-    const exportDest = path.join(__coreDataDir, 'data', userId, 'exports', exportName);
+
+    const exportDest = await fsUtil.generateFileLocation(userId, exportName);
+    const exportFile = path.join(exportDest, exportName);
+    const dbFileUrl = exportFile.substring(exportFile.lastIndexOf('data'));
     // create a file to stream archive data to.
-    var output = fs.createWriteStream(exportDest);
+    var output = fs.createWriteStream(exportFile);
     var archive = archiver('zip', {
       zlib: { level: 9 }, // Sets the compression level.
     });
@@ -63,12 +61,13 @@ exports.exportAllUserData = async (req, res, next) => {
         searchable: true,
         type: 'package',
         name: exportName,
-        preview: path.join('data', userId, 'exports', exportName),
-        path: path.join('data', userId, 'exports', exportName),
+        preview: dbFileUrl,
+        path: dbFileUrl,
         content: exportName,
         creator: userId,
       });
       // TODO: send back the created export to the client as a file
+      res.redirect('/');
       res.sendStatus(200);
     });
 
@@ -127,11 +126,11 @@ exports.exportAllUserData = async (req, res, next) => {
       // add associated files to the export
       if (node.isFile || node.type === 'user') {
         let extension = node.preview.substring(node.preview.lastIndexOf('.'));
-        let previewDir = path.join(__coreDataDir, node.preview);
-        if (fs.existsSync(previewDir)) {
+        let nodeFile = path.join(__coreDataDir, node.preview);
+        if (fs.existsSync(nodeFile)) {
           try {
             // append the associated file to the export
-            archive.append(fs.createReadStream(previewDir), {
+            archive.append(fs.createReadStream(nodeFile), {
               name: node.uuid + extension,
             });
           } catch (err) {
@@ -272,11 +271,13 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       exportIdList.push(node.id);
       // anchorNodeId = node.id;
     }
-    // set export name and extension
+    // set export name, destination, and extension
     const exportName = anchorNodeName + '.synth';
-    const exportDest = path.join(__coreDataDir, 'data', userId, 'exports', exportName);
+    const exportDest = await fsUtil.generateFileLocation(userId, exportName);
+    const exportFile = path.join(exportDest, exportName);
+    const dbFileUrl = exportFile.substring(exportFile.lastIndexOf('data'));
     // create a file to stream archive data to.
-    var output = fs.createWriteStream(exportDest);
+    var output = fs.createWriteStream(exportFile);
     var archive = archiver('zip', {
       zlib: { level: 9 }, // Sets the compression level.
     });
@@ -292,8 +293,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
         searchable: true,
         type: 'package',
         name: exportName,
-        preview: path.join('data', userId, 'exports', exportName),
-        path: path.join('data', userId, 'exports', exportName),
+        preview: dbFileUrl,
+        path: dbFileUrl,
         content: exportName,
         creator: userId,
       });
@@ -888,6 +889,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     console.log('import successfully completed');
     console.log('=================================');
     // send response
+    res.redirect('/');
     res.sendStatus(200);
   } catch (err) {
     if (!err.statusCode) {

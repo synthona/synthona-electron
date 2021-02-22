@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const shortId = require('shortid');
+const fsUtil = require('../util/fsUtil');
 
 // set up multer config for file uploads
 const fileStorage = multer.diskStorage({

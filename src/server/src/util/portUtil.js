@@ -59,7 +59,14 @@ exports.transferImportedUserData = async (packageUUID, loggedInUserNode) => {
     }
   }
   // 3) delete all user nodes from nodes table with the importId
-  await node.destroy({ where: { type: 'user', importId: packageUUID } });
+  await node.destroy({
+    where: {
+      [Op.and]: {
+        type: 'user',
+        importId: packageUUID,
+      },
+    },
+  });
 };
 
 exports.countBrokenAssociations = async () => {

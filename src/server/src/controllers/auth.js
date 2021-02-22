@@ -247,7 +247,7 @@ exports.isAuthenticated = async (req, res, next) => {
 };
 
 exports.signOut = (req, res, next) => {
-  res.clearCookie('jwt');
-  res.clearCookie('refreshToken');
+  res.clearCookie('jwt', { path: '/' });
+  res.clearCookie('refreshToken', { path: '/' });
   res.sendStatus(200);
 };

@@ -17,5 +17,7 @@ router.put(
   collectionController.createCollection
 );
 
+router.patch('/regenerate', isAuth, collectionController.regenerateCollectionPreviews);
+
 // return the router
 module.exports = router;

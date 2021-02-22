@@ -517,7 +517,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     // uuid of the import package node
     const packageUUID = req.body.uuid;
     // mark the import package as expanded so undo is possible even if the operation fails
-    node.update(
+    await node.update(
       {
         metadata: { expanded: true },
       },

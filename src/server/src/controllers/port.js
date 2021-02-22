@@ -67,7 +67,7 @@ exports.exportAllUserData = async (req, res, next) => {
         creator: userId,
       });
       // TODO: send back the created export to the client as a file
-      res.redirect('/');
+      res.sendStatus(200);
     });
 
     // This event is fired when the data source is drained no matter what was the data source.
@@ -888,7 +888,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     console.log('import successfully completed');
     console.log('=================================');
     // send response
-    res.redirect('/');
+    res.sendStatus(200);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

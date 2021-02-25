@@ -1,7 +1,9 @@
 // custom code
 const { validationResult } = require('express-validator/check');
 // bring in data models.
-const { node, association } = require('../db/models');
+const { node, association, user } = require('../db/models');
+// import node dependencies
+const path = require('path');
 
 exports.createFile = async (req, res, next) => {
   // this comes from the is-auth middleware
@@ -68,11 +70,39 @@ exports.createFile = async (req, res, next) => {
     // add the baseURL of the server instance back in
     if (result.isFile) {
       result.preview = result.preview
-        ? req.protocol + '://' + req.get('host') + '/' + result.preview
+        ? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
         : null;
     }
     // send response
     res.status(200).json({ node: result });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+exports.loadFileByUUID = async (req, res, next) => {
+  // this comes from the is-auth middleware
+  const userId = req.user.uid;
+  try {
+    const uuid = req.params.uuid;
+    // load node
+    const result = await node.findOne({
+      where: {
+        uuid: uuid,
+        creator: userId,
+      },
+      attributes: ['preview', 'path'],
+    });
+    // make sure there is a preview and then respond
+    if (result && result.preview) {
+      const imagePath = path.join(__coreDataDir, result.preview);
+      res.sendFile(path.resolve(imagePath));
+    } else {
+      res.sendStatus(404);
+    }
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

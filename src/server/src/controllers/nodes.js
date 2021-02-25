@@ -123,7 +123,7 @@ exports.getNodeByUUID = async (req, res, next) => {
     // add full file url
     if (result.isFile || result.type === 'user') {
       result.preview = result.preview
-        ? req.protocol + '://' + req.get('host') + '/' + result.preview
+        ? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
         : null;
     }
     // send response
@@ -195,7 +195,7 @@ exports.updateNode = async (req, res, next) => {
     // it's an file, re-apply the baseURL
     if (result.isFile || result.type === 'user') {
       const fullUrl = result.preview
-        ? req.protocol + '://' + req.get('host') + '/' + result.preview
+        ? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
         : null;
       result.preview = fullUrl;
     }
@@ -282,7 +282,7 @@ exports.searchNodes = async (req, res, next) => {
     const results = result.map((item) => {
       if (item.isFile || item.type === 'user') {
         const fullUrl = item.preview
-          ? req.protocol + '://' + req.get('host') + '/' + item.preview
+          ? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
           : null;
         item.preview = fullUrl;
       }
@@ -468,10 +468,10 @@ exports.getGraphData = async (req, res, next) => {
     const results = nodeList.map((item) => {
       if (item.isFile || item.type === 'user') {
         const fullUrl = item.preview
-          ? req.protocol + '://' + req.get('host') + '/' + item.preview
+          ? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
           : null;
         const fullPath = item.path
-          ? req.protocol + '://' + req.get('host') + '/' + item.path
+          ? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
           : null;
         item.path = fullPath;
         item.preview = fullUrl;

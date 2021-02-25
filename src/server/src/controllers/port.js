@@ -319,6 +319,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
     archive.on('error', function (err) {
       throw err;
     });
+    // make another query to fetch the export data based on
+    // the exportIdList we already have
     const exportData = await node.findAll({
       where: {
         uuid: exportAnchorUUID,
@@ -348,6 +350,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
               ],
               where: {
                 [Op.and]: [
+                  // we only want to grab the associations where both items,
+                  // left and right, are associate with packageUUID
                   { nodeId: { [Op.in]: exportIdList } },
                   { linkedNode: { [Op.in]: exportIdList } },
                 ],
@@ -378,6 +382,8 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
               required: false,
               where: {
                 [Op.and]: [
+                  // we only want to grab the associations where both items,
+                  // left and right, are associated with packageUUID
                   { nodeId: { [Op.in]: exportIdList } },
                   { linkedNode: { [Op.in]: exportIdList } },
                   { [Op.not]: { nodeType: 'package' } },
@@ -681,6 +687,20 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         }
         // process the linkedNode and linkedNodeUUID columns
         for (let value of newNodeIdList) {
+          // this is where i should call a function for portUtil which will
+          // search for all nodes with the importId of this packageUUID and
+          // perform a text search of the content column of the text node types
+          // searching for a match of "oldUUID"
+
+          // whenever there is a match of "oldUUID" in one of the nodes
+          // we add that node to a list to be updated? or directly update it
+
+          // the update to be done is that we need to replaced the oldUUID with newUUID
+          // directly in the string in the database, without changing anything else
+          // and once that's done, we simply save the updated node back to the database!
+
+          // easy!
+
           // replace the temporary values with the correct values
           association.update(
             {
@@ -818,7 +838,6 @@ exports.unpackSynthonaImport = async (req, res, next) => {
       });
       var collectionPreview = [];
       var nodePreview = null;
-      // console.log(result);
       console.log('\n' + '=================================');
       console.log(collection.name);
       console.log('=================================');
@@ -828,7 +847,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           // store instance url in the collection preview if it is a file
           if (value.original.isFile) {
             nodePreview = value.original.preview
-              ? req.protocol + '://' + req.get('host') + '/' + value.original.preview
+              ? req.protocol + '://' + req.get('host') + '/file/load/' + value.original.uuid
               : null;
           } else {
             nodePreview = value.original.preview;
@@ -841,7 +860,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           // store instance url in the collection preview if it is a file
           if (value.associated.isFile) {
             nodePreview = value.associated.preview
-              ? req.protocol + '://' + req.get('host') + '/' + value.associated.preview
+              ? req.protocol + '://' + req.get('host') + '/file/load/' + value.associated.uuid
               : null;
           } else {
             nodePreview = value.associated.preview;

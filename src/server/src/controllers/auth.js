@@ -127,10 +127,12 @@ exports.login = async (req, res, next) => {
     let fullAvatarUrl;
     let fullHeaderUrl;
     if (account.avatar) {
-      fullAvatarUrl = req.protocol + '://' + req.get('host') + '/' + account.avatar;
+      fullAvatarUrl =
+        req.protocol + '://' + req.get('host') + '/user/load/avatar/' + account.nodeId;
     }
     if (account.header) {
-      fullHeaderUrl = req.protocol + '://' + req.get('host') + '/' + account.header;
+      fullHeaderUrl =
+        req.protocol + '://' + req.get('host') + '/user/load/header/' + account.nodeId;
     }
     // send response
     res.status(201).json({
@@ -224,10 +226,12 @@ exports.isAuthenticated = async (req, res, next) => {
     let fullAvatarUrl;
     let fullHeaderUrl;
     if (account.avatar) {
-      fullAvatarUrl = req.protocol + '://' + req.get('host') + '/' + account.avatar;
+      fullAvatarUrl =
+        req.protocol + '://' + req.get('host') + '/user/load/avatar/' + account.nodeId;
     }
     if (account.header) {
-      fullHeaderUrl = req.protocol + '://' + req.get('host') + '/' + account.header;
+      fullHeaderUrl =
+        req.protocol + '://' + req.get('host') + '/user/load/header/' + account.nodeId;
     }
     // send reponse
     res.status(201).json({

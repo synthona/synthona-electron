@@ -89,7 +89,7 @@ exports.createAssociation = async (req, res, next) => {
     // re-apply baseURL if node is a file
     if (result.associated.isFile || result.associated.type === 'user') {
       const fullUrl = result.associated.preview
-        ? req.protocol + '://' + req.get('host') + '/' + result.associated.preview
+        ? req.protocol + '://' + req.get('host') + '/' + 'file/load/' + result.associated.uid
         : null;
       result.associated.preview = fullUrl;
     }
@@ -154,11 +154,22 @@ exports.associationAutocomplete = async (req, res, next) => {
     var orderStatement = [];
     // set searchQuery
     if (searchQuery) {
+      var splitQuery = searchQuery.split(' ');
+      var fuzzySearch = '%';
+      // TODO. i can make this even better by adding an additional OR query to the whereStatement
+      // and just passing in the array there instead of into this cycler
+      if (splitQuery.length > 0) {
+        splitQuery.forEach((word) => {
+          if (word) {
+            fuzzySearch = fuzzySearch + word + '%';
+          }
+        });
+      }
       whereStatement = {
         [Op.and]: [
           // look for text match for the name
           {
-            name: { [Op.like]: '%' + searchQuery + '%' },
+            name: { [Op.like]: '%' + fuzzySearch + '%' },
           },
           // prevent association with exclusionList
           {
@@ -293,7 +304,7 @@ exports.getAssociationsByUUID = async (req, res, next) => {
     const results = associations.map((item) => {
       if (item.isFile || item.type === 'user') {
         const fullUrl = item.preview
-          ? req.protocol + '://' + req.get('host') + '/' + item.preview
+          ? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
           : null;
         item.preview = fullUrl;
       }

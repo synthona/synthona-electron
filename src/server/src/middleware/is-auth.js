@@ -9,8 +9,9 @@ module.exports = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     // if refresh token is missing throw error
     if (!refreshToken) {
-      res.clearCookie('jwt', { path: '/' });
-      res.clearCookie('refreshToken', { path: '/' });
+      // res.clearCookie('jwt', { path: '/' });
+      // res.clearCookie('refreshToken', { path: '/' });
+      res.redirect('/');
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;
@@ -45,16 +46,18 @@ module.exports = async (req, res, next) => {
           });
         }
       } catch (err) {
-        res.clearCookie('jwt', { path: '/' });
-        res.clearCookie('refreshToken', { path: '/' });
+        // res.clearCookie('jwt', { path: '/' });
+        // res.clearCookie('refreshToken', { path: '/' });
+        res.redirect('/');
         err.statusCode = 500;
         throw err;
       }
     }
     // if there are no decoded tokens at this point, throw error
     if (!decodedToken && !decodedRefreshToken) {
-      res.clearCookie('jwt', { path: '/' });
-      res.clearCookie('refreshToken', { path: '/' });
+      // res.clearCookie('jwt', { path: '/' });
+      // res.clearCookie('refreshToken', { path: '/' });
+      res.redirect('/');
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;
@@ -66,8 +69,9 @@ module.exports = async (req, res, next) => {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
-    res.clearCookie('jwt', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
+    // res.clearCookie('jwt', { path: '/' });
+    // res.clearCookie('refreshToken', { path: '/' });
+    res.redirect('/');
     next(err);
   }
 };

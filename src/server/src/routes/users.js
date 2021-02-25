@@ -77,6 +77,12 @@ router.patch('/avatar', isAuth, userFileUpload, userController.setAvatar);
 // need to update this so you can only update your own
 router.patch('/header', isAuth, userFileUpload, userController.setHeaderImage);
 
+// load user avatar by uuid
+router.get('/load/avatar/:uuid', userController.loadUserAvatar);
+
+// load user header by uuid
+router.get('/load/header/:uuid', userController.loadUserHeader);
+
 // update the username
 router.patch(
   '/username',

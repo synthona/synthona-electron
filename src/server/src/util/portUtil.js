@@ -100,3 +100,29 @@ exports.countBrokenAssociations = async () => {
   console.log('done');
   return;
 };
+
+exports.findAndReplaceTextNodeUUID = async (oldUUID, newUUID) => {
+  console.log('updating text node uuids for ');
+  // there might be more than one result. we are simply going to search for the old ID
+  // there will be an array of values in return, possibly 1 long or possibly more
+
+  // it will loop through those here. unfortunatley we do have to perform a search for each one don't we?
+  // unfortunately yes i think so. which will add time to imports. the only relief is that
+  // imports are something you only have to run like, occasionally
+
+  // perform a text search of the content column of the text node types
+  // searching for a match of "oldUUID"
+  const result = node.findAll({
+    where: {
+      content: { [Op.like]: '%' + oldUUID },
+    },
+  });
+
+  // loop through
+  for (node of result) {
+    console.log(node);
+    // the update to be done is that we need to replaced the oldUUID with newUUID
+    // directly in the string in the database, without changing anything else
+    // and once that's done, we simply save the updated node back to the database!
+  }
+};

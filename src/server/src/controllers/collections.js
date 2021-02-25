@@ -59,19 +59,25 @@ exports.regenerateCollectionPreviews = async (req, res, next) => {
       },
     });
     // loop through
-    nodeData.map(async (collection) => {
+    for (let collection of nodeData) {
       // loop through each collection
       const collectionJSON = JSON.parse(collection.preview);
-      collectionJSON.map((node) => {
-        let preview = node.preview;
+      for (let item of collectionJSON) {
+        let preview = item.preview;
         // limit the updates to file previews since everything else should work fine
-        if (node.type === 'image' && preview.includes(path.join('data', userId))) {
+        if (item.type === 'image' && preview.includes(path.join('data', userId))) {
           // grab the substring containing the data folder path
           const shortPath = preview.substring(preview.lastIndexOf('data'));
+          // lookup full data for item
+          const fullItemData = await node.findOne({
+            where: {
+              preview: shortPath,
+            },
+          });
           // return the updated values
-          return (node.preview = req.protocol + '://' + req.get('host') + '/' + shortPath);
+          item.preview = req.protocol + '://' + req.get('host') + '/file/load/' + fullItemData.uuid;
         }
-      });
+      }
       const newPreview = JSON.stringify(collectionJSON);
       // save the updated values to the database
       await node.update(
@@ -86,7 +92,7 @@ exports.regenerateCollectionPreviews = async (req, res, next) => {
           silent: true,
         }
       );
-    });
+    }
     // send back 200 status
     res.sendStatus(200);
   } catch (err) {

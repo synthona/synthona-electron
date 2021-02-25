@@ -91,9 +91,6 @@ app.use('/association', associationRoutes);
 app.use('/port', portRoutes);
 app.use('/file', fileRoutes);
 
-// TODO: the file directory should probably require permissions per image? not sure how that should work
-app.use('/data', isAuth, express.static(path.join(__coreDataDir, 'data'))); // file directory
-
 if (process.env.FRONTEND_DEV_MODE) {
   console.log('✔ serving pre-built client');
   // serve the React interface

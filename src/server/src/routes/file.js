@@ -19,5 +19,8 @@ router.put(
   fileController.createFile
 );
 
+// load file
+router.get('/load/:uuid', isAuth, fileController.loadFileByUUID);
+
 // return the router
 module.exports = router;

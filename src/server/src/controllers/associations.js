@@ -242,6 +242,11 @@ exports.getAssociationsByUUID = async (req, res, next) => {
     var perPage = 30;
     // fetch the node to get the internal ID
     var specificNode = await node.findOne({ where: { uuid: nodeUUID } });
+    if (!specificNode) {
+      const error = new Error('Could not find  node');
+      error.statusCode = 404;
+      throw error;
+    }
     var nodeId = specificNode.id;
     // get the total node count
     const data = await association.findAndCountAll({

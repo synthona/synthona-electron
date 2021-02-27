@@ -244,6 +244,13 @@ const mainWindow = () => {
           },
         },
         {
+          label: 'Github',
+          click: async () => {
+            const { shell } = require('electron');
+            await shell.openExternal('https://www.github.com/synthona');
+          },
+        },
+        {
           label: 'Patreon',
           click: async () => {
             const { shell } = require('electron');
@@ -251,10 +258,10 @@ const mainWindow = () => {
           },
         },
         {
-          label: 'Github',
+          label: 'Ko-Fi',
           click: async () => {
             const { shell } = require('electron');
-            await shell.openExternal('https://www.github.com/synthona');
+            await shell.openExternal('https://ko-fi.com/hyperpoints');
           },
         },
       ],

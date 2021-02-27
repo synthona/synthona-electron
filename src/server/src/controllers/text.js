@@ -187,9 +187,6 @@ exports.processText = async (req, res, next) => {
     }
     textNode.preview = preview ? preview : textNode.preview;
     const result = await textNode.save();
-    // for testing only
-    const portUtil = require('../util/portUtil');
-    // portUtil.findAndReplaceTextNodeUUID('', '');
     // send response
     res.status(200).json({ node: result });
   } catch (err) {

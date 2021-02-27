@@ -24,8 +24,6 @@ const collectionRoutes = require('./src/routes/collections');
 const associationRoutes = require('./src/routes/associations');
 const portRoutes = require('./src/routes/port');
 const fileRoutes = require('./src/routes/file');
-// import auth middleware
-const isAuth = require('./src/middleware/is-auth');
 
 const debug = false;
 // WARNING: setting this to TRUE will erase the

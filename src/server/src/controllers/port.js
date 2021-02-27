@@ -1,14 +1,14 @@
 const fs = require('fs');
 const path = require('path');
-// custom code
 const { validationResult } = require('express-validator/check');
 // bring in data models.
 const { node, association, user } = require('../db/models');
 const { Op } = require('sequelize');
 // set up archiver and unzip library
-const portUtil = require('../util/portUtil');
 const archiver = require('archiver');
 var admZip = require('adm-zip');
+// custom code
+const portUtil = require('../util/portUtil');
 const fsUtil = require('../util/fsUtil');
 
 // generate a data export for this user
@@ -291,10 +291,10 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
         hidden: false,
         searchable: true,
         type: 'package',
-        name: exportName,
+        name: anchorNodeName,
         preview: dbFileUrl,
         path: dbFileUrl,
-        content: exportName,
+        content: anchorNodeName,
         creator: userId,
       });
       // TODO: send back the created export to the client as a file
@@ -687,21 +687,10 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         }
         // process the linkedNode and linkedNodeUUID columns
         for (let value of newNodeIdList) {
-          // this is where i should call a function for portUtil which will
-          // search for all nodes with the importId of this packageUUID and
-          // perform a text search of the content column of the text node types
-          // searching for a match of "oldUUID"
-
-          // whenever there is a match of "oldUUID" in one of the nodes
-          // we add that node to a list to be updated? or directly update it
-
-          // the update to be done is that we need to replaced the oldUUID with newUUID
-          // directly in the string in the database, without changing anything else
-          // and once that's done, we simply save the updated node back to the database!
-
-          // easy!
-
-          // replace the temporary values with the correct values
+          // update the UUIDs in all text content to reflect new post-import values
+          // for testing only
+          portUtil.findAndReplaceTextNodeUUID(value.oldUUID, value.newUUID, packageUUID);
+          // replace the temporary values with the correct values for associations
           association.update(
             {
               linkedNode: value.newId,

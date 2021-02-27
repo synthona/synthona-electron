@@ -6,8 +6,10 @@ exports.transferImportedUserData = async (packageUUID, loggedInUserNode) => {
   // 1) "look up" all the user nodes and associations in the import
   const userNodeList = await node.findAll({
     where: {
-      importId: packageUUID,
-      type: 'user',
+      [Op.and]: {
+        importId: packageUUID,
+        type: 'user',
+      },
     },
     // include whichever node is the associated one for
     include: [
@@ -101,28 +103,29 @@ exports.countBrokenAssociations = async () => {
   return;
 };
 
-exports.findAndReplaceTextNodeUUID = async (oldUUID, newUUID) => {
-  console.log('updating text node uuids for ');
-  // there might be more than one result. we are simply going to search for the old ID
-  // there will be an array of values in return, possibly 1 long or possibly more
-
-  // it will loop through those here. unfortunatley we do have to perform a search for each one don't we?
-  // unfortunately yes i think so. which will add time to imports. the only relief is that
-  // imports are something you only have to run like, occasionally
-
+exports.findAndReplaceTextNodeUUID = async (oldUUID, newUUID, importId) => {
+  console.log('updating instances of text content uuid ' + oldUUID + ' with ' + newUUID);
   // perform a text search of the content column of the text node types
   // searching for a match of "oldUUID"
-  const result = node.findAll({
+  const result = await node.findAll({
     where: {
-      content: { [Op.like]: '%' + oldUUID },
+      [Op.and]: {
+        content: { [Op.like]: '%' + oldUUID + '%' },
+        importId: importId,
+      },
     },
   });
-
-  // loop through
-  for (node of result) {
-    console.log(node);
-    // the update to be done is that we need to replaced the oldUUID with newUUID
-    // directly in the string in the database, without changing anything else
-    // and once that's done, we simply save the updated node back to the database!
+  // loop through the nodes
+  for (let item of result) {
+    // set up regex to search globally for the oldUUID
+    const regex = new RegExp(oldUUID, 'g');
+    // replace all instances of the uuid
+    const newContent = item.content.replace(regex, newUUID);
+    // update the content value
+    item.content = newContent;
+    // save the updated content into the database
+    item.save();
   }
+  // and...we're done!
+  return;
 };

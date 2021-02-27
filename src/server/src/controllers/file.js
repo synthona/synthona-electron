@@ -94,12 +94,14 @@ exports.loadFileByUUID = async (req, res, next) => {
         uuid: uuid,
         creator: userId,
       },
-      attributes: ['preview', 'path'],
+      attributes: ['preview', 'path', 'name'],
     });
     // make sure there is a preview and then respond
     if (result && result.preview) {
-      const imagePath = path.join(__coreDataDir, result.preview);
-      res.sendFile(path.resolve(imagePath));
+      const filePath = path.join(__coreDataDir, result.preview);
+      const basename = path.basename(filePath);
+      const extension = basename.substring(basename.lastIndexOf('.'));
+      res.download(filePath, result.name + extension);
     } else {
       res.sendStatus(404);
     }

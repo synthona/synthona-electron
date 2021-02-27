@@ -89,7 +89,7 @@ exports.createAssociation = async (req, res, next) => {
     // re-apply baseURL if node is a file
     if (result.associated.isFile || result.associated.type === 'user') {
       const fullUrl = result.associated.preview
-        ? req.protocol + '://' + req.get('host') + '/' + 'file/load/' + result.associated.uid
+        ? req.protocol + '://' + req.get('host') + '/' + 'file/load/' + result.associated.uuid
         : null;
       result.associated.preview = fullUrl;
     }

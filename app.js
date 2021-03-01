@@ -1,7 +1,16 @@
 const path = require('path');
 const fs = require('fs');
 const crytpo = require('crypto');
-const { app, session, shell, globalShortcut, BrowserWindow, Menu, MenuItem } = require('electron');
+const {
+  app,
+  session,
+  shell,
+  globalShortcut,
+  BrowserWindow,
+  Menu,
+  MenuItem,
+  clipboard,
+} = require('electron');
 const contextMenu = require('electron-context-menu');
 
 // load configuration data
@@ -15,17 +24,19 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
   // if there's no config file yet, make sure to generate one
   console.log('✔ generating configuration file');
   const configJSON = JSON.stringify({
-    'VERSION': 1,
     'FULLSCREEN': true,
+    'OPEN_URLS_IN_BROWSER': true,
+    'GRAPH_RENDER_LIMIT': 100,
     'HTTP_CACHE': false,
     'CLEAR_CACHE': false,
     'DEBUG': false,
     'SERVER_PORT': 3077,
     'CLIENT_PORT': 3077,
     'CLIENT_BASE': 'localhost',
-    'APP_NAME': 'synthona',
     'JWT_SECRET': crytpo.randomBytes(100).toString('base64'),
     'REFRESH_TOKEN_SECRET': crytpo.randomBytes(100).toString('base64'),
+    'APP_NAME': 'synthona',
+    'VERSION': 1,
   });
   if (!fs.existsSync(configDirPath)) {
     fs.mkdirSync(configDirPath);
@@ -67,6 +78,7 @@ const serverProcess = fork(path.join(__dirname, './src/server/app.js'), ['args']
     'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
     'VERSION': config.VERSION,
     'CORE_DATA_DIRECTORY': app.getPath('userData'),
+    'GRAPH_RENDER_LIMIT': config.GRAPH_RENDER_LIMIT,
   },
 });
 
@@ -190,6 +202,13 @@ const mainWindow = () => {
     {
       label: 'Edit',
       submenu: [
+        {
+          label: 'copy url',
+          click: async () => {
+            let currentUrl = BrowserWindow.getFocusedWindow().webContents.getURL();
+            clipboard.writeText(currentUrl);
+          },
+        },
         { role: 'undo' },
         { role: 'redo' },
         { type: 'separator' },
@@ -251,6 +270,13 @@ const mainWindow = () => {
           },
         },
         {
+          label: 'Twitter',
+          click: async () => {
+            const { shell } = require('electron');
+            await shell.openExternal('https://twitter.com/synthona');
+          },
+        },
+        {
           label: 'Patreon',
           click: async () => {
             const { shell } = require('electron');
@@ -274,9 +300,11 @@ const mainWindow = () => {
   newWindow.loadURL('http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT);
   // set behaviour for opening a link in new tab
   newWindow.webContents.on('new-window', function (e, url) {
-    e.preventDefault();
-    // open url in user's default browser
-    shell.openExternal(url);
+    if (config.OPEN_URLS_IN_BROWSER) {
+      e.preventDefault();
+      // open url in user's default browser
+      shell.openExternal(url);
+    }
   });
   // mark window as created and electron as ready
   electronReady = true;

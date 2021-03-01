@@ -8,7 +8,7 @@ exports.generateToken = (user) => {
   // look at jwt.io for additional information.
   return (token = jwt.sign(u, process.env.JWT_SECRET, {
     // expiresIn: '1h', // expires in 1 hours
-    expiresIn: '10m', // expires every 15 minutes
+    expiresIn: '10m', // expires every 10 minutes
   }));
 };
 

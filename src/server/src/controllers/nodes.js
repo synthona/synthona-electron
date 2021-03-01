@@ -360,7 +360,7 @@ exports.getGraphData = async (req, res, next) => {
       throw error;
     }
     // process request
-    const perPage = 100;
+    const perPage = process.env.GRAPH_RENDER_LIMIT || 100;
     const anchorNode = req.query.anchorNode;
     let nodeList;
     let nodeIdList = [];

@@ -119,7 +119,6 @@ exports.getNodeByUUID = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    context.markNodeView(result.uuid);
     // add full file url
     if (result.isFile || result.type === 'user') {
       result.preview = result.preview

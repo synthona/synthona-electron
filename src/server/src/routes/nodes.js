@@ -35,6 +35,7 @@ router.patch(
     body('searchable').optional().isBoolean(),
     body('preview').optional().isString(),
     body('content').optional().isString(),
+    query('pinned').optional().isBoolean(),
   ],
   nodeController.updateNode
 );
@@ -53,6 +54,7 @@ router.get(
   [
     query('page').optional().isNumeric(),
     query('type').optional().isString(),
+    query('pinned').optional().isBoolean(),
     query('searchQuery').optional().isString(),
   ],
   nodeController.searchNodes

@@ -30,6 +30,6 @@
     "sequelize-cli": "^5.5.1",
     "shortid": "^2.2.16",
     "sqlite3": "^5.0.0",
-    "umzug": "^3.0.0-beta.15"
+    "umzug": "^2.3.0"
   }
 }

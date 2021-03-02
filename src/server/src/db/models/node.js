@@ -78,6 +78,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         comment: 'The creator of the node',
       },
+      pinned: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        comment: 'Whether or not the node is pinned',
+      },
       viewedAt: {
         type: DataTypes.DATE,
         comment: 'last date this node was viewed',

@@ -111,6 +111,7 @@ exports.getNodeByUUID = async (req, res, next) => {
         'preview',
         'content',
         'path',
+        'pinned',
         'updatedAt',
       ],
     });
@@ -189,6 +190,8 @@ exports.updateNode = async (req, res, next) => {
       typeof req.body.hidden === 'boolean' ? req.body.hidden : existingNode.hidden;
     existingNode.searchable =
       typeof req.body.searchable === 'boolean' ? req.body.searchable : existingNode.searchable;
+    existingNode.pinned =
+      typeof req.body.pinned === 'boolean' ? req.body.pinned : existingNode.pinned;
     // save and store result
     const result = await existingNode.save({ silent: true });
     // it's an file, re-apply the baseURL
@@ -225,6 +228,7 @@ exports.searchNodes = async (req, res, next) => {
     var perPage = 15;
     var type = req.query.type || null;
     var searchQuery = req.query.searchQuery || '';
+    var pinned = req.query.pinned || null;
 
     var splitQuery = searchQuery.split(' ');
     var fuzzySearch = '%';
@@ -257,10 +261,9 @@ exports.searchNodes = async (req, res, next) => {
       // in an open request do not return hidden items
       whereStatement.hidden = { [Op.not]: true };
     }
-    // exclude user nodes from the explore page for now
-    // whereStatement.type = { [Op.not]: 'user' };
     if (type) whereStatement.type = type;
-    // make sure the only nodes retrieved are from the logged in user
+    if (pinned) whereStatement.pinned = true;
+    // // make sure the only nodes retrieved are from the logged in user
     whereStatement.creator = userId;
     // get the total node count
     const data = await node.findAndCountAll({

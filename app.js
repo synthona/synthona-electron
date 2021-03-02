@@ -350,6 +350,13 @@ app.on('ready', () => {
       );
     }
   });
+  globalShortcut.register('CommandOrControl+P', () => {
+    if (BrowserWindow.getFocusedWindow()) {
+      BrowserWindow.getFocusedWindow().loadURL(
+        'http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT + '/pins/'
+      );
+    }
+  });
   // register the quickmen system
   registerQuickMenu();
   if (!config.DEBUG) {

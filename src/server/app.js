@@ -35,7 +35,8 @@ let dataDirectory = path.join(__coreDataDir, 'data');
 if (!fs.existsSync(dataDirectory)) {
   fs.mkdirSync(dataDirectory);
 }
-// check for database updates
+
+// run database updates
 dbUpdater.checkForDatabaseUpdates(db);
 
 // set up express app

@@ -350,7 +350,7 @@ app.on('ready', () => {
       );
     }
   });
-  globalShortcut.register('CommandOrControl+P', () => {
+  globalShortcut.register('CommandOrControl+J', () => {
     if (BrowserWindow.getFocusedWindow()) {
       BrowserWindow.getFocusedWindow().loadURL(
         'http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT + '/pins/'

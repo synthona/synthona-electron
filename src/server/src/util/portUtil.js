@@ -3,61 +3,27 @@ const { Op } = require('sequelize');
 
 exports.transferImportedUserData = async (packageUUID, loggedInUserNode) => {
   console.log('\n' + 'associating imported user data to logged in user');
-  // 1) "look up" all the user nodes and associations in the import
-  const userNodeList = await node.findAll({
+  const associations = await association.findAll({
     where: {
       [Op.and]: {
         importId: packageUUID,
-        type: 'user',
+        [Op.or]: {
+          nodeType: 'user',
+          linkedNodeType: 'user',
+        },
       },
     },
-    // include whichever node is the associated one for
-    include: [
-      {
-        model: association,
-        where: {
-          [Op.or]: [{ nodeType: 'user' }, { linkedNodeType: 'user' }],
-        },
-        required: false,
-        as: 'original',
-      },
-      {
-        model: association,
-        where: {
-          [Op.or]: [{ nodeType: 'user' }, { linkedNodeType: 'user' }],
-        },
-        required: false,
-        as: 'associated',
-      },
-    ],
   });
-  // 2) replace the user part of the association with the values of loggedInUser
-  for (userNode of userNodeList) {
-    if (userNode.original) {
-      userNode.original.forEach((association) => {
-        if (association.nodeType === 'user') {
-          association.nodeId = loggedInUserNode.id;
-          association.nodeUUID = loggedInUserNode.uuid;
-          association.save();
-        } else if (association.linkedNodeType === 'user') {
-          association.linkedNode = loggedInUserNode.id;
-          association.linkedNodeUUID = loggedInUserNode.uuid;
-          association.save();
-        }
-      });
-    }
-    if (userNode.associated) {
-      userNode.associated.forEach((association) => {
-        if (association.nodeType === 'user') {
-          association.nodeId = loggedInUserNode.id;
-          association.nodeUUID = loggedInUserNode.uuid;
-          association.save();
-        } else if (association.linkedNodeType === 'user') {
-          association.linkedNode = loggedInUserNode.id;
-          association.linkedNodeUUID = loggedInUserNode.uuid;
-          association.save();
-        }
-      });
+  // loop through and update the association values with the logged in user values instead
+  for (let item of associations) {
+    if (item.nodeType === 'user') {
+      item.nodeUUID = loggedInUserNode.uuid.toString();
+      item.nodeId = loggedInUserNode.id.toString();
+      item.save();
+    } else if (item.linkedNodeType === 'user') {
+      item.linkedNodeUUID = loggedInUserNode.uuid.toString();
+      item.linkedNode = loggedInUserNode.id.toString();
+      item.save();
     }
   }
   // 3) delete all user nodes from nodes table with the importId

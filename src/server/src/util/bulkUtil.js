@@ -249,7 +249,7 @@ exports.countBrokenAssociations = async () => {
     order: [['updatedAt', 'ASC']],
   });
   // iterate through the associations
-  for (value of result) {
+  for (let value of result) {
     const anchorNode = await node.findOne({
       where: {
         id: value.nodeId,

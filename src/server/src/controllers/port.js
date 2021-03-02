@@ -652,7 +652,6 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               // nodeId and nodeUUID to the new values. linkedNode
               // and linkedNodeUUID will temporarily have the wrong values. this will
               // be corrected at a second pass later in the import
-              console.log('about to create association');
               await association.create(
                 {
                   nodeId: newNode.id,
@@ -669,7 +668,6 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 },
                 { silent: true }
               );
-              console.log('just created association');
             }
             // store the old and new UUIDs and IDs here to be re-processed
             // with the linkedNode and linkedNodeUUID columns at the end

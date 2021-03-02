@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         comment: 'unique identifier',
+        allowNull: true,
       },
       metadata: {
         type: DataTypes.JSON,
@@ -24,23 +25,23 @@ module.exports = (sequelize, DataTypes) => {
         comment: 'url or file path associated with the node',
       },
       isFile: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
         comment: 'is there a file on the server associated with this?',
       },
       hidden: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
         comment: 'can it be accessed directly or only through its associations?',
       },
       searchable: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.BOOLEAN,
         comment: 'should it appear in search?',
       },
       type: {
         type: DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
         comment: 'The Node type',
       },
       name: {
@@ -75,7 +76,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       creator: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         comment: 'The creator of the node',
       },
       pinned: {
@@ -92,11 +93,11 @@ module.exports = (sequelize, DataTypes) => {
         comment: 'UUID of the import package, if association was imported from elsewhere',
       },
       createdAt: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.DATE,
       },
       updatedAt: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.DATE,
       },
     },

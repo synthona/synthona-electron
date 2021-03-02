@@ -55,11 +55,9 @@ module.exports = (sequelize, DataTypes) => {
       //   comment: 'The fileurl of the user header image'
       // },
       createdAt: {
-        allowNull: false,
         type: DataTypes.DATE,
       },
       updatedAt: {
-        allowNull: false,
         type: DataTypes.DATE,
       },
     },

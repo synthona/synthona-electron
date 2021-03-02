@@ -608,24 +608,20 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               fileEntry.name
             );
             // generate node
-            newNode = await node.create(
-              {
-                isFile: nodeImport.isFile,
-                hidden: nodeImport.hidden,
-                searchable: nodeImport.searchable,
-                type: nodeImport.type,
-                name: nodeImport.name,
-                preview: dbFilePath || null,
-                content: nodeImport.content,
-                path: nodeImport.path,
-                creator: userId,
-                pinned: nodeImport.pinned,
-                createdAt: nodeImport.createdAt,
-                updatedAt: nodeImport.updatedAt,
-                importId: packageUUID,
-              },
-              { silent: true }
-            );
+            newNode = await node.create({
+              isFile: nodeImport.isFile,
+              hidden: nodeImport.hidden,
+              searchable: nodeImport.searchable,
+              type: nodeImport.type,
+              name: nodeImport.name,
+              preview: dbFilePath || null,
+              content: nodeImport.content,
+              path: nodeImport.path,
+              creator: userId,
+              pinned: nodeImport.pinned,
+              createdAt: nodeImport.createdAt,
+              importId: packageUUID,
+            });
           }
           // default import code
           else {
@@ -633,24 +629,20 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               nodeImport.path = loggedInUser.username;
             }
             // generate node
-            newNode = await node.create(
-              {
-                isFile: nodeImport.isFile,
-                hidden: nodeImport.hidden,
-                searchable: nodeImport.searchable,
-                type: nodeImport.type,
-                name: nodeImport.name,
-                preview: nodeImport.preview,
-                content: nodeImport.content,
-                path: nodeImport.path,
-                creator: userId,
-                pinned: nodeImport.pinned,
-                createdAt: nodeImport.createdAt,
-                updatedAt: nodeImport.updatedAt,
-                importId: packageUUID,
-              },
-              { silent: true }
-            );
+            newNode = await node.create({
+              isFile: nodeImport.isFile,
+              hidden: nodeImport.hidden,
+              searchable: nodeImport.searchable,
+              type: nodeImport.type,
+              name: nodeImport.name,
+              preview: nodeImport.preview,
+              content: nodeImport.content,
+              path: nodeImport.path,
+              creator: userId,
+              pinned: nodeImport.pinned,
+              createdAt: nodeImport.createdAt,
+              importId: packageUUID,
+            });
           }
           // if the node in question has associations, process them
           if (nodeImport.original) {
@@ -660,6 +652,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               // nodeId and nodeUUID to the new values. linkedNode
               // and linkedNodeUUID will temporarily have the wrong values. this will
               // be corrected at a second pass later in the import
+              console.log('about to create association');
               await association.create(
                 {
                   nodeId: newNode.id,
@@ -676,6 +669,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
                 },
                 { silent: true }
               );
+              console.log('just created association');
             }
             // store the old and new UUIDs and IDs here to be re-processed
             // with the linkedNode and linkedNodeUUID columns at the end

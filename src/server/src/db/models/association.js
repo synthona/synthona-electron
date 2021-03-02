@@ -12,55 +12,57 @@ module.exports = (sequelize, DataTypes) => {
       },
       nodeId: {
         type: DataTypes.INTEGER,
-        unique: false,
         comment: 'The Node which is being associated',
+        allowNull: true,
       },
       nodeUUID: {
         type: DataTypes.UUID,
-        unique: false,
         comment: 'unique identifier for the node',
+        allowNull: true,
       },
       nodeType: {
         type: DataTypes.STRING,
-        allowNull: false,
         comment: 'The node type',
+        allowNull: true,
       },
       linkedNode: {
         type: DataTypes.INTEGER,
-        unique: false,
         comment: 'the node being linked to',
+        allowNull: true,
       },
       linkedNodeUUID: {
         type: DataTypes.UUID,
-        unique: false,
         comment: 'copy of the unique identifier for the linkedNode',
+        allowNull: true,
       },
       linkedNodeType: {
         type: DataTypes.STRING,
-        allowNull: false,
         comment: 'The linked node type',
+        allowNull: true,
       },
       linkStrength: {
         type: DataTypes.INTEGER,
         comment: 'left associated node association strength',
+        allowNull: true,
       },
       creator: {
         type: DataTypes.INTEGER,
-        allowNull: false,
         comment: 'The creator of the association',
+        allowNull: true,
       },
       importId: {
         type: DataTypes.UUID,
         after: 'creator',
         comment: 'UUID of the import package, if association was imported from elsewhere',
+        allowNull: true,
       },
       createdAt: {
-        allowNull: false,
         type: DataTypes.DATE,
+        allowNull: true,
       },
       updatedAt: {
-        allowNull: false,
         type: DataTypes.DATE,
+        allowNull: true,
       },
     },
     { freezeTableName: true }

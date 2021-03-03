@@ -32,3 +32,24 @@ exports.markNodeView = async (uuid) => {
     err.message = 'Failed to mark view in context system';
   }
 };
+
+exports.createNewAssociation = async (anchorNode, linkedNode, userId) => {
+  try {
+    // create association
+    const newAssociation = await association.create({
+      nodeId: anchorNode.id,
+      nodeUUID: anchorNode.uuid,
+      nodeType: anchorNode.type,
+      linkedNode: linkedNode.id,
+      linkedNodeUUID: linkedNode.uuid,
+      linkedNodeType: linkedNode.type,
+      linkStrength: 1,
+      creator: userId,
+    });
+    // return the value
+    return newAssociation;
+  } catch (err) {
+    err.statusCode = 500;
+    err.message = 'Failed to mark view in context system';
+  }
+};

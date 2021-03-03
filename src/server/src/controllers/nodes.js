@@ -380,7 +380,7 @@ exports.getGraphData = async (req, res, next) => {
       nodeIdList.push(anchor.dataValues.id);
       nodeList.push(anchor.dataValues);
       // 1. fetch the nodes
-      const oringalList = await association.findAll({
+      const originalList = await association.findAll({
         where: {
           creator: userId,
           [Op.or]: [{ nodeUUID: anchorNode }, { linkedNodeUUID: anchorNode }],
@@ -416,7 +416,7 @@ exports.getGraphData = async (req, res, next) => {
         ],
       });
       // 2. turn the nodelist into an array to be passed into the second query
-      oringalList.map((node) => {
+      originalList.map((node) => {
         // grab the left associated nodes
         if (node.original.dataValues.uuid !== anchor.uuid) {
           nodeIdList.push(node.original.dataValues.id);

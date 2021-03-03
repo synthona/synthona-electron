@@ -10,6 +10,7 @@ var admZip = require('adm-zip');
 // custom code
 const portUtil = require('../util/portUtil');
 const fsUtil = require('../util/fsUtil');
+const context = require('../util/context');
 
 // generate a data export for this user
 exports.exportAllUserData = async (req, res, next) => {
@@ -677,6 +678,13 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               newId: newNode.id,
               newUUID: newNode.uuid,
             });
+          }
+          // associate the imports to the package so users can easily see what they have imported
+          // skip the user nodes as we are dealing with those separately
+          if (newNode.type !== 'user') {
+            console.log('associating ' + newNode.name + ' to package');
+            // create association between the import package and the new node
+            await context.createNewAssociation(packageNode, newNode, userId);
           }
         }
         // process the linkedNode and linkedNodeUUID columns

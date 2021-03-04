@@ -2,6 +2,7 @@ const path = require('path');
 var fs = require('fs');
 // import packages
 const { validationResult } = require('express-validator/check');
+const bcrypt = require('bcryptjs');
 // bring in data models.
 const { user, node } = require('../db/models');
 // bring in util functions
@@ -428,9 +429,6 @@ exports.loadUserHeader = async (req, res, next) => {
 };
 
 exports.clearAllNodesByUser = async (req, res, next) => {
-  // NOTE: this info is generated server side in is-auth.js
-  // so doesn't need to be validated here
-  const uid = req.user.uid;
   try {
     // catch validation errors
     const errors = validationResult(req);
@@ -440,7 +438,28 @@ exports.clearAllNodesByUser = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
-    // remove all nodes which are not of type user
+    // NOTE: this info is generated server side in is-auth.js
+    // so doesn't need to be validated here
+    const uid = req.user.uid;
+    const account = await user.findOne({
+      where: { id: uid },
+    });
+    // catch error if no account is found
+    if (!account) {
+      const error = new Error('A user with this uid could not be found');
+      error.statusCode = 401;
+      throw error;
+    }
+    // store incoming info in variables.
+    const password = req.body.password.trim();
+    // verify old password
+    const isEqual = await bcrypt.compare(password, account.password);
+    if (!isEqual) {
+      const error = new Error('Password is incorrect');
+      error.statusCode = 401;
+      throw error;
+    }
+    // remove all nodes created by the logged in user which are not of type user
     await node.destroy({ where: { [Op.and]: { creator: uid, [Op.not]: { type: 'user' } } } });
     // send response
     res.sendStatus(200);

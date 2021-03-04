@@ -132,13 +132,12 @@ router.patch(
   userController.setEmail
 );
 
-// router.patch(
-//   'clear',
-//   isAuth,
-//   [
-//     body('')
-//   ]
-// )
+router.patch(
+  '/clear',
+  isAuth,
+  [body('password').exists().trim().isString().isLength({ min: 5 })],
+  userController.clearAllNodesByUser
+);
 
 // return the router
 module.exports = router;

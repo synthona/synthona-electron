@@ -2,7 +2,6 @@
 require('dotenv').config();
 // import packages
 const { validationResult } = require('express-validator/check');
-// var cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 // custom code
 const tokens = require('../util/tokens');

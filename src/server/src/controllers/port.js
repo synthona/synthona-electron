@@ -39,11 +39,10 @@ exports.exportAllUserData = async (req, res, next) => {
       '-' +
       currentDate.getMinutes() +
       '-' +
-      currentDate.getSeconds() +
-      '.synth';
+      currentDate.getSeconds();
 
-    const exportDest = await fsUtil.generateFileLocation(userId, exportName);
-    const exportFile = path.join(exportDest, exportName);
+    const exportDest = await fsUtil.generateFileLocation(userId, exportName + '.synth');
+    const exportFile = path.join(exportDest, exportName + '.synth');
     const dbFileUrl = exportFile.substring(exportFile.lastIndexOf('data'));
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportFile);
@@ -272,9 +271,9 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       // anchorNodeId = node.id;
     }
     // set export name, destination, and extension
-    const exportName = anchorNodeName + '.synth';
-    const exportDest = await fsUtil.generateFileLocation(userId, exportName);
-    const exportFile = path.join(exportDest, exportName);
+    const exportName = anchorNodeName;
+    const exportDest = await fsUtil.generateFileLocation(userId, exportName + '.synth');
+    const exportFile = path.join(exportDest, exportName + '.synth');
     const dbFileUrl = exportFile.substring(exportFile.lastIndexOf('data'));
     // create a file to stream archive data to.
     var output = fs.createWriteStream(exportFile);
@@ -609,20 +608,24 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               fileEntry.name
             );
             // generate node
-            newNode = await node.create({
-              isFile: nodeImport.isFile,
-              hidden: nodeImport.hidden,
-              searchable: nodeImport.searchable,
-              type: nodeImport.type,
-              name: nodeImport.name,
-              preview: dbFilePath || null,
-              content: nodeImport.content,
-              path: nodeImport.path,
-              creator: userId,
-              pinned: nodeImport.pinned,
-              createdAt: nodeImport.createdAt,
-              importId: packageUUID,
-            });
+            newNode = await node.create(
+              {
+                isFile: nodeImport.isFile,
+                hidden: nodeImport.hidden,
+                searchable: nodeImport.searchable,
+                type: nodeImport.type,
+                name: nodeImport.name,
+                preview: dbFilePath || null,
+                content: nodeImport.content,
+                path: nodeImport.path,
+                creator: userId,
+                pinned: nodeImport.pinned,
+                createdAt: nodeImport.createdAt,
+                updatedAt: nodeImport.updatedAt,
+                importId: packageUUID,
+              },
+              { silent: true }
+            );
           }
           // default import code
           else {
@@ -630,20 +633,24 @@ exports.unpackSynthonaImport = async (req, res, next) => {
               nodeImport.path = loggedInUser.username;
             }
             // generate node
-            newNode = await node.create({
-              isFile: nodeImport.isFile,
-              hidden: nodeImport.hidden,
-              searchable: nodeImport.searchable,
-              type: nodeImport.type,
-              name: nodeImport.name,
-              preview: nodeImport.preview,
-              content: nodeImport.content,
-              path: nodeImport.path,
-              creator: userId,
-              pinned: nodeImport.pinned,
-              createdAt: nodeImport.createdAt,
-              importId: packageUUID,
-            });
+            newNode = await node.create(
+              {
+                isFile: nodeImport.isFile,
+                hidden: nodeImport.hidden,
+                searchable: nodeImport.searchable,
+                type: nodeImport.type,
+                name: nodeImport.name,
+                preview: nodeImport.preview,
+                content: nodeImport.content,
+                path: nodeImport.path,
+                creator: userId,
+                pinned: nodeImport.pinned,
+                createdAt: nodeImport.createdAt,
+                updatedAt: nodeImport.updatedAt,
+                importId: packageUUID,
+              },
+              { silent: true }
+            );
           }
           // if the node in question has associations, process them
           if (nodeImport.original) {

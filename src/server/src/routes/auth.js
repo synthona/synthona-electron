@@ -62,7 +62,7 @@ router.patch(
   '/password',
   isAuth,
   [
-    body('oldPassword').exists().trim().isString(),
+    body('oldPassword').exists().trim().isString().isLength({ min: 5 }),
     body('newPassword').exists().trim().isString().isLength({ min: 5 }),
   ],
   authController.changePassword

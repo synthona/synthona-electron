@@ -19,11 +19,11 @@ exports.transferImportedUserData = async (packageUUID, loggedInUserNode) => {
     if (item.nodeType === 'user') {
       item.nodeUUID = loggedInUserNode.uuid.toString();
       item.nodeId = loggedInUserNode.id.toString();
-      item.save();
+      item.save({ silent: true });
     } else if (item.linkedNodeType === 'user') {
       item.linkedNodeUUID = loggedInUserNode.uuid.toString();
       item.linkedNode = loggedInUserNode.id.toString();
-      item.save();
+      item.save({ silent: true });
     }
   }
   // 3) delete all user nodes from nodes table with the importId

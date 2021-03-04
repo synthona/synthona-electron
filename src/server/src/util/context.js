@@ -33,7 +33,7 @@ exports.markNodeView = async (uuid) => {
   }
 };
 
-exports.createNewAssociation = async (anchorNode, linkedNode, userId) => {
+exports.createNewAssociation = async (anchorNode, linkedNode, userId, importId) => {
   try {
     // create association
     const newAssociation = await association.create({
@@ -43,6 +43,7 @@ exports.createNewAssociation = async (anchorNode, linkedNode, userId) => {
       linkedNode: linkedNode.id,
       linkedNodeUUID: linkedNode.uuid,
       linkedNodeType: linkedNode.type,
+      importId: importId.uuid || null,
       linkStrength: 1,
       creator: userId,
     });

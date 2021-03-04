@@ -63,7 +63,6 @@ module.exports = async (req, res, next) => {
     if (!err.statusCode) {
       err.statusCode = 500;
     }
-    res.redirect('/');
     next(err);
   }
 };

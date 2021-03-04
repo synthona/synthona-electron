@@ -4,7 +4,8 @@ var fs = require('fs');
 const { validationResult } = require('express-validator/check');
 const bcrypt = require('bcryptjs');
 // bring in data models.
-const { user, node } = require('../db/models');
+const { Op } = require('sequelize');
+const { user, node, association } = require('../db/models');
 // bring in util functions
 const fsUtil = require('../util/fsUtil');
 
@@ -428,7 +429,7 @@ exports.loadUserHeader = async (req, res, next) => {
   }
 };
 
-exports.clearAllNodesByUser = async (req, res, next) => {
+exports.clearAllDataByUser = async (req, res, next) => {
   try {
     // catch validation errors
     const errors = validationResult(req);
@@ -461,6 +462,21 @@ exports.clearAllNodesByUser = async (req, res, next) => {
     }
     // remove all nodes created by the logged in user which are not of type user
     await node.destroy({ where: { [Op.and]: { creator: uid, [Op.not]: { type: 'user' } } } });
+    await association.destroy({ where: { creator: uid } });
+    // clean up the data folder as well
+    fs.readdir(path.join(__coreDataDir, 'data', uid), (err, files) => {
+      if (err) {
+        return next(err);
+      } else {
+        // console.log(files);
+        files.forEach((file) => {
+          if (file !== 'user') {
+            const filePath = path.join(__coreDataDir, 'data', uid, file);
+            fs.rmdirSync(filePath, { recursive: true });
+          }
+        });
+      }
+    });
     // send response
     res.sendStatus(200);
   } catch (err) {

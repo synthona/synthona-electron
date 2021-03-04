@@ -65,6 +65,7 @@ exports.exportAllUserData = async (req, res, next) => {
         path: dbFileUrl,
         content: exportName,
         creator: userId,
+        pinned: true,
       });
       // TODO: send back the created export to the client as a file
       res.sendStatus(200);
@@ -296,6 +297,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
         path: dbFileUrl,
         content: anchorNodeName,
         creator: userId,
+        pinned: true,
       });
       // TODO: send back the created export to the client as a file
       res.sendStatus(200);
@@ -522,7 +524,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     const userId = req.user.uid;
     // uuid of the import package node
     const packageUUID = req.body.uuid;
-    // mark the import package as expanded so undo is possible even if the operation fails
+    // mark the import package as expanded so undo is possible even if the operation fails or is interrupted
     await node.update(
       {
         metadata: { expanded: true },
@@ -691,14 +693,14 @@ exports.unpackSynthonaImport = async (req, res, next) => {
           if (newNode.type !== 'user') {
             console.log('associating ' + newNode.name + ' to package');
             // create association between the import package and the new node
-            await context.createNewAssociation(packageNode, newNode, userId);
+            await context.createNewAssociation(packageNode, newNode, userId, packageNode);
           }
         }
         // process the linkedNode and linkedNodeUUID columns
         for (let value of newNodeIdList) {
           // update the UUIDs in all text content to reflect new post-import values
           // for testing only
-          portUtil.findAndReplaceTextNodeUUID(value.oldUUID, value.newUUID, packageUUID);
+          await portUtil.findAndReplaceTextNodeUUID(value.oldUUID, value.newUUID, packageUUID);
           // replace the temporary values with the correct values for associations
           association.update(
             {
@@ -886,8 +888,9 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     }
     console.log('\n' + '=================================');
     console.log('marking package as imported');
+    console.log('\n' + '=================================');
     // mark the import package as successfully expanded
-    node.update(
+    await node.update(
       {
         metadata: { expanded: true, success: true },
       },
@@ -895,11 +898,9 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         where: {
           uuid: packageUUID,
         },
-        silent: true,
       }
     );
-    const bulkUtil = require('../util/bulkUtil');
-    await bulkUtil.countBrokenAssociations();
+    await portUtil.countBrokenAssociations();
     console.log('\n');
     console.log('=================================');
     console.log('import successfully completed');

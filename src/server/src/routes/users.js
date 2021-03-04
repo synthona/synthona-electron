@@ -136,7 +136,7 @@ router.patch(
   '/clear',
   isAuth,
   [body('password').exists().trim().isString().isLength({ min: 5 })],
-  userController.clearAllNodesByUser
+  userController.clearAllDataByUser
 );
 
 // return the router

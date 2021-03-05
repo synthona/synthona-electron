@@ -23,6 +23,8 @@ exports.exportAllUserData = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
+    // send back the 200 response to let user know we're working on it
+    res.sendStatus(200);
     // this comes from the is-auth middleware
     const userId = req.user.uid;
     // set export name and extension
@@ -67,8 +69,6 @@ exports.exportAllUserData = async (req, res, next) => {
         creator: userId,
         pinned: true,
       });
-      // TODO: send back the created export to the client as a file
-      res.sendStatus(200);
     });
 
     // This event is fired when the data source is drained no matter what was the data source.
@@ -218,6 +218,9 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
       error.data = errors.array();
       throw error;
     }
+    // send back 200 response to let client know we've started the process
+    res.sendStatus(200);
+    // start generating the export
     let exportDirectory = path.join(__coreDataDir, 'data', userId, 'exports');
     // generate export directory if it does not exist
     if (!fs.existsSync(exportDirectory)) {
@@ -299,8 +302,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
         creator: userId,
         pinned: true,
       });
-      // TODO: send back the created export to the client as a file
-      res.sendStatus(200);
     });
 
     // // This event is fired when the data source is drained no matter what was the data source.
@@ -510,6 +511,68 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
   }
 };
 
+exports.removeImportsByPackage = async (req, res, next) => {
+  try {
+    // catch validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation Failed');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    // this comes from the is-auth middleware
+    const uid = req.user.uid;
+    // uuid of the import package node
+    const packageUUID = req.body.uuid;
+    // get a list of nodes which are files so the associated files can be removed
+    const nodelist = await node.findAll({
+      where: {
+        [Op.and]: [
+          { importId: packageUUID },
+          { creator: uid },
+          { isFile: true },
+          { [Op.not]: { type: 'user' } },
+        ],
+      },
+    });
+    // remove all the files
+    for (fileNode of nodelist) {
+      var filePath = path.join(__coreDataDir, fileNode.preview);
+      // remove the file if it exists
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        // clean up any empty folders created by this deletion
+        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+      }
+    }
+    // remove all the nodes and associations created by this package
+    await node.destroy({
+      where: {
+        [Op.and]: [{ importId: packageUUID }, { creator: uid }],
+      },
+    });
+    await association.destroy({
+      where: { [Op.and]: [{ importId: packageUUID }, { creator: uid }] },
+    });
+    await node.update(
+      {
+        metadata: null,
+      },
+      {
+        where: { [Op.and]: [{ uuid: packageUUID }, { creator: uid }] },
+      }
+    );
+    // send response
+    res.sendStatus(200);
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
 exports.unpackSynthonaImport = async (req, res, next) => {
   try {
     // catch validation errors
@@ -527,7 +590,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     // mark the import package as expanded so undo is possible even if the operation fails or is interrupted
     await node.update(
       {
-        metadata: { expanded: true },
+        metadata: { expanded: true, importing: true },
       },
       {
         where: {
@@ -535,8 +598,20 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         },
       }
     );
-    let userDirectoryPath = path.join(__coreDataDir, 'data', userId);
+    // send a 200 response to let the frontend know we've started the import process
+    // since it will probably take a while, and the browser may duplicate the request
+    // TODO: switch over to websockets or something so we can stream
+    // live updates of the import progress to the frontend instead of
+    // having to use this workaround
+    res.sendStatus(200);
+    // make sure al the file directories are there
+    let dataDirectoryPath = path.join(__coreDataDir, 'data', userId);
+    let userDirectoryPath = path.join(__coreDataDir, 'data', userId, 'user');
     // generate user data directory if it does not exist
+    if (!fs.existsSync(dataDirectoryPath)) {
+      fs.mkdirSync(dataDirectoryPath);
+    }
+    // generate user profile image directory if it does not exist
     if (!fs.existsSync(userDirectoryPath)) {
       fs.mkdirSync(userDirectoryPath);
     }
@@ -886,13 +961,14 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         }
       );
     }
-    console.log('\n' + '=================================');
-    console.log('marking package as imported');
-    console.log('\n' + '=================================');
+    console.log('\n=================================');
+    console.log('finishing up');
+    console.log('=================================');
+    // await portUtil.countBrokenAssociations();
     // mark the import package as successfully expanded
     await node.update(
       {
-        metadata: { expanded: true, success: true },
+        metadata: { expanded: true, success: true, importing: false },
       },
       {
         where: {
@@ -900,75 +976,10 @@ exports.unpackSynthonaImport = async (req, res, next) => {
         },
       }
     );
-    await portUtil.countBrokenAssociations();
     console.log('\n');
     console.log('=================================');
     console.log('import successfully completed');
     console.log('=================================');
-    // send response
-    res.sendStatus(200);
-  } catch (err) {
-    if (!err.statusCode) {
-      err.statusCode = 500;
-    }
-    next(err);
-  }
-};
-
-exports.removeImportsByPackage = async (req, res, next) => {
-  try {
-    // catch validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const error = new Error('Validation Failed');
-      error.statusCode = 422;
-      error.data = errors.array();
-      throw error;
-    }
-    // this comes from the is-auth middleware
-    const uid = req.user.uid;
-    // uuid of the import package node
-    const packageUUID = req.body.uuid;
-    // get a list of nodes which are files so the associated files can be removed
-    const nodelist = await node.findAll({
-      where: {
-        [Op.and]: [
-          { importId: packageUUID },
-          { creator: uid },
-          { isFile: true },
-          { [Op.not]: { type: 'user' } },
-        ],
-      },
-    });
-    // remove all the files
-    for (fileNode of nodelist) {
-      var filePath = path.join(__coreDataDir, fileNode.preview);
-      // remove the file if it exists
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        // clean up any empty folders created by this deletion
-        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
-      }
-    }
-    // remove all the nodes and associations created by this package
-    await node.destroy({
-      where: {
-        [Op.and]: [{ importId: packageUUID }, { creator: uid }],
-      },
-    });
-    await association.destroy({
-      where: { [Op.and]: [{ importId: packageUUID }, { creator: uid }] },
-    });
-    await node.update(
-      {
-        metadata: null,
-      },
-      {
-        where: { [Op.and]: [{ uuid: packageUUID }, { creator: uid }] },
-      }
-    );
-    // send response
-    res.sendStatus(200);
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;

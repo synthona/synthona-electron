@@ -418,12 +418,12 @@ exports.getGraphData = async (req, res, next) => {
       // 2. turn the nodelist into an array to be passed into the second query
       originalList.map((node) => {
         // grab the left associated nodes
-        if (node.original.dataValues.uuid !== anchor.uuid) {
+        if (node.original && node.original.dataValues.uuid !== anchor.uuid) {
           nodeIdList.push(node.original.dataValues.id);
           nodeList.push(node.original.dataValues);
         }
         // grab the right associated nodes
-        if (node.associated.dataValues.uuid !== anchor.uuid) {
+        if (node.associated && node.associated.dataValues.uuid !== anchor.uuid) {
           nodeIdList.push(node.associated.dataValues.id);
           nodeList.push(node.associated.dataValues);
         }

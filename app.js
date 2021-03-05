@@ -265,29 +265,31 @@ const mainWindow = () => {
         {
           label: 'Github',
           click: async () => {
-            const { shell } = require('electron');
             await shell.openExternal('https://www.github.com/synthona');
           },
         },
         {
           label: 'Twitter',
           click: async () => {
-            const { shell } = require('electron');
-            await shell.openExternal('https://twitter.com/synthona');
+            await shell.openExternal('https://www.twitter.com/synthona');
           },
         },
         {
           label: 'Patreon',
           click: async () => {
-            const { shell } = require('electron');
             await shell.openExternal('https://www.patreon.com/synthona');
           },
         },
         {
           label: 'Ko-Fi',
           click: async () => {
-            const { shell } = require('electron');
             await shell.openExternal('https://ko-fi.com/hyperpoints');
+          },
+        },
+        {
+          label: 'Email',
+          click: async () => {
+            await shell.openExternal('mailto:synthona@gmail.com');
           },
         },
       ],

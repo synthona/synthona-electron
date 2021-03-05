@@ -981,6 +981,17 @@ exports.unpackSynthonaImport = async (req, res, next) => {
     console.log('import successfully completed');
     console.log('=================================');
   } catch (err) {
+    // mark the import package as done importing so it can be undone
+    await node.update(
+      {
+        metadata: { expanded: true, success: false, importing: false },
+      },
+      {
+        where: {
+          uuid: req.body.uuid,
+        },
+      }
+    );
     if (!err.statusCode) {
       err.statusCode = 500;
     }

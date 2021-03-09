@@ -299,13 +299,15 @@ exports.setAvatar = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // delete the old file
-    var filePath = path.join(__coreDataDir, userNode.avatar);
-    // remove the file if it exists
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      // clean up any empty folders created by this deletion
-      fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+    // delete the old file if it exists
+    if (userNode.avatar) {
+      var filePath = path.join(__coreDataDir, userNode.avatar);
+      // remove the file if it exists
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        // clean up any empty folders created by this deletion
+        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+      }
     }
     // update the header url
     userNode.avatar = fullImageUrl;
@@ -358,12 +360,15 @@ exports.setHeaderImage = async (req, res, next) => {
       throw error;
     }
     // delete the old file
-    var filePath = path.join(__coreDataDir, userNode.header);
-    // remove the file if it exists
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      // clean up any empty folders created by this deletion
-      fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+    // delete the old file if it exists
+    if (userNode.header) {
+      var filePath = path.join(__coreDataDir, userNode.header);
+      // remove the file if it exists
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        // clean up any empty folders created by this deletion
+        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+      }
     }
     // update the header url
     userNode.header = fullImageUrl;

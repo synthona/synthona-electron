@@ -1,16 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const crytpo = require('crypto');
-const {
-  app,
-  session,
-  shell,
-  globalShortcut,
-  BrowserWindow,
-  Menu,
-  MenuItem,
-  clipboard,
-} = require('electron');
+const { app, session, shell, globalShortcut, BrowserWindow, Menu, clipboard } = require('electron');
 const contextMenu = require('electron-context-menu');
 
 // load configuration data
@@ -28,7 +19,8 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
     'OPEN_URLS_IN_BROWSER': true,
     'GRAPH_RENDER_LIMIT': 100,
     'HTTP_CACHE': false,
-    'CLEAR_CACHE': false,
+    'CLEAR_CACHE_ON_START': false,
+    'ENABLE_HARDWARE_ACCELERATION': false,
     'DEBUG': false,
     'SERVER_PORT': 3077,
     'CLIENT_PORT': 3077,
@@ -281,12 +273,6 @@ const mainWindow = () => {
           },
         },
         {
-          label: 'Ko-Fi',
-          click: async () => {
-            await shell.openExternal('https://ko-fi.com/hyperpoints');
-          },
-        },
-        {
           label: 'Email',
           click: async () => {
             await shell.openExternal('mailto:synthona@gmail.com');
@@ -312,14 +298,18 @@ const mainWindow = () => {
   electronReady = true;
   mainWindowCreated = true;
   // clear the webcontents
-  if (config.CLEAR_CACHE) {
+  if (config.CLEAR_CACHE_ON_START) {
     newWindow.webContents.session.clearStorageData();
   }
   // show the window
   newWindow.show();
 };
 // disable hardware acceleration to prevent rendering bug
-app.disableHardwareAcceleration();
+if (!config.ENABLE_HARDWARE_ACCELERATION) {
+  app.disableHardwareAcceleration();
+} else {
+  console.log('✔ starting with hardware acceleration enabled');
+}
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -479,15 +469,5 @@ registerQuickMenu = () => {
   });
   globalShortcut.register('CommandOrControl+ALT+9', () => {
     key9 = BrowserWindow.getFocusedWindow().webContents.getURL();
-  });
-  // 0 key
-  let key0 = null;
-  globalShortcut.register('CommandOrControl+0', () => {
-    if (key0 !== null && BrowserWindow.getFocusedWindow()) {
-      BrowserWindow.getFocusedWindow().loadURL(key0);
-    }
-  });
-  globalShortcut.register('CommandOrControl+ALT+0', () => {
-    key0 = BrowserWindow.getFocusedWindow().webContents.getURL();
   });
 };

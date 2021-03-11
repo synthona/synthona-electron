@@ -1,9 +1,12 @@
+require('dotenv').config();
+
 module.exports = {
   packagerConfig: {
     ignore: '/node_modules/electron-packager|/server/database.sqlite3',
     prune: true,
     icon: 'build/synthona.icns',
     overwrite: true,
+    appBundleId: process.env.APPLE_BUNDLE_ID,
     osxSign: {
       'hardened-runtime': true,
       'gatekeeper-assess': false,

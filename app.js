@@ -8,6 +8,8 @@ const contextMenu = require('electron-context-menu');
 let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');
+let databasePath = path.join(configDirPath, 'database.sqlite3');
+let dataFolderPath = path.join(configDirPath, 'data');
 // check if config already exists and if it does load it
 if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
   config = require(configPath);
@@ -235,9 +237,15 @@ const mainWindow = () => {
       label: 'Advanced',
       submenu: [
         {
-          label: 'Show Config File',
+          label: 'Show Config',
           click: async () => {
             shell.showItemInFolder(configPath);
+          },
+        },
+        {
+          label: 'Show Database',
+          click: async () => {
+            shell.showItemInFolder(databasePath);
           },
         },
         { role: 'toggledevtools', visible: false },

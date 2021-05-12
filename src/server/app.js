@@ -56,6 +56,7 @@ app.use((req, res, next) => {
     'http://127.0.0.1:9000',
     'http://localhost:3000',
     'http://localhost:9000',
+    'http://localhost:9000',
   ];
   let reqOrigin = req.get('origin');
   let origin = process.env.CLIENT_URL;

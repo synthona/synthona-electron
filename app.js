@@ -286,6 +286,12 @@ const mainWindow = () => {
             await shell.openExternal('mailto:synthona@gmail.com');
           },
         },
+        {
+          label: 'Check For Updates',
+          click: async () => {
+            await shell.openExternal('https://synthona.itch.io/synthona');
+          },
+        },
       ],
     },
   ]);

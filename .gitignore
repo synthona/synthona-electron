@@ -5,3 +5,4 @@ dist
 release-builds
 config.json
 out/
+.DS_Store

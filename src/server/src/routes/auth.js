@@ -58,6 +58,16 @@ router.put(
   authController.login
 );
 
+router.put(
+  '/forgot-password',
+  [
+    body('email').exists().isEmail().normalizeEmail(),
+    body('newPassword').exists().trim().isString(),
+    body('confirmNewPassword').exists().trim().isString(),
+  ],
+  authController.forgotPassword
+);
+
 router.patch(
   '/password',
   isAuth,

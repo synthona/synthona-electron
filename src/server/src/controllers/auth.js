@@ -210,6 +210,65 @@ exports.changePassword = async (req, res, next) => {
   }
 };
 
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    // catch validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation Failed');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    // get data from req
+    const email = req.body.email;
+    const newPassword = req.body.newPassword.trim();
+    const confirmNewPassword = req.body.confirmNewPassword.trim();
+    // check that passwords match
+    const isEqual = newPassword === confirmNewPassword;
+    if (!isEqual) {
+      const error = new Error('Passwords do not match');
+      error.statusCode = 401;
+      throw error;
+    }
+    // fetch the account so we can modify it
+    const account = await user.findOne({
+      where: { email: email },
+    });
+    // catch error if no account is found
+    if (!account) {
+      const error = new Error('A user with this uid could not be found');
+      error.statusCode = 401;
+      throw error;
+    }
+    // // update password
+    const hash = await bcrypt.hash(newPassword, 12);
+    account.password = hash;
+    const result = await account.save();
+    // generate new token
+    const newToken = tokens.generateToken(result);
+    const newRefreshToken = tokens.generateRefreshToken(account);
+    // set the jwt cookie
+    res.cookie('jwt', newToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 15 * 60000),
+    });
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      sameSite: true,
+      expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
+    });
+    // send the response
+    res.sendStatus(200);
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
 exports.isAuthenticated = async (req, res, next) => {
   const uid = req.user.uid;
   try {
@@ -232,7 +291,7 @@ exports.isAuthenticated = async (req, res, next) => {
       fullHeaderUrl =
         req.protocol + '://' + req.get('host') + '/user/load/header/' + account.nodeId;
     }
-    // send reponse
+    // // send reponse
     res.status(201).json({
       email: account.email,
       username: account.username,

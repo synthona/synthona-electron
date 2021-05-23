@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
     // if refresh token is missing throw error
     if (!refreshToken) {
-      res.redirect('/');
+      res.sendStatus(401);
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;
@@ -44,14 +44,14 @@ module.exports = async (req, res, next) => {
           });
         }
       } catch (err) {
-        res.redirect('/');
+        res.sendStatus(401);
         err.statusCode = 500;
         throw err;
       }
     }
     // if there are no decoded tokens at this point, throw error
     if (!decodedToken && !decodedRefreshToken) {
-      res.redirect('/');
+      res.sendStatus(401);
       const error = new Error('Not Authenticated');
       error.statusCode = 401;
       throw error;

@@ -133,7 +133,7 @@ const mainWindow = (initUrl) => {
       },
     ],
     labels: {
-      // copyImage: 'copy image',
+      copyImage: 'copy image',
       paste: 'paste',
       copy: 'copy',
       cut: 'cut',
@@ -143,7 +143,7 @@ const mainWindow = (initUrl) => {
     showSearchWithGoogle: false,
     showInspectElement: false,
     showCopyImageAddress: true,
-    showCopyImage: false,
+    showCopyImage: true,
   });
   // register the main app menu
   registerAppMenu();

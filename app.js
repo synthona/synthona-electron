@@ -118,17 +118,17 @@ const mainWindow = (initUrl) => {
   contextMenu({
     prepend: (defaultActions, params, browserWindow) => [
       {
+        label: 'branch',
+        visible: validUrl(params.linkURL),
+        click: () => {
+          createNewWindowAtURL(params.linkURL);
+        },
+      },
+      {
         label: 'emoji',
         visible: params.mediaType !== 'image',
         click: () => {
           app.showEmojiPanel();
-        },
-      },
-      {
-        label: 'open in new window',
-        visible: validUrl(params.linkURL),
-        click: () => {
-          createNewWindowAtURL(params.linkURL);
         },
       },
     ],

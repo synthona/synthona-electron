@@ -78,7 +78,6 @@ const serverProcess = fork(path.join(__dirname, './src/server/app.js'), ['args']
 
 serverProcess.on('message', (message) => {
   if (message === 'server-started') {
-    console.log('✔ started app');
     serverReady = true;
     if (serverReady && electronReady && mainWindowCreated) {
       windowList[0].reload();

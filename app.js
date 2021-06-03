@@ -126,8 +126,8 @@ const mainWindow = (initUrl) => {
       },
       {
         label: 'open in new window',
+        visible: validUrl(params.linkURL),
         click: () => {
-          // console.log(params.linkURL);
           createNewWindowAtURL(params.linkURL);
         },
       },
@@ -242,7 +242,7 @@ app.on('activate', () => {
   }
 });
 
-createNewWindowAtURL = (initUrl) => {
+const createNewWindowAtURL = (initUrl) => {
   console.log('✔ creating window at ' + initUrl);
   // Create the browser window.
   let newWindow = new BrowserWindow({
@@ -260,42 +260,6 @@ createNewWindowAtURL = (initUrl) => {
   });
   // add it to the window list
   windowList.push(newWindow);
-  // add the context menu
-  // contextMenu({
-  //   prepend: (defaultActions, params, browserWindow) => [
-  //     {
-  //       label: 'emoji',
-  //       click: () => {
-  //         app.showEmojiPanel();
-  //       },
-  //     },
-  //     {
-  //       label: 'emoji',
-  //       click: () => {
-  //         app.showEmojiPanel();
-  //       },
-  //     },
-  //     {
-  //       label: 'Open In New Window',
-  //       click: () => {
-  //         // console.log(params.linkURL);
-  //         mainWindow(params.linkURL);
-  //       },
-  //     },
-  //   ],
-  //   labels: {
-  //     copyImage: 'copy',
-  //     paste: 'paste',
-  //     copy: 'copy',
-  //     cut: 'cut',
-  //     inspect: 'inspect',
-  //   },
-  //   showSearchWithGoogle: false,
-  //   showInspectElement: false,
-  //   showCopyImageAddress: true,
-  // });
-  // register the main app menu
-  // registerAppMenu();
   // match the background color to the app theme
   newWindow.setBackgroundColor('#272727');
   // set the localhost URL for the app to load
@@ -316,7 +280,7 @@ createNewWindowAtURL = (initUrl) => {
   newWindow.show();
 };
 
-registerQuickMenu = () => {
+const registerQuickMenu = () => {
   // ===============================
   // bindings for quick menu
   // ===============================
@@ -412,7 +376,7 @@ registerQuickMenu = () => {
   });
 };
 
-registerAppMenu = () => {
+const registerAppMenu = () => {
   // set up the app menu
   const isMac = process.platform === 'darwin';
   const menu = Menu.buildFromTemplate([
@@ -574,4 +538,13 @@ registerAppMenu = () => {
     },
   ]);
   Menu.setApplicationMenu(menu);
+};
+
+const validUrl = (value) => {
+  try {
+    new URL(value);
+  } catch (_) {
+    return false;
+  }
+  return true;
 };

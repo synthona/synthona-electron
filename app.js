@@ -118,7 +118,7 @@ const mainWindow = (initUrl) => {
   contextMenu({
     prepend: (defaultActions, params, browserWindow) => [
       {
-        label: 'branch',
+        label: 'V',
         visible: validUrl(params.linkURL),
         click: () => {
           createNewWindowAtURL(params.linkURL);

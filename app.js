@@ -118,7 +118,7 @@ const mainWindow = (initUrl) => {
   contextMenu({
     prepend: (defaultActions, params, browserWindow) => [
       {
-        label: '∆',
+        label: 'open as new window',
         visible: validUrl(params.linkURL),
         click: () => {
           createNewWindowAtURL(params.linkURL);

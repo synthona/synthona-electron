@@ -40,6 +40,14 @@ router.patch(
   nodeController.updateNode
 );
 
+// clear a node preview by uuid
+router.patch(
+  '/preview/clear',
+  isAuth,
+  [body('uuid').exists().isUUID()],
+  nodeController.clearNodePreview
+);
+
 // fetch a node by uuid
 router.get('/', isAuth, [query('uuid').exists().isUUID()], nodeController.getNodeByUUID);
 

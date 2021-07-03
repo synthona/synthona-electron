@@ -3,29 +3,22 @@ const { Op } = require('sequelize');
 
 exports.transferImportedUserData = async (packageUUID, loggedInUserNode) => {
   console.log('\n' + 'associating imported user data to logged in user');
-  const associations = await association.findAll({
-    where: {
-      [Op.and]: {
-        importId: packageUUID,
-        [Op.or]: {
-          nodeType: 'user',
-          linkedNodeType: 'user',
-        },
-      },
+  //update the anchorNodes
+  await association.update(
+    {
+      nodeUUID: loggedInUserNode.uuid,
+      nodeId: loggedInUserNode.id,
     },
-  });
-  // loop through and update the association values with the logged in user values instead
-  for (let item of associations) {
-    if (item.nodeType === 'user') {
-      item.nodeUUID = loggedInUserNode.uuid.toString();
-      item.nodeId = loggedInUserNode.id.toString();
-      await item.save({ silent: true });
-    } else if (item.linkedNodeType === 'user') {
-      item.linkedNodeUUID = loggedInUserNode.uuid.toString();
-      item.linkedNode = loggedInUserNode.id.toString();
-      await item.save({ silent: true });
-    }
-  }
+    { where: { [Op.and]: { importId: packageUUID, nodeType: 'user' } }, silent: true }
+  );
+  // update the linkedNodes
+  await association.update(
+    {
+      linkedNodeUUID: loggedInUserNode.uuid,
+      linkedNode: loggedInUserNode.id,
+    },
+    { where: { [Op.and]: { importId: packageUUID, linkedNodeType: 'user' } }, silent: true }
+  );
   // 3) delete all user nodes from nodes table with the importId
   await node.destroy({
     where: {
@@ -65,6 +58,36 @@ exports.countBrokenAssociations = async () => {
     }
   }
   console.log('there are ' + count + ' broken associations');
+  return;
+};
+
+exports.clearBrokenAssociations = async () => {
+  console.log('clearing broken associations');
+  // load all associations into a variable
+  const result = await association.findAll({
+    order: [['updatedAt', 'ASC']],
+  });
+  // iterate through the associations
+  for (value of result) {
+    const anchorNode = await node.findOne({
+      where: {
+        id: value.nodeId,
+      },
+    });
+    const linkedNode = await node.findOne({
+      where: {
+        id: value.linkedNode,
+      },
+    });
+    // if one of them is missing, clear the association
+    if (!anchorNode || !linkedNode) {
+      console.log(
+        'id: ' + value.id + ', nodeId: ' + value.nodeId + ', linkedNode: ' + value.linkedNode
+      );
+      value.destroy();
+    }
+  }
+  console.log('done');
   return;
 };
 

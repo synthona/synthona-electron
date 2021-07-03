@@ -290,7 +290,6 @@ exports.setAvatar = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
-    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('data'));
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -301,16 +300,16 @@ exports.setAvatar = async (req, res, next) => {
     }
     // delete the old file if it exists
     if (userNode.avatar) {
-      var filePath = path.join(__coreDataDir, userNode.avatar);
+      var filePath = path.resolve(userNode.avatar);
       // remove the file if it exists
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         // clean up any empty folders created by this deletion
-        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+        await fsUtil.cleanupDataDirectoryFromFilePath(filePath);
       }
     }
     // update the header url
-    userNode.avatar = fullImageUrl;
+    userNode.avatar = imageUrl;
     const result = await userNode.save();
     // update the associated user node
     // this should be made more specific
@@ -350,7 +349,6 @@ exports.setHeaderImage = async (req, res, next) => {
     const uid = req.user.uid;
     // process request
     const imageUrl = req.file.path;
-    const fullImageUrl = imageUrl.substring(imageUrl.lastIndexOf('data'));
     // load user
     const userNode = await user.findByPk(uid);
     // check for errors
@@ -362,16 +360,16 @@ exports.setHeaderImage = async (req, res, next) => {
     // delete the old file
     // delete the old file if it exists
     if (userNode.header) {
-      var filePath = path.join(__coreDataDir, userNode.header);
+      var filePath = path.resolve(userNode.header);
       // remove the file if it exists
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
         // clean up any empty folders created by this deletion
-        fsUtil.cleanupDataDirectoryFromFilePath(filePath);
+        await fsUtil.cleanupDataDirectoryFromFilePath(filePath);
       }
     }
     // update the header url
-    userNode.header = fullImageUrl;
+    userNode.header = imageUrl;
     const result = await userNode.save();
     const headerUrl = req.protocol + '://' + req.get('host') + '/user/load/header/' + result.nodeId;
     // send response
@@ -396,7 +394,7 @@ exports.loadUserAvatar = async (req, res, next) => {
     });
     // make sure there is a preview and then respond
     if (result && result.avatar) {
-      const imagePath = path.join(__coreDataDir, result.avatar);
+      const imagePath = path.resolve(result.avatar);
       res.sendFile(path.resolve(imagePath));
     } else {
       res.sendStatus(404);
@@ -421,7 +419,7 @@ exports.loadUserHeader = async (req, res, next) => {
     });
     // make sure there is a preview and then respond
     if (result && result.header) {
-      const imagePath = path.join(__coreDataDir, result.header);
+      const imagePath = path.resolve(result.header);
       res.sendFile(path.resolve(imagePath));
     } else {
       res.sendStatus(404);
@@ -473,7 +471,6 @@ exports.clearAllDataByUser = async (req, res, next) => {
       if (err) {
         return next(err);
       } else {
-        // console.log(files);
         files.forEach((file) => {
           if (file !== 'user') {
             const filePath = path.join(__coreDataDir, 'data', uid, file);

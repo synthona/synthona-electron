@@ -171,7 +171,7 @@ exports.updateNode = async (req, res, next) => {
     }
     // process request
     const uuid = req.body.uuid;
-    // load text node
+    // load node
     const existingNode = await node.findOne({
       where: {
         uuid: uuid,
@@ -301,6 +301,36 @@ exports.searchNodes = async (req, res, next) => {
 };
 
 // delete a single node and any associations
+exports.clearNodePreview = async (req, res, next) => {
+  try {
+    // catch validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const error = new Error('Validation Failed');
+      error.statusCode = 422;
+      error.data = errors.array();
+      throw error;
+    }
+    // process request
+    const uuid = req.body.uuid;
+    // update the node with the new full path
+    const result = await node.update(
+      {
+        preview: null,
+      },
+      { where: { uuid: uuid }, silent: true }
+    );
+    // send response
+    res.status(200).json({ node: result });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
+};
+
+// delete a single node and any associations
 exports.deleteNodeByUUID = async (req, res, next) => {
   try {
     // catch validation errors
@@ -324,11 +354,11 @@ exports.deleteNodeByUUID = async (req, res, next) => {
       error.statusCode = 404;
       throw error;
     }
-    // if the node is a file, delete from the file system
+    // if the node is a file, check if we need to delete from the file system
     if (nodeToDelete.isFile) {
-      var filePath = path.join(__coreDataDir, nodeToDelete.preview);
-      // remove the file if it exists
-      if (fs.existsSync(filePath)) {
+      var filePath = path.join(nodeToDelete.path);
+      // remove the file if it exists & is in the synthona core data directory
+      if (fs.existsSync(filePath) && filePath.includes(__coreDataDir)) {
         fs.unlinkSync(filePath);
         // clean up any empty folders created by this deletion
         fsUtil.cleanupDataDirectoryFromFilePath(filePath);

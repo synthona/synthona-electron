@@ -9,7 +9,7 @@ let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');
 let databasePath = path.join(configDirPath, 'database.sqlite3');
-// let dataFolderPath = path.join(configDirPath, 'data');
+let dataFolderPath = path.join(configDirPath, 'data');
 // check if config already exists and if it does load it
 if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
   config = require(configPath);
@@ -488,6 +488,12 @@ const registerAppMenu = () => {
           label: 'Show Database',
           click: async () => {
             shell.showItemInFolder(databasePath);
+          },
+        },
+        {
+          label: 'Show Imports',
+          click: async () => {
+            shell.showItemInFolder(dataFolderPath);
           },
         },
         { role: 'toggledevtools', visible: false },

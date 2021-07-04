@@ -714,7 +714,12 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 								searchable: nodeImport.searchable,
 								type: nodeImport.type,
 								name: nodeImport.name,
-								preview: loggedInUser.avatar,
+								preview:
+									req.protocol +
+									'://' +
+									req.get('host') +
+									'/user/load/avatar/' +
+									loggedInUser.nodeId,
 								content: nodeImport.content,
 								path: nodeImport.path,
 								creator: userId,

@@ -705,6 +705,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 					else {
 						if (nodeImport.type === 'user') {
 							nodeImport.path = loggedInUser.username;
+							nodeImport.preview = loggedInUserNode.preview;
 						}
 						// generate node
 						newNode = await node.create(
@@ -714,7 +715,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 								searchable: nodeImport.searchable,
 								type: nodeImport.type,
 								name: nodeImport.name,
-								preview: loggedInUserNode.preview,
+								preview: nodeImport.preview,
 								content: nodeImport.content,
 								path: nodeImport.path,
 								creator: userId,

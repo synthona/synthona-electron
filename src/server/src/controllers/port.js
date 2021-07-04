@@ -662,8 +662,9 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 					console.log('importing ' + nodeImport.name);
 					// handle file node imports
 					if (nodeImport.isFile) {
+						let nodeImportPath = nodeImport.path ? nodeImport.path : nodeImport.preview;
 						// load the fileEntry
-						let extension = nodeImport.path.substring(nodeImport.path.lastIndexOf('.'));
+						let extension = nodeImportPath.substring(nodeImportPath.lastIndexOf('.'));
 						// use the uuid to recognize the file
 						const fileEntry = zip.getEntry(nodeImport.uuid + extension);
 						let filePath;

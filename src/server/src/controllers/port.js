@@ -680,7 +680,7 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 							throw err;
 						}
 						const dbFilePath = path.join(filePath, fileEntry.name);
-						const previewPath = nodeImport.type === 'image' ? filePath : null;
+						const previewPath = nodeImport.type === 'image' ? dbFilePath : null;
 						// generate node
 						newNode = await node.create(
 							{

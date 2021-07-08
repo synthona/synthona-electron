@@ -120,7 +120,7 @@ exports.linkFiles = async (req, res, next) => {
 				preview = file.path;
 			} else if (audioMimetypes.includes(file.type)) {
 				nodeType = 'audio';
-			} else if (file.type === 'application/zip' && !extension === '.synth') {
+			} else if (file.type === 'application/zip' && !(extension === '.synth')) {
 				nodeType = 'zip';
 			} else if (extension === '.synth') {
 				nodeType = 'package';

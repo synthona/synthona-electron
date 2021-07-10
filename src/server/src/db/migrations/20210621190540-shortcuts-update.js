@@ -115,7 +115,7 @@ module.exports = {
 					node.path.includes(path.join(__coreDataDir, 'data')) &&
 					!node.path.includes('database.sqlite3')
 				) {
-					console.log(node.name);
+					// console.log(node.name);
 					const currentPath = node.path;
 					let revertedPath;
 					if (currentPath) {
@@ -123,23 +123,23 @@ module.exports = {
 					} else {
 						revertedPath = null;
 					}
-					console.log(revertedPath + '\n');
-					if (node.type === 'user') {
-						await node.update(
-							{
-								preview: node.preview.substring(node.preview.lastIndexOf('data')),
-							},
-							{ where: { id: node.id }, silent: true }
-						);
-					} else {
-						await node.update(
-							{
-								preview: revertedPath,
-								path: revertedPath,
-							},
-							{ where: { id: node.id }, silent: true }
-						);
-					}
+					// console.log(revertedPath + '\n');
+					await node.update(
+						{
+							preview: revertedPath,
+							path: revertedPath,
+						},
+						{ where: { id: node.id }, silent: true }
+					);
+				} else if (node.type === 'user') {
+					let newUserNodePreview = node.preview.substring(node.preview.lastIndexOf('data'));
+					console.log('new user node preview: ' + newUserNodePreview);
+					await node.update(
+						{
+							preview: newUserNodePreview,
+						},
+						{ where: { id: node.id }, silent: true }
+					);
 				}
 			}
 			// do the same thing for all user DB entries in the user table

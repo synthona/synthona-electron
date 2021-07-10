@@ -25,7 +25,15 @@ module.exports = {
 					const newPreview = node.preview ? path.join(__coreDataDir, node.preview) : null;
 					// const newPath = node.path ? path.join(__coreDataDir, node.path) : newPreview;
 					console.log('new path: ' + newPreview + '\n');
-					if (node.type !== 'user') {
+					if (node.type === 'user') {
+						// for user nodes we only update the preview
+						await node.update(
+							{
+								preview: newPreview,
+							},
+							{ where: { id: node.id }, silent: true }
+						);
+					} else if (node.type === 'image') {
 						// update the node with the new full path
 						await node.update(
 							{
@@ -35,10 +43,11 @@ module.exports = {
 							{ where: { id: node.id }, silent: true }
 						);
 					} else {
-						// for user nodes we only update the preview
+						// for all non image & non-user files leave the preview blank
 						await node.update(
 							{
-								preview: newPreview,
+								preview: null,
+								path: newPreview,
 							},
 							{ where: { id: node.id }, silent: true }
 						);
@@ -99,18 +108,26 @@ module.exports = {
 			});
 			// loop through the results
 			for (let node of results) {
-				const pathRoot = node.preview ? node.preview.split(path.sep)[0] : null;
+				// const pathRoot = node.path ? node.path.split(path.sep)[0] : null;
 				// make sure we are only reverting nodes which need to be reverted
-				if (pathRoot !== 'data') {
+				if (
+					node.path &&
+					node.path.includes(path.join(__coreDataDir, 'data')) &&
+					!node.path.includes('database.sqlite3')
+				) {
 					console.log(node.name);
-					const previewPath = node.preview;
-					const revertedPath = previewPath.substring(previewPath.lastIndexOf('data'));
+					const currentPath = node.path;
+					let revertedPath;
+					if (currentPath) {
+						revertedPath = currentPath.substring(currentPath.lastIndexOf('data'));
+					} else {
+						revertedPath = null;
+					}
 					console.log(revertedPath + '\n');
-					if (node.type !== 'user') {
+					if (node.type === 'user') {
 						await node.update(
 							{
-								preview: revertedPath,
-								path: revertedPath,
+								preview: node.preview.substring(node.preview.lastIndexOf('data')),
 							},
 							{ where: { id: node.id }, silent: true }
 						);
@@ -118,6 +135,7 @@ module.exports = {
 						await node.update(
 							{
 								preview: revertedPath,
+								path: revertedPath,
 							},
 							{ where: { id: node.id }, silent: true }
 						);
@@ -131,11 +149,16 @@ module.exports = {
 				//   get the root of the path for avatar & header images, so we can make sure we only update
 				//  the partial paths stored in older versions of synthona
 				const userData = user.dataValues;
-				const avatarRootPath = userData.avatar ? userData.avatar.split(path.sep)[0] : null;
-				const headerRootPath = userData.header ? userData.header.split(path.sep)[0] : null;
+				// const avatarRootPath = userData.avatar ? userData.avatar.split(path.sep)[0] : null;
+				// const headerRootPath = userData.header ? userData.header.split(path.sep)[0] : null;
 				// make sure we are only updating nodes which need to be updated
-				if (avatarRootPath !== 'data') {
-					const revertedAvatar = userData.avatar.substring(userData.avatar.lastIndexOf('data'));
+				if (userData.avatar && userData.avatar.includes(path.join(__coreDataDir, 'data'))) {
+					let revertedAvatar;
+					if (userData.avatar) {
+						revertedAvatar = userData.avatar.substring(userData.avatar.lastIndexOf('data'));
+					} else {
+						revertedAvatar = null;
+					}
 					console.log(revertedAvatar + '\n');
 					// update the user avatar with the reverted file path
 					await user.update(
@@ -145,8 +168,13 @@ module.exports = {
 						{ where: { id: node.id }, silent: true }
 					);
 				}
-				if (headerRootPath !== 'data') {
-					const revertedHeader = userData.header.substring(userData.header.lastIndexOf('data'));
+				if (userData.header && userData.header.includes(path.join(__coreDataDir, 'data'))) {
+					let revertedHeader;
+					if (userData.header) {
+						revertedHeader = userData.header.substring(userData.header.lastIndexOf('data'));
+					} else {
+						revertedHeader = null;
+					}
 					console.log(revertedHeader + '\n');
 					// update the user avatar with the reverted file path
 					await user.update(

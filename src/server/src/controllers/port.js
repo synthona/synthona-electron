@@ -126,7 +126,9 @@ exports.exportAllUserData = async (req, res, next) => {
 			if (node.isFile || node.type === 'user') {
 				let extension = node.path.substring(node.path.lastIndexOf('.'));
 				let nodeFile = path.resolve(node.path);
-				if (fs.existsSync(nodeFile)) {
+				console.log('gathering files related to ' + node.name);
+				console.log(nodeFile + '\n');
+				if (fs.existsSync(nodeFile) && !fs.lstatSync(nodeFile).isDirectory()) {
 					try {
 						// append the associated file to the export
 						archive.append(fs.createReadStream(nodeFile), {
@@ -141,6 +143,7 @@ exports.exportAllUserData = async (req, res, next) => {
 		});
 		// stringify JSON
 		const nodeString = JSON.stringify(nodeData);
+		console.log('generating nodes.json file in export');
 		// append a file containing the nodeData
 		archive.append(nodeString, { name: '/db/nodes.json' });
 		// load in the user export-data from the database
@@ -152,6 +155,7 @@ exports.exportAllUserData = async (req, res, next) => {
 		});
 		// get the json object for the logged in user
 		const userValues = userData[0];
+		console.log('adding user avatar files');
 		// add avatar files to the export
 		if (userValues.avatar) {
 			let extension = userValues.avatar.substring(userValues.avatar.lastIndexOf('.'));
@@ -168,6 +172,7 @@ exports.exportAllUserData = async (req, res, next) => {
 				}
 			}
 		}
+		console.log('adding user header files');
 		// add header to export
 		if (userValues.header) {
 			let extension = userValues.header.substring(userValues.header.lastIndexOf('.'));
@@ -184,10 +189,12 @@ exports.exportAllUserData = async (req, res, next) => {
 				}
 			}
 		}
+		console.log('adding user data to export');
 		// stringify JSON
 		const userString = JSON.stringify(userData);
 		// append a file containing the userData
 		archive.append(userString, { name: '/db/user.json' });
+		console.log('generating metadata file');
 		// add a metadata file
 		const metadataString = JSON.stringify({ version: process.env.VERSION });
 		// append a file containing the metadata
@@ -416,7 +423,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 						let extension = leftNode.path.substring(leftNode.path.lastIndexOf('.'));
 						let leftPreviewPath = path.resolve(leftNode.path);
 						// see if the file exists
-						if (fs.existsSync(leftPreviewPath)) {
+						if (fs.existsSync(leftPreviewPath) && !fs.lstatSync(leftPreviewPath).isDirectory()) {
 							try {
 								// append the associated file to the export
 								archive.append(fs.createReadStream(leftPreviewPath), {
@@ -440,7 +447,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 						let extension = rightNode.path.substring(rightNode.path.lastIndexOf('.'));
 						let rightPreviewPath = path.resolve(rightNode.path);
 						// see if the file exists
-						if (fs.existsSync(rightPreviewPath)) {
+						if (fs.existsSync(rightPreviewPath) && !fs.lstatSync(rightPreviewPath).isDirectory()) {
 							try {
 								// append the associated file to the export
 								archive.append(fs.createReadStream(rightPreviewPath), {
@@ -464,7 +471,10 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 					let extension = anchorNode.path.substring(anchorNode.path.lastIndexOf('.'));
 					let anchorNodePreviewPath = path.resolve(anchorNode.path);
 					// see if the file exists
-					if (fs.existsSync(anchorNodePreviewPath)) {
+					if (
+						fs.existsSync(anchorNodePreviewPath) &&
+						!fs.lstatSync(anchorNodePreviewPath).isDirectory()
+					) {
 						try {
 							// append the associated file to the export
 							archive.append(fs.createReadStream(anchorNodePreviewPath), {
@@ -527,9 +537,12 @@ exports.removeImportsByPackage = async (req, res, next) => {
 		});
 		// remove all the files
 		for (fileNode of nodelist) {
-			var filePath = path.join(fileNode.path);
+			var filePath = '';
+			if (typeof fileNode.path === 'string') {
+				filePath = path.join(fileNode.path);
+			}
 			// remove the file if it exists
-			if (fs.existsSync(filePath)) {
+			if (fs.existsSync(filePath) && !fs.lstatSync(filePath).isDirectory()) {
 				fs.unlinkSync(filePath);
 				// clean up any empty folders created by this deletion
 				await fsUtil.cleanupDataDirectoryFromFilePath(filePath);
@@ -671,15 +684,17 @@ exports.unpackSynthonaImport = async (req, res, next) => {
 						if (fileEntry && fileEntry.name) {
 							// generate the file location and get file path
 							filePath = await fsUtil.generateFileLocation(userId, nodeImport.type);
-							//extract file to the generated directory
+							//extract file to the generated location
 							zip.extractEntryTo(fileEntry, filePath, false, true);
 						} else {
-							err = new Error('file import error');
+							// err = new Error('file import error');
+							console.log('file import at...');
 							console.log(nodeImport);
-							err.statusCode = 500;
-							throw err;
+							// err.statusCode = 500;
+							// throw err;
 						}
-						const dbFilePath = path.join(filePath, fileEntry.name);
+						const dbFilePath =
+							fileEntry && fileEntry.name ? path.join(filePath, fileEntry.name) : null;
 						const previewPath = nodeImport.type === 'image' ? dbFilePath : null;
 						// generate node
 						newNode = await node.create(

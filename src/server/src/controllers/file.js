@@ -1,10 +1,11 @@
-// custom code
 const { validationResult } = require('express-validator/check');
-// bring in data models.
-const { node, association, user } = require('../db/models');
 // import node dependencies
 const path = require('path');
 const fs = require('fs');
+// bring in data models.
+const { node, association } = require('../db/models');
+// bring in fsUtil
+const fsUtil = require('../util/fsUtil');
 
 exports.createFile = async (req, res, next) => {
 	// this comes from the is-auth middleware
@@ -199,14 +200,28 @@ exports.loadFileByUUID = async (req, res, next) => {
 				uuid: uuid,
 				creator: userId,
 			},
-			attributes: ['preview', 'path', 'name'],
+			attributes: ['id', 'type', 'preview', 'path', 'name'],
 		});
+		// check for issues
+		if (!result) {
+			const error = new Error('that node does not exist');
+			error.statusCode = 404;
+			throw error;
+		}
+		// set path variable
+		const filePath = result.dataValues.path;
+		const fileExists = fs.existsSync(filePath);
+		// check to see if the file exists
+		if (!fileExists && result.dataValues.type !== 'user') {
+			console.log('erasing path for ' + result.dataValues.name);
+			await fsUtil.setFilePathToNullById(result.dataValues.id);
+		}
 		// make sure there is a preview and then respond
 		if (result && result.preview) {
-			const filePath = result.preview;
-			const basename = path.basename(filePath);
+			const filePreview = result.preview;
+			const basename = path.basename(filePreview);
 			const extension = basename.substring(basename.lastIndexOf('.'));
-			res.download(filePath, result.name + extension);
+			res.download(filePreview, result.name + extension);
 		} else {
 			res.sendStatus(404);
 		}
@@ -235,23 +250,30 @@ exports.openShortcutInExplorer = async (req, res, next) => {
 			where: {
 				uuid: uuid,
 			},
-			attributes: ['uuid', 'path', 'creator'],
+			attributes: ['id', 'uuid', 'path', 'creator'],
 		});
-		// check for issues
+		// make sure there is a result
 		if (!result) {
 			const error = new Error('there was a problem launching the shortcut');
 			error.statusCode = 404;
 			throw error;
 		}
 		// set path variable
-		const path = result.dataValues.path;
-		var exec = require('child_process').exec;
-		// surround the path with double-quotes to avoid any issues to do with spaces in file paths
-		const stringPath = ' "' + path + '"';
-		// launch the command
-		exec(openInExplorerCode() + stringPath);
-		// send 200 status to interface
-		res.sendStatus(200);
+		const filePath = result.dataValues.path;
+		const fileExists = fs.existsSync(filePath);
+		// check to see if the file exists
+		if (!fileExists) {
+			await fsUtil.setFilePathToNullById(result.dataValues.id);
+			res.sendStatus(404);
+		} else {
+			var exec = require('child_process').exec;
+			// surround the path with double-quotes to avoid any issues to do with spaces in file paths
+			const stringPath = ' "' + filePath + '"';
+			// launch the command
+			exec(openInExplorerCode() + stringPath);
+			// send 200 status to interface
+			res.sendStatus(200);
+		}
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -277,23 +299,30 @@ exports.launchShortcut = async (req, res, next) => {
 			where: {
 				uuid: uuid,
 			},
-			attributes: ['uuid', 'path', 'creator'],
+			attributes: ['id', 'uuid', 'path', 'creator'],
 		});
 		// check for issues
 		if (!result) {
-			const error = new Error('there was a problem launching the shortcut');
+			const error = new Error('that node does not exist');
 			error.statusCode = 404;
 			throw error;
 		}
 		// set path variable
-		const path = result.dataValues.path;
-		var exec = require('child_process').exec;
-		// surround the path with double-quotes to avoid any issues to do with spaces in file paths
-		const stringPath = ' "' + path + '"';
-		// launch the command
-		exec(getLaunchCode() + stringPath);
-		// send 200 status to interface
-		res.sendStatus(200);
+		const filePath = result.dataValues.path;
+		const fileExists = fs.existsSync(filePath);
+		// check to see if the file exists
+		if (!fileExists) {
+			await fsUtil.setFilePathToNullById(result.dataValues.id);
+			res.sendStatus(404);
+		} else {
+			var exec = require('child_process').exec;
+			// surround the path with double-quotes to avoid any issues to do with spaces in file paths
+			const stringPath = ' "' + filePath + '"';
+			// launch the command
+			exec(getLaunchCode() + stringPath);
+			// send 200 status to interface
+			res.sendStatus(200);
+		}
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;

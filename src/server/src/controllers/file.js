@@ -125,7 +125,21 @@ exports.linkFiles = async (req, res, next) => {
 				nodeType = 'zip';
 			} else if (extension === '.synth') {
 				nodeType = 'package';
+			} else if (process.platform === 'darwin' && file.path.includes('.app/')) {
+				// we are doing a little magic here to auto-generate a shortcut
+				// launcher path on mac for applications if u select any file within them
+				// TODO: make this a little more user friendly by integrating electron file-dialogue
+				// and making it so selecting "packages" on mac treats them as files
+				let appDirPath = file.path.substring(0, file.path.lastIndexOf('.app') + 4);
+				// set the file path to that .app path
+				file.path = appDirPath;
+				// attempt to extract the App Name from the end of the path, & before the .app extension
+				let appName = appDirPath.substring(appDirPath.lastIndexOf('/') + 1, appDirPath.lastIndexOf('.app'));
+				file.name = appName;
+				// set the node type to file still
+				nodeType = 'file';
 			} else {
+				// catchall for adding any other files at all
 				nodeType = 'file';
 			}
 			// create the corresponding node in the database

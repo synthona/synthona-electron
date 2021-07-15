@@ -204,7 +204,7 @@ exports.loadFileByUUID = async (req, res, next) => {
 		});
 		// check for issues
 		if (!result) {
-			const error = new Error('that node does not exist');
+			const error = new Error('node does not exist, maybe it was deleted');
 			error.statusCode = 404;
 			throw error;
 		}
@@ -220,8 +220,8 @@ exports.loadFileByUUID = async (req, res, next) => {
 		if (result && result.preview) {
 			const filePreview = result.preview;
 			const basename = path.basename(filePreview);
-			const extension = basename.substring(basename.lastIndexOf('.'));
-			res.download(filePreview, result.name + extension);
+			// const extension = basename.substring(basename.lastIndexOf('.'));
+			res.download(filePreview, result.name);
 		} else {
 			res.sendStatus(404);
 		}

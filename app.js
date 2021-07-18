@@ -5,6 +5,7 @@ const { app, session, shell, globalShortcut, BrowserWindow, Menu, clipboard } = 
 const contextMenu = require('electron-context-menu');
 
 // load configuration data
+const APP_VERSION = '1.2.3';
 let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');
@@ -30,7 +31,6 @@ if (fs.existsSync(configPath) && fs.existsSync(configPath)) {
 		'JWT_SECRET': crytpo.randomBytes(100).toString('base64'),
 		'REFRESH_TOKEN_SECRET': crytpo.randomBytes(100).toString('base64'),
 		'APP_NAME': 'synthona',
-		'VERSION': 1,
 	});
 	if (!fs.existsSync(configDirPath)) {
 		fs.mkdirSync(configDirPath);
@@ -70,7 +70,7 @@ const serverProcess = fork(path.join(__dirname, './src/server/app.js'), ['args']
 		'FRONTEND_DEV_MODE': config.CLIENT_PORT === config.SERVER_PORT,
 		'JWT_SECRET': config.JWT_SECRET,
 		'REFRESH_TOKEN_SECRET': config.REFRESH_TOKEN_SECRET,
-		'VERSION': config.VERSION,
+		'VERSION': APP_VERSION,
 		'CORE_DATA_DIRECTORY': app.getPath('userData'),
 		'GRAPH_RENDER_LIMIT': config.GRAPH_RENDER_LIMIT,
 	},
@@ -533,6 +533,9 @@ const registerAppMenu = () => {
 					click: async () => {
 						await shell.openExternal('mailto:synthona@gmail.com');
 					},
+				},
+				{
+					label: 'Synthona v' + APP_VERSION,
 				},
 				{
 					label: 'Check For Updates',

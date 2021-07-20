@@ -471,7 +471,7 @@ exports.getGraphData = async (req, res, next) => {
 				limit: perPage,
 				raw: true,
 				order: [['updatedAt', 'DESC']],
-				attributes: ['id', 'uuid', 'preview', 'name', 'path', 'type', 'updatedAt'],
+				attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
 			});
 			// 2. turn the nodelist into an array to be passed into the second query
 			nodeList.map((node) => {

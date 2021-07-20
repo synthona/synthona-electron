@@ -14,6 +14,7 @@ exports.scrapeOpenGraph = async (inputUrl) => {
     request(
       {
         uri: inputUrl,
+        timeout: 3000,
       },
       (error, res, body) => {
         if (!error) {

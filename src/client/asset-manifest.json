@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/static/css/main.754ce32f.chunk.css",
-    "main.js": "/static/js/main.edec8c1a.chunk.js",
-    "main.js.map": "/static/js/main.edec8c1a.chunk.js.map",
+    "main.js": "/static/js/main.1e3156cc.chunk.js",
+    "main.js.map": "/static/js/main.1e3156cc.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.08bbf159.js",
     "runtime-main.js.map": "/static/js/runtime-main.08bbf159.js.map",
     "static/css/2.c2cd6797.chunk.css": "/static/css/2.c2cd6797.chunk.css",
     "static/js/2.355870cd.chunk.js": "/static/js/2.355870cd.chunk.js",
     "static/js/2.355870cd.chunk.js.map": "/static/js/2.355870cd.chunk.js.map",
     "index.html": "/index.html",
-    "precache-manifest.b090f52e0437c507f644b2e97f12c084.js": "/precache-manifest.b090f52e0437c507f644b2e97f12c084.js",
+    "precache-manifest.3b22db7b19d480e7d97e93463d330cde.js": "/precache-manifest.3b22db7b19d480e7d97e93463d330cde.js",
     "service-worker.js": "/service-worker.js",
     "static/css/2.c2cd6797.chunk.css.map": "/static/css/2.c2cd6797.chunk.css.map",
     "static/css/main.754ce32f.chunk.css.map": "/static/css/main.754ce32f.chunk.css.map",
@@ -17,13 +17,13 @@
     "static/media/GraphBrowser.less": "/static/media/cloud9.22dc8cce.png",
     "static/media/help.png": "/static/media/help.f2efb220.png",
     "static/media/missing-file.png": "/static/media/missing-file.20cda3d1.png",
-    "static/media/synthona-logo.png": "/static/media/synthona-logo.b740604b.png"
+    "static/media/synthona-logo.png": "/static/media/synthona-logo.6ac38d56.png"
   },
   "entrypoints": [
     "static/js/runtime-main.08bbf159.js",
     "static/css/2.c2cd6797.chunk.css",
     "static/js/2.355870cd.chunk.js",
     "static/css/main.754ce32f.chunk.css",
-    "static/js/main.edec8c1a.chunk.js"
+    "static/js/main.1e3156cc.chunk.js"
   ]
 }

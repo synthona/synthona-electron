@@ -5,7 +5,7 @@ const { app, session, shell, globalShortcut, BrowserWindow, Menu, clipboard } = 
 const contextMenu = require('electron-context-menu');
 
 // load configuration data
-const APP_VERSION = '1.2.3';
+const APP_VERSION = '1.2.4';
 let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');

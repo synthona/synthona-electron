@@ -356,7 +356,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 			throw error;
 		}
 		// if the node is a file, check if we need to delete from the file system
-		if (nodeToDelete.isFile) {
+		if (nodeToDelete.isFile && nodeToDelete.path) {
 			var filePath = path.join(nodeToDelete.path);
 			// remove the file if it exists & is in the synthona core data directory
 			if (fs.existsSync(filePath) && filePath.includes(__coreDataDir)) {

@@ -16,42 +16,37 @@ router.put('/export/all', isAuth, portController.exportAllUserData);
 
 // generate export from UUID
 router.put(
-  '/export',
-  isAuth,
-  [body('uuid').exists().isUUID()],
-  portController.exportFromAnchorUUID
+	'/export',
+	isAuth,
+	[body('uuid').exists().isUUID()],
+	portController.exportFromAnchorUUID
 );
 
 // clear imports from a package
 router.patch(
-  '/export/undo',
-  isAuth,
-  [
-    body('uuid')
-      .exists()
-      .isUUID()
-      .custom((value, { req }) => {
-        return node
-          .findOne({
-            where: { uuid: value },
-          })
-          .then((node) => {
-            if (!(node && node.metadata && node.metadata.expanded)) {
-              return Promise.reject('package is not expanded');
-            }
-          });
-      }),
-  ],
-  portController.removeImportsByPackage
+	'/export/undo',
+	isAuth,
+	[
+		body('uuid')
+			.exists()
+			.isUUID()
+			.custom((value, { req }) => {
+				return node
+					.findOne({
+						where: { uuid: value },
+					})
+					.then((node) => {
+						if (!(node && node.metadata && node.metadata.expanded)) {
+							return Promise.reject('package is not expanded');
+						}
+					});
+			}),
+	],
+	portController.removeImportsByPackage
 );
 
-// import a synthona package
-router.put(
-  '/import',
-  isAuth,
-  [body('uuid').exists().isUUID()],
-  portController.unpackSynthonaImport
-);
+// import a package
+router.put('/import', isAuth, [body('uuid').exists().isUUID()], portController.unpackImport);
 
 // return the router
 module.exports = router;

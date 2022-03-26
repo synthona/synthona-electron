@@ -230,6 +230,38 @@ exports.searchNodes = async (req, res, next) => {
 		var type = req.query.type || null;
 		var searchQuery = req.query.searchQuery || '';
 		var pinned = req.query.pinned || null;
+		var sortType = req.query.sortType || 'updatedAt';
+		var sortOrder = req.query.sortOrder || 'DESC';
+
+		if (sortType) {
+			switch (sortType) {
+				case 'recent':
+					sortType = 'updatedAt';
+					break;
+				case 'created':
+					sortType = 'createdAt';
+					break;
+				case 'views':
+					sortType = 'views';
+					break;
+				default:
+					sortType = 'updatedAt';
+					break;
+			}
+		}
+		if (sortOrder) {
+			switch (sortOrder) {
+				case 'ASC':
+					sortOrder = 'ASC';
+					break;
+				case 'DESC':
+					sortOrder = 'DESC';
+					break;
+				default:
+					sortOrder = 'DESC';
+					break;
+			}
+		}
 
 		var splitQuery = searchQuery.split(' ');
 		var fuzzySearch = '%';
@@ -247,13 +279,10 @@ exports.searchNodes = async (req, res, next) => {
 		if (searchQuery) {
 			whereStatement[Op.or] = [
 				{
-					name: { [Op.like]: fuzzySearch },
+					name: { [Op.like]: '%' + fuzzySearch + '%' },
 				},
 				{
-					preview: { [Op.like]: fuzzySearch },
-				},
-				{
-					content: { [Op.like]: fuzzySearch },
+					content: { [Op.like]: '%' + searchQuery + '%' },
 				},
 			];
 			// if there is a search query only return searchable items
@@ -276,8 +305,8 @@ exports.searchNodes = async (req, res, next) => {
 			where: whereStatement,
 			offset: (currentPage - 1) * perPage,
 			limit: perPage,
-			order: [['updatedAt', 'DESC']],
-			attributes: ['uuid', 'isFile', 'name', 'path', 'type', 'preview', 'updatedAt'],
+			order: [[sortType, sortOrder]],
+			attributes: ['uuid', 'isFile', 'name', 'path', 'type', 'preview', 'views', 'updatedAt'],
 			raw: true,
 		});
 		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
@@ -358,7 +387,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 		// if the node is a file, check if we need to delete from the file system
 		if (nodeToDelete.isFile && nodeToDelete.path) {
 			var filePath = path.join(nodeToDelete.path);
-			// remove the file if it exists & is in the synthona core data directory
+			// remove the file if it exists & is in the core data directory
 			if (fs.existsSync(filePath) && filePath.includes(__coreDataDir)) {
 				fs.unlinkSync(filePath);
 				// clean up any empty folders created by this deletion

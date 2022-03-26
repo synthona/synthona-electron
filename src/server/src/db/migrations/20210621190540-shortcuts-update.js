@@ -17,7 +17,7 @@ module.exports = {
 			// iterate through the results and update the values
 			for (let node of results) {
 				// get the root of the path, so we can make sure we only update
-				// the partial paths stored in older versions of synthona
+				// the partial paths stored in older versions of yarnpoint
 				const pathRoot = node.preview ? node.preview.split(path.sep)[0] : null;
 				// make sure we are only updating nodes which have partial paths from the data folder
 				if (pathRoot === 'data') {
@@ -59,7 +59,7 @@ module.exports = {
 			// iterate through the results and update the values
 			for (let user of users) {
 				//   get the root of the path for avatar & header images, so we can make sure we only update
-				//  the partial paths stored in older versions of synthona
+				//  the partial paths stored in older versions of yarnpoint
 				const userData = user.dataValues;
 				const avatarRootPath = userData.avatar ? userData.avatar.split(path.sep)[0] : null;
 				const headerRootPath = userData.header ? userData.header.split(path.sep)[0] : null;
@@ -147,7 +147,7 @@ module.exports = {
 			// iterate through the results and update the values
 			for (let user of users) {
 				//   get the root of the path for avatar & header images, so we can make sure we only update
-				//  the partial paths stored in older versions of synthona
+				//  the partial paths stored in older versions of yarnpoint
 				const userData = user.dataValues;
 				// const avatarRootPath = userData.avatar ? userData.avatar.split(path.sep)[0] : null;
 				// const headerRootPath = userData.header ? userData.header.split(path.sep)[0] : null;

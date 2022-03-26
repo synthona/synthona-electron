@@ -1,11 +1,21 @@
 const path = require('path');
 const fs = require('fs');
 const crytpo = require('crypto');
-const { app, session, shell, globalShortcut, BrowserWindow, Menu, clipboard } = require('electron');
+const {
+	app,
+	session,
+	shell,
+	globalShortcut,
+	BrowserWindow,
+	Menu,
+	clipboard,
+	ipcMain,
+} = require('electron');
 const contextMenu = require('electron-context-menu');
 
 // load configuration data
-const APP_VERSION = '1.2.5';
+let packageJson = require('./package.json');
+const APP_VERSION = packageJson.version;
 let config;
 let configDirPath = app.getPath('userData');
 let configPath = path.join(configDirPath, 'config.json');
@@ -52,7 +62,10 @@ if (!config.HTTP_CACHE) {
 }
 
 // prevent squirrel installer bug on windows that makes app start during installation
-if (require('electron-squirrel-startup')) return app.quit();
+// prevent squirrel installer bug on windows that makes app start during installation
+(() => {
+	if (require('electron-squirrel-startup')) return app.quit();
+})();
 
 let serverReady = false;
 let electronReady = false;
@@ -77,13 +90,22 @@ const serverProcess = fork(path.join(__dirname, './src/server/app.js'), ['args']
 });
 
 serverProcess.on('message', (message) => {
+	// test
+	// serverProcess.send({ test: 'hello' });
+	// existing
 	if (message === 'server-started') {
 		serverReady = true;
 		if (serverReady && electronReady && mainWindowCreated) {
 			windowList[0].reload();
 		}
+		// check for updates
+		checkForUpdates();
 	} else {
-		console.log(message);
+		// HERE
+		// this is where we recieve messages from the server, ANY message!
+		// this is how we can take a string command from the server to, say, spawn a file-picker
+		// and we can send messages back??? somehow
+		// console.log(message);
 	}
 });
 
@@ -109,6 +131,7 @@ const mainWindow = (initUrl) => {
 			enableRemoteModule: false,
 			worldSafeExecuteJavaScript: true,
 			contextIsolation: true,
+			preload: path.join(__dirname, 'preload.js'), // use a preload script
 		},
 		show: false,
 	});
@@ -215,8 +238,9 @@ app.on('ready', () => {
 			);
 		}
 	});
-	// register the quickmen system
+	// register the quickmenu system
 	registerQuickMenu();
+	// if we're not in debug mode, enable security policies
 	if (!config.DEBUG) {
 		session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 			callback({
@@ -226,6 +250,27 @@ app.on('ready', () => {
 				},
 			});
 		});
+	}
+});
+
+// set up ipc event
+ipcMain.on('toMain', (event, args) => {
+	// TODO: this whole findInPage thing...the findNext feature doesn't work
+	// i think there's actually an issue with the electron implementation
+	// in the meantime, at least the basic functionality works now
+	if (args.action && typeof args.action === 'string') {
+		switch (args.action) {
+			case 'search':
+				if (args.query && typeof args.query === 'string') {
+					BrowserWindow.getFocusedWindow().webContents.findInPage(args.query, { forward: true });
+				}
+				return;
+			case 'hide-search':
+				BrowserWindow.getFocusedWindow().webContents.stopFindInPage('clearSelection');
+				return;
+			default:
+				return;
+		}
 	}
 });
 
@@ -255,6 +300,7 @@ const createNewWindowAtURL = (initUrl) => {
 			enableRemoteModule: false,
 			worldSafeExecuteJavaScript: true,
 			contextIsolation: true,
+			preload: path.join(__dirname, 'preload.js'), // use a preload script
 		},
 		show: false,
 	});
@@ -292,7 +338,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+1', () => {
-		key1 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key1 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 2 key
 	let key2 = null;
@@ -302,7 +350,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+2', () => {
-		key2 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key2 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 3 key
 	let key3 = null;
@@ -312,7 +362,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+3', () => {
-		key3 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key3 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 4 key
 	let key4 = null;
@@ -322,7 +374,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+4', () => {
-		key4 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key4 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 5 key
 	let key5 = null;
@@ -332,7 +386,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+5', () => {
-		key5 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key5 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 6 key
 	let key6 = null;
@@ -342,7 +398,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+6', () => {
-		key6 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key6 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 7 key
 	let key7 = null;
@@ -352,7 +410,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+7', () => {
-		key7 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key7 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 8 key
 	let key8 = null;
@@ -362,7 +422,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+8', () => {
-		key8 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key8 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 	// 9 key
 	let key9 = null;
@@ -372,7 +434,9 @@ const registerQuickMenu = () => {
 		}
 	});
 	globalShortcut.register('CommandOrControl+ALT+9', () => {
-		key9 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		if (BrowserWindow.getFocusedWindow()) {
+			key9 = BrowserWindow.getFocusedWindow().webContents.getURL();
+		}
 	});
 };
 
@@ -438,6 +502,26 @@ const registerAppMenu = () => {
 		{
 			label: 'Edit',
 			submenu: [
+				{
+					label: 'Find In Page',
+					accelerator: 'CommandOrControl+F',
+					click: async () => {
+						// send message to main
+						BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+							message: 'search',
+						});
+					},
+				},
+				{
+					label: 'Search All',
+					accelerator: 'CommandOrControl+L',
+					click: async () => {
+						// send message to main
+						BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+							message: 'search-all',
+						});
+					},
+				},
 				{
 					label: 'Copy Url',
 					click: async () => {
@@ -513,19 +597,19 @@ const registerAppMenu = () => {
 				{
 					label: 'Github',
 					click: async () => {
-						await shell.openExternal('https://www.github.com/synthona');
+						await shell.openExternal('https://www.github.com/yarnpoint');
 					},
 				},
 				{
 					label: 'Twitter',
 					click: async () => {
-						await shell.openExternal('https://www.twitter.com/synthona');
+						await shell.openExternal('https://www.twitter.com/yarnpoint');
 					},
 				},
 				{
 					label: 'Patreon',
 					click: async () => {
-						await shell.openExternal('https://www.patreon.com/synthona');
+						await shell.openExternal('https://www.patreon.com/yarnpoint');
 					},
 				},
 				{
@@ -535,13 +619,20 @@ const registerAppMenu = () => {
 					},
 				},
 				{
-					label: 'Synthona v' + APP_VERSION,
+					label: 'Yarnpoint',
+					click: async () => {
+						await shell.openExternal('http://www.yarnpoint.net');
+					},
 				},
 				{
 					label: 'Check For Updates',
 					click: async () => {
-						await shell.openExternal('https://synthona.itch.io/synthona');
+						checkForUpdates(true);
 					},
+				},
+				{ type: 'separator' },
+				{
+					label: 'v' + APP_VERSION,
 				},
 			],
 		},
@@ -556,4 +647,33 @@ const validUrl = (value) => {
 		return false;
 	}
 	return true;
+};
+
+const checkForUpdates = (reportNegative) => {
+	const { net } = require('electron');
+	const request = net.request(
+		'https://raw.githubusercontent.com/yarnpoint/synthona-electron/master/package.json'
+	);
+	request.on('response', (response) => {
+		response.on('data', (chunk) => {
+			// parse the json data from the github package.json route
+			let jsonData = JSON.parse(chunk);
+			let githubVersion = jsonData.version;
+			// check for a version match
+			if (githubVersion === APP_VERSION) {
+				console.log('✔ ' + config.APP_NAME + ' is up to date');
+				if (reportNegative) {
+					BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+						message: 'latest-version',
+					});
+				}
+			} else {
+				console.log('a NEW version is available :)');
+				BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+					message: 'update-available',
+				});
+			}
+		});
+	});
+	request.end();
 };

@@ -65,6 +65,8 @@ router.get(
 		query('type').optional().isString(),
 		query('pinned').optional().isBoolean(),
 		query('searchQuery').optional().isString(),
+		query('sortType').optional().isString(),
+		query('sortOrder').optional().isString(),
 	],
 	nodeController.searchNodes
 );

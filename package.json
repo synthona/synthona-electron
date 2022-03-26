@@ -1,6 +1,6 @@
 {
   "name": "synthona",
-  "version": "1.2.5",
+  "version": "1.2.7",
   "description": "synthona",
   "main": "app.js",
   "scripts": {
@@ -18,7 +18,7 @@
     "type": "git",
     "url": "synthona"
   },
-  "author": "synthona",
+  "author": "yarnpoint",
   "license": "GPL-2.0-or-later",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.54",

@@ -123,7 +123,7 @@ exports.exportAllUserData = async (req, res, next) => {
 		// loop through all nodes to add files into export
 		await nodeData.forEach((node) => {
 			// add associated files to the export
-			if (node.isFile || node.type === 'user') {
+			if (node.path && (node.isFile || node.type === 'user')) {
 				let extension = node.path.substring(node.path.lastIndexOf('.'));
 				let nodeFile = path.resolve(node.path);
 				console.log('gathering files related to ' + node.name);
@@ -575,7 +575,7 @@ exports.removeImportsByPackage = async (req, res, next) => {
 	}
 };
 
-exports.unpackSynthonaImport = async (req, res, next) => {
+exports.unpackImport = async (req, res, next) => {
 	try {
 		// catch validation errors
 		const errors = validationResult(req);

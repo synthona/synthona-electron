@@ -6,24 +6,24 @@ global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 const dbPath = path.join(__coreDataDir, 'database.sqlite3');
 
 module.exports = {
-  development: {
-    storage: dbPath,
-    dialect: 'sqlite',
-    logging: false,
-  },
-  test: {
-    storage: dbPath,
-    dialect: 'sqlite',
-    logging: false,
-  },
-  production: {
-    storage: dbPath,
-    dialect: 'sqlite',
-    logging: false,
-    dialectOptions: {
-      ssl: {
-        // ca: fs.readFileSync(__dirname + '/mysql-ca-master.crt')
-      },
-    },
-  },
+	development: {
+		storage: dbPath,
+		dialect: 'sqlite',
+		logging: false,
+	},
+	test: {
+		storage: dbPath,
+		dialect: 'sqlite',
+		logging: false,
+	},
+	production: {
+		storage: dbPath,
+		dialect: 'sqlite',
+		logging: false,
+		dialectOptions: {
+			ssl: {
+				// ca: fs.readFileSync(__dirname + '/mysql-ca-master.crt')
+			},
+		},
+	},
 };

@@ -1,4 +1,4 @@
-### Synthona ~ Associative Information System
+### synthona ~ Associative Information System
 
 need to write something more comprehensive here eventually, but for now here is how to set up for development...
 

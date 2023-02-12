@@ -33,8 +33,6 @@ exports.createUrl = async (req, res, next) => {
 		// create text node
 		const urlNode = await node.create({
 			isFile: false,
-			hidden: false,
-			searchable: true,
 			type: 'url',
 			name: name,
 			preview: preview,

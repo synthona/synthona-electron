@@ -1,46 +1,46 @@
 {
-  "name": "synthona",
-  "version": "1.2.7",
-  "description": "synthona",
-  "main": "app.js",
-  "scripts": {
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder build",
-    "mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=dist/mac --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
-    "windows": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=build/synthona.ico --prune=true --out=dist/windows --ignore=\"/server/data|/server/database.sqlite3|/node_modules/electron-packager\"",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron-forge start",
-    "dev": "nodemon --watch * --exec 'npm run start'",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
-  },
-  "repository": {
-    "type": "git",
-    "url": "synthona"
-  },
-  "author": "yarnpoint",
-  "license": "GPL-2.0-or-later",
-  "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.54",
-    "@electron-forge/maker-deb": "^6.0.0-beta.54",
-    "@electron-forge/maker-dmg": "^6.0.0-beta.54",
-    "@electron-forge/maker-pkg": "^6.0.0-beta.54",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
-    "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "electron": "^13.6.6",
-    "electron-notarize": "^1.0.0"
-  },
-  "dependencies": {
-    "concurrently": "^5.3.0",
-    "dotenv": "^8.2.0",
-    "electron-context-menu": "^2.4.0",
-    "electron-squirrel-startup": "^1.0.0",
-    "electron-unhandled": "^3.0.2",
-    "serve": "^11.3.2",
-    "wait-on": "^5.2.1"
-  },
-  "config": {
-    "forge": "./forge.config.js"
-  }
+	"name": "synthona",
+	"version": "1.2.7",
+	"description": "synthona",
+	"main": "app.js",
+	"scripts": {
+		"pack": "electron-builder --dir",
+		"dist": "electron-builder build",
+		"mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=dist/mac --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
+		"windows": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=build/synthona.ico --prune=true --out=dist/windows --ignore=\"/server/data|/server/database.sqlite3|/node_modules/electron-packager\"",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "electron-forge start",
+		"dev": "nodemon --watch * --exec 'npm run start'",
+		"package": "electron-forge package",
+		"make": "electron-forge make"
+	},
+	"repository": {
+		"type": "git",
+		"url": "synthona"
+	},
+	"author": "synthona",
+	"license": "GPL-2.0-or-later",
+	"devDependencies": {
+		"@electron-forge/cli": "^6.0.0-beta.54",
+		"@electron-forge/maker-deb": "^6.0.0-beta.54",
+		"@electron-forge/maker-dmg": "^6.0.0-beta.54",
+		"@electron-forge/maker-pkg": "^6.0.0-beta.54",
+		"@electron-forge/maker-rpm": "^6.0.0-beta.54",
+		"@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+		"@electron-forge/maker-zip": "^6.0.0-beta.54",
+		"electron": "^9.4.1",
+		"electron-notarize": "^1.0.0"
+	},
+	"dependencies": {
+		"concurrently": "^5.3.0",
+		"dotenv": "^8.2.0",
+		"electron-context-menu": "^2.4.0",
+		"electron-squirrel-startup": "^1.0.0",
+		"electron-unhandled": "^3.0.2",
+		"serve": "^11.3.2",
+		"wait-on": "^5.2.1"
+	},
+	"config": {
+		"forge": "./forge.config.js"
+	}
 }

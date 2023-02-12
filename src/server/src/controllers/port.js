@@ -58,8 +58,6 @@ exports.exportAllUserData = async (req, res, next) => {
 			// create node when the export is done
 			await node.create({
 				isFile: true,
-				hidden: false,
-				searchable: true,
 				type: 'package',
 				name: exportName,
 				preview: null,
@@ -114,6 +112,7 @@ exports.exportAllUserData = async (req, res, next) => {
 						'linkedNodeUUID',
 						'linkedNodeType',
 						'linkStrength',
+						'linkStart',
 						'updatedAt',
 						'createdAt',
 					],
@@ -243,11 +242,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 					as: 'left',
 					attributes: ['id', 'name'],
 				},
-				{
-					model: node,
-					as: 'right',
-					attributes: ['id', 'name'],
-				},
 			],
 		});
 		// create a list of exported IDS so incomplete
@@ -258,11 +252,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 			if (node.left) {
 				for (let leftNode of node.left) {
 					exportIdList.push(leftNode.id);
-				}
-			}
-			if (node.right) {
-				for (let rightNode of node.right) {
-					exportIdList.push(rightNode.id);
 				}
 			}
 			// set anchorNodeName
@@ -288,8 +277,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 			// create node when the export is done
 			await node.create({
 				isFile: true,
-				hidden: false,
-				searchable: true,
 				type: 'package',
 				name: anchorNodeName,
 				preview: null,
@@ -329,38 +316,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 				{
 					model: node,
 					required: false,
-					as: 'right',
-					include: [
-						{
-							model: association,
-							as: 'original',
-							required: false,
-							attributes: [
-								'id',
-								'nodeId',
-								'nodeUUID',
-								'nodeType',
-								'linkedNode',
-								'linkedNodeUUID',
-								'linkedNodeType',
-								'linkStrength',
-								'updatedAt',
-								'createdAt',
-							],
-							where: {
-								[Op.and]: [
-									// we only want to grab the associations where both items,
-									// left and right, are associate with packageUUID
-									{ nodeId: { [Op.in]: exportIdList } },
-									{ linkedNode: { [Op.in]: exportIdList } },
-								],
-							},
-						},
-					],
-				},
-				{
-					model: node,
-					required: false,
 					as: 'left',
 					include: [
 						{
@@ -374,6 +329,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 								'linkedNodeUUID',
 								'linkedNodeType',
 								'linkStrength',
+								'linkStart',
 								'updatedAt',
 								'createdAt',
 							],
@@ -382,7 +338,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 							where: {
 								[Op.and]: [
 									// we only want to grab the associations where both items,
-									// left and right, are associated with packageUUID
+									// left and right, are included in the export
 									{ nodeId: { [Op.in]: exportIdList } },
 									{ linkedNode: { [Op.in]: exportIdList } },
 									{ [Op.not]: { nodeType: 'package' } },
@@ -403,6 +359,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 						'linkedNodeUUID',
 						'linkedNodeType',
 						'linkStrength',
+						'linkStart',
 						'updatedAt',
 						'createdAt',
 					],
@@ -440,30 +397,6 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 				}
 				// remove these values so they are not duplicated in the export
 				delete anchorNode.dataValues.left;
-			}
-			if (node.right) {
-				for (let rightNode of node.right) {
-					if (rightNode.isFile) {
-						let extension = rightNode.path.substring(rightNode.path.lastIndexOf('.'));
-						let rightPreviewPath = path.resolve(rightNode.path);
-						// see if the file exists
-						if (fs.existsSync(rightPreviewPath) && !fs.lstatSync(rightPreviewPath).isDirectory()) {
-							try {
-								// append the associated file to the export
-								archive.append(fs.createReadStream(rightPreviewPath), {
-									name: rightNode.uuid + extension,
-								});
-							} catch (err) {
-								err.statusCode = 500;
-								throw err;
-							}
-						}
-					}
-					exportJSON.push(rightNode);
-					delete rightNode.dataValues.association;
-				}
-				// remove these values so they are not duplicated in the export
-				delete anchorNode.dataValues.right;
 			}
 			// add the anchor node
 			if (includeAnchorNode) {
@@ -589,6 +522,28 @@ exports.unpackImport = async (req, res, next) => {
 		const userId = req.user.uid;
 		// uuid of the import package node
 		const packageUUID = req.body.uuid;
+		// make sure al the file directories are there
+		let dataDirectoryPath = path.join(__coreDataDir, 'data', userId);
+		let userDirectoryPath = path.join(__coreDataDir, 'data', userId, 'user');
+		// generate user data directory if it does not exist
+		if (!fs.existsSync(dataDirectoryPath)) {
+			fs.mkdirSync(dataDirectoryPath);
+		}
+		// generate user profile image directory if it does not exist
+		if (!fs.existsSync(userDirectoryPath)) {
+			fs.mkdirSync(userDirectoryPath);
+		}
+		// fetch the package node from the DB
+		const packageNode = await node.findOne({
+			where: { [Op.and]: [{ uuid: packageUUID }, { creator: userId }] },
+			raw: true,
+		});
+		// check that the node is not already expanded
+		if (packageNode.metadata && packageNode.metadata.expanded) {
+			err = new Error('package is already expanded');
+			err.statusCode = 500;
+			throw err;
+		}
 		// mark the import package as expanded so undo is possible even if the operation fails or is interrupted
 		await node.update(
 			{
@@ -606,22 +561,6 @@ exports.unpackImport = async (req, res, next) => {
 		// live updates of the import progress to the frontend instead of
 		// having to use this workaround
 		res.sendStatus(200);
-		// make sure al the file directories are there
-		let dataDirectoryPath = path.join(__coreDataDir, 'data', userId);
-		let userDirectoryPath = path.join(__coreDataDir, 'data', userId, 'user');
-		// generate user data directory if it does not exist
-		if (!fs.existsSync(dataDirectoryPath)) {
-			fs.mkdirSync(dataDirectoryPath);
-		}
-		// generate user profile image directory if it does not exist
-		if (!fs.existsSync(userDirectoryPath)) {
-			fs.mkdirSync(userDirectoryPath);
-		}
-		// fetch the package node from the DB
-		const packageNode = await node.findOne({
-			where: { [Op.and]: [{ uuid: packageUUID }, { creator: userId }] },
-			raw: true,
-		});
 		// fetch the logged in user from the DB
 		const loggedInUser = await user.findOne({
 			where: {
@@ -636,12 +575,6 @@ exports.unpackImport = async (req, res, next) => {
 				type: 'user',
 			},
 		});
-		// check that the node is not already expanded
-		if (packageNode.metadata && packageNode.metadata.expanded) {
-			err = new Error('package is already expanded');
-			err.statusCode = 500;
-			throw err;
-		}
 		// get the fileUrl
 		const packageUrl = path.join(packageNode.path);
 		// check zip buffer size before unzipping
@@ -677,7 +610,10 @@ exports.unpackImport = async (req, res, next) => {
 					if (nodeImport.isFile) {
 						let nodeImportPath = nodeImport.path ? nodeImport.path : nodeImport.preview;
 						// load the fileEntry
-						let extension = nodeImportPath.substring(nodeImportPath.lastIndexOf('.'));
+						let extension = null;
+						if (nodeImportPath) {
+							extension = nodeImportPath.substring(nodeImportPath.lastIndexOf('.'));
+						}
 						// use the uuid to recognize the file
 						const fileEntry = zip.getEntry(nodeImport.uuid + extension);
 						let filePath;
@@ -700,8 +636,6 @@ exports.unpackImport = async (req, res, next) => {
 						newNode = await node.create(
 							{
 								isFile: nodeImport.isFile,
-								hidden: nodeImport.hidden,
-								searchable: nodeImport.searchable,
 								type: nodeImport.type,
 								name: nodeImport.name,
 								preview: previewPath,
@@ -726,8 +660,6 @@ exports.unpackImport = async (req, res, next) => {
 						newNode = await node.create(
 							{
 								isFile: nodeImport.isFile,
-								hidden: nodeImport.hidden,
-								searchable: nodeImport.searchable,
 								type: nodeImport.type,
 								name: nodeImport.name,
 								preview: nodeImport.preview,
@@ -759,6 +691,7 @@ exports.unpackImport = async (req, res, next) => {
 									linkedNodeUUID: associationImport.linkedNodeUUID,
 									linkedNodeType: associationImport.linkedNodeType,
 									linkStrength: associationImport.linkStrength,
+									linkStart: associationImport.linkStart,
 									creator: userId,
 									importId: packageUUID,
 									createdAt: associationImport.createdAt,

@@ -33,8 +33,6 @@ exports.createFile = async (req, res, next) => {
 		// create node in the context system
 		const result = await node.create({
 			isFile: true,
-			hidden: false,
-			searchable: true,
 			type: nodeType,
 			name: originalName,
 			preview: fileUrl,
@@ -134,7 +132,10 @@ exports.linkFiles = async (req, res, next) => {
 				// set the file path to that .app path
 				file.path = appDirPath;
 				// attempt to extract the App Name from the end of the path, & before the .app extension
-				let appName = appDirPath.substring(appDirPath.lastIndexOf('/') + 1, appDirPath.lastIndexOf('.app'));
+				let appName = appDirPath.substring(
+					appDirPath.lastIndexOf('/') + 1,
+					appDirPath.lastIndexOf('.app')
+				);
 				file.name = appName;
 				// set the node type to file still
 				nodeType = 'file';
@@ -145,8 +146,6 @@ exports.linkFiles = async (req, res, next) => {
 			// create the corresponding node in the database
 			const result = await node.create({
 				isFile: true,
-				hidden: false,
-				searchable: true,
 				type: nodeType,
 				name: file.name,
 				preview: preview,
@@ -227,8 +226,8 @@ exports.loadFileByUUID = async (req, res, next) => {
 		const fileExists = fs.existsSync(filePath);
 		// check to see if the file exists
 		if (!fileExists && result.dataValues.type !== 'user') {
-			console.log('erasing path for ' + result.dataValues.name);
-			await fsUtil.setFilePathToNullById(result.dataValues.id);
+			console.log('path for ' + result.dataValues.name + ' is messed up');
+			// await fsUtil.setFilePathToNullById(result.dataValues.id);
 		}
 		// make sure there is a preview and then respond
 		if (result && result.preview) {

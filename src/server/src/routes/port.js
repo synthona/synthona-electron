@@ -45,7 +45,7 @@ router.patch(
 	portController.removeImportsByPackage
 );
 
-// import a package
+// import a synthona package
 router.put('/import', isAuth, [body('uuid').exists().isUUID()], portController.unpackImport);
 
 // return the router

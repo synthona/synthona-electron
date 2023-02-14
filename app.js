@@ -75,7 +75,7 @@ serverProcess.on('message', (message) => {
 			windowList[0].reload();
 		}
 		// check for updates
-		// checkForUpdates();
+		checkForUpdates();
 	} else {
 		// HERE
 		// this is where we recieve messages from the server, ANY message!
@@ -491,8 +491,8 @@ const registerAppMenu = () => {
 				{
 					label: 'Help',
 					click: async () => {
-						BrowserWindow.getFocusedWindow().loadURL(
-							'http://' + config.CLIENT_BASE + ':' + config.CLIENT_PORT + '/help'
+						await shell.openExternal(
+							'https://github.com/synthona/synthona-help/blob/main/README.md'
 						);
 					},
 				},

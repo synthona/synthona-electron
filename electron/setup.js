@@ -72,25 +72,27 @@ exports.checkForUpdates = (reportNegative) => {
 		'https://raw.githubusercontent.com/synthona/synthona-electron/master/package.json'
 	);
 	request.on('response', (response) => {
-		response.on('data', (chunk) => {
-			// parse the json data from the github package.json route
-			let jsonData = JSON.parse(chunk);
-			let githubVersion = jsonData.version;
-			// check for a version match
-			if (githubVersion === APP_VERSION) {
-				console.log('✔ ' + config.APP_NAME + ' is up to date');
-				if (reportNegative) {
+		if (response) {
+			response.on('data', (chunk) => {
+				// parse the json data from the github package.json route
+				let jsonData = JSON.parse(chunk);
+				let githubVersion = jsonData ? jsonData.version : null;
+				// check for a version match
+				if (githubVersion && githubVersion === APP_VERSION) {
+					console.log('✔ ' + config.APP_NAME + ' is up to date');
+					if (reportNegative) {
+						BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+							message: 'latest-version',
+						});
+					}
+				} else {
+					console.log('a NEW version is available :)');
 					BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
-						message: 'latest-version',
+						message: 'update-available',
 					});
 				}
-			} else {
-				console.log('a NEW version is available :)');
-				BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
-					message: 'update-available',
-				});
-			}
-		});
+			});
+		}
 	});
 	request.end();
 };

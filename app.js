@@ -38,6 +38,11 @@ if (require('electron-squirrel-startup')) return app.quit();
 
 // config vars
 let configDirPath = app.getPath('userData');
+let legacyConfigDirPath = configDirPath.replace('synthona', 'yarnpoint');
+if (fs.existsSync(legacyConfigDirPath)) {
+	// if the user has an existing yarnpoint directory we'll use that
+	configDirPath = legacyConfigDirPath;
+}
 let configPath = path.join(configDirPath, 'config.json');
 let databasePath = path.join(configDirPath, 'database.sqlite3');
 let dataFolderPath = path.join(configDirPath, 'data');
@@ -505,7 +510,7 @@ const registerAppMenu = () => {
 				{
 					label: 'Patreon',
 					click: async () => {
-						await shell.openExternal('https://www.patreon.com/hyperpoints');
+						await shell.openExternal('https://www.patreon.com/synthona');
 					},
 				},
 				{

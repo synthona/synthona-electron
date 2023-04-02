@@ -258,7 +258,8 @@ exports.searchNodes = async (req, res, next) => {
 		}
 		// process request
 		var currentPage = req.query.page || 1;
-		var perPage = 15;
+		// var perPage = 15;
+		var perPage = 30;
 		var type = req.query.type || null;
 		var searchQuery = req.query.searchQuery || '';
 		var pinned = req.query.pinned || null;

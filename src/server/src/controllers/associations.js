@@ -284,17 +284,7 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 			where: whereStatement,
 			offset: (currentPage - 1) * perPage,
 			limit: perPage,
-			order: [['updatedAt', 'DESC']],
-			attributes: [
-				'id',
-				'nodeId',
-				'nodeType',
-				'linkedNode',
-				'linkedNodeType',
-				'linkStrength',
-				'updatedAt',
-				'linkStart',
-			],
+			attributes: ['id'],
 			// include whichever node is the associated one for
 			include: [
 				{
@@ -302,14 +292,14 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 					where: { id: { [Op.not]: nodeId } },
 					required: false,
 					as: 'original',
-					attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+					attributes: ['id'],
 				},
 				{
 					model: node,
 					where: { id: { [Op.not]: nodeId } },
 					required: false,
 					as: 'associated',
-					attributes: ['id', 'uuid', 'isFile', 'path', 'type', 'preview', 'name'],
+					attributes: ['id'],
 				},
 			],
 		});
@@ -321,9 +311,9 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 		// condense results to one list
 		result.forEach(async (value) => {
 			if (value.original) {
-				associations.push(value.original);
+				associations.push(value.original.id);
 			} else if (value.associated) {
-				associations.push(value.associated);
+				associations.push(value.associated.id);
 			} else {
 				// there are some cases where an association
 				// is missing the nodes it refers to, in which
@@ -340,9 +330,18 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 				await brokenLink.destroy();
 			}
 		});
+		// do a second query to properly order our results
+		const nodeResult = await node.findAll({
+			where: {
+				id: {
+					[Op.in]: associations,
+				},
+			},
+			order: [['updatedAt', 'DESC']],
+		});
 		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
 		// i got way ahead of myself refactoring today and basically created a huge mess
-		const results = associations.map((item) => {
+		const results = nodeResult.map((item) => {
 			if (item.isFile || item.type === 'user') {
 				const fullUrl = item.preview
 					? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid

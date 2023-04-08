@@ -457,31 +457,7 @@ exports.removeImportsByPackage = async (req, res, next) => {
 		const uid = req.user.uid;
 		// uuid of the import package node
 		const packageUUID = req.body.uuid;
-		// get a list of nodes which are files so the associated files can be removed
-		const nodelist = await node.findAll({
-			where: {
-				[Op.and]: [
-					{ importId: packageUUID },
-					{ creator: uid },
-					{ isFile: true },
-					{ [Op.not]: { type: 'user' } },
-				],
-			},
-		});
-		// remove all the files
-		for (fileNode of nodelist) {
-			var filePath = '';
-			if (typeof fileNode.path === 'string') {
-				filePath = path.join(fileNode.path);
-			}
-			// remove the file if it exists
-			if (fs.existsSync(filePath) && !fs.lstatSync(filePath).isDirectory()) {
-				fs.unlinkSync(filePath);
-				// clean up any empty folders created by this deletion
-				await fsUtil.cleanupDataDirectoryFromFilePath(filePath);
-			}
-		}
-		// remove all the nodes and associations created by this package
+		// remove all the nodes and associations metadata created by this package
 		await node.destroy({
 			where: {
 				[Op.and]: [{ importId: packageUUID }, { creator: uid }],
@@ -581,9 +557,9 @@ exports.unpackImport = async (req, res, next) => {
 		// var buffer = new admZip(packageUrl).toBuffer();
 		// const maxZipSize = 1000000000; // 1GB
 		// if (buffer.byteLength > maxZipSize) {
-		//   err = new Error('zip buffer exceeds max allowed size');
-		//   err.statusCode = 500;
-		//   throw err;
+		// 	err = new Error('zip buffer exceeds max allowed size');
+		// 	err.statusCode = 500;
+		// 	throw err;
 		// }
 		// create new reference to zip
 		var zip = new admZip(packageUrl);
@@ -617,11 +593,21 @@ exports.unpackImport = async (req, res, next) => {
 						// use the uuid to recognize the file
 						const fileEntry = zip.getEntry(nodeImport.uuid + extension);
 						let filePath;
+						let dbFilePath;
 						if (fileEntry && fileEntry.name) {
-							// generate the file location and get file path
-							filePath = await fsUtil.generateFileLocation(userId, nodeImport.type);
-							//extract file to the generated location
-							zip.extractEntryTo(fileEntry, filePath, false, true);
+							// lets make sure the file doesnt already exist before we make another copy
+							if (fs.existsSync(nodeImport.path)) {
+								// file at this specific path with this specific name already exists lets just use it
+								filePath = nodeImport.path;
+								dbFilePath = nodeImport.path;
+							} else {
+								// if it doesn't already exist we should generate the file location and get file path
+								filePath = await fsUtil.generateFileLocation(userId, nodeImport.type);
+								//extract file to the generated location
+								zip.extractEntryTo(fileEntry, filePath, false, true);
+								dbFilePath =
+									fileEntry && fileEntry.name ? path.join(filePath, fileEntry.name) : null;
+							}
 						} else {
 							// err = new Error('file import error');
 							console.log('file import at...');
@@ -629,8 +615,6 @@ exports.unpackImport = async (req, res, next) => {
 							// err.statusCode = 500;
 							// throw err;
 						}
-						const dbFilePath =
-							fileEntry && fileEntry.name ? path.join(filePath, fileEntry.name) : null;
 						const previewPath = nodeImport.type === 'image' ? dbFilePath : null;
 						// generate node
 						newNode = await node.create(

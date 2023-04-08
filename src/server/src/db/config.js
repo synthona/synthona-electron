@@ -4,21 +4,25 @@ require('dotenv').config();
 global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 // set dbPath
 const dbPath = path.join(__coreDataDir, 'database.sqlite3');
+const { sqlite } = require('sqlite3');
 
 module.exports = {
 	development: {
 		storage: dbPath,
 		dialect: 'sqlite',
+		dialectModule: sqlite,
 		logging: false,
 	},
 	test: {
 		storage: dbPath,
 		dialect: 'sqlite',
+		dialectModule: sqlite,
 		logging: false,
 	},
 	production: {
 		storage: dbPath,
 		dialect: 'sqlite',
+		dialectModule: sqlite,
 		logging: false,
 		dialectOptions: {
 			ssl: {

@@ -7,6 +7,11 @@ let packageJson = require('../package.json');
 const APP_VERSION = packageJson.version;
 let config;
 let configDirPath = app.getPath('userData');
+let legacyConfigDirPath = configDirPath.replace('synthona', 'yarnpoint');
+if (fs.existsSync(legacyConfigDirPath)) {
+	// if the user has an existing yarnpoint directory we'll use that
+	configDirPath = legacyConfigDirPath;
+}
 let configPath = path.join(configDirPath, 'config.json');
 
 exports.loadConfig = () => {
@@ -78,7 +83,7 @@ exports.checkForUpdates = (reportNegative) => {
 				let jsonData = JSON.parse(chunk);
 				let githubVersion = jsonData ? jsonData.version : null;
 				// check for a version match
-				if (githubVersion && githubVersion === APP_VERSION) {
+				if (githubVersion && githubVersion <= APP_VERSION) {
 					console.log('✔ ' + config.APP_NAME + ' is up to date');
 					if (reportNegative) {
 						BrowserWindow.getFocusedWindow().webContents.send('fromMain', {

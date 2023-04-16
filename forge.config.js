@@ -3,47 +3,53 @@ require('dotenv').config();
 module.exports = {
 	packagerConfig: {
 		ignore: '/node_modules/electron-packager|/server/database.sqlite3',
-		prune: true,
 		icon: 'build/synthona.icns',
 		overwrite: true,
-		appBundleId: process.env.APPLE_BUNDLE_ID,
 		osxSign: {
-			'hardened-runtime': true,
-			'gatekeeper-assess': false,
-			'entitlements': 'entitlements.plist',
-			'entitlements-inherit': 'entitlements.plist',
+			optionsForFile: (filePath) => {
+				// Here, we keep it simple and return a single entitlements.plist file.
+				// You can use this callback to map different sets of entitlements
+				// to specific files in your packaged app.
+				return {
+					entitlements: 'entitlements.plist',
+				};
+			},
+		},
+		osxNotarize: {
+			tool: 'notarytool',
+			appleId: process.env.APPLE_ID,
+			appleIdPassword: process.env.APPLE_ID_PASSWORD,
+			teamId: process.env.APPLE_TEAM_ID,
 		},
 	},
-	hooks: {
-		'postPackage': require('./notarize.js'),
-	},
+	rebuildConfig: {},
 	makers: [
 		{
 			name: '@electron-forge/maker-squirrel',
 			config: {
-				'name': 'synthona',
-				'icon': 'build/synthona.ico',
-				'loadingGif': 'build/initializing.gif',
+				icon: 'build/synthona.icns',
+				loadingGif: 'build/initializing.gif',
 			},
 		},
 		{
 			name: '@electron-forge/maker-dmg',
 			platforms: ['darwin'],
 			config: {
-				'name': 'synthona',
-				'icon': 'build/synthona.icns',
+				icon: 'build/synthona.icns',
+				format: 'ULFO',
 			},
 		},
 		{
 			name: '@electron-forge/maker-deb',
 			config: {
-				'name': 'synthona',
-				'icon': 'build/synthona.icns',
+				icon: 'build/synthona.icns',
 			},
 		},
 		{
 			name: '@electron-forge/maker-rpm',
-			config: {},
+			config: {
+				icon: 'build/synthona.icns',
+			},
 		},
 	],
 };

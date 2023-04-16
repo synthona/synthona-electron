@@ -21,15 +21,14 @@
 	"author": "synthona",
 	"license": "GPL-2.0-or-later",
 	"devDependencies": {
-		"@electron-forge/cli": "^6.0.0-beta.54",
-		"@electron-forge/maker-deb": "^6.0.0-beta.54",
-		"@electron-forge/maker-dmg": "^6.0.0-beta.54",
-		"@electron-forge/maker-pkg": "^6.0.0-beta.54",
-		"@electron-forge/maker-rpm": "^6.0.0-beta.54",
-		"@electron-forge/maker-squirrel": "^6.0.0-beta.54",
-		"@electron-forge/maker-zip": "^6.0.0-beta.54",
-		"electron": "^9.4.1",
-		"electron-notarize": "^1.0.0"
+		"@electron-forge/cli": "^6.1.1",
+		"@electron-forge/maker-deb": "^6.1.1",
+		"@electron-forge/maker-dmg": "^6.1.1",
+		"@electron-forge/maker-pkg": "^6.1.1",
+		"@electron-forge/maker-rpm": "^6.1.1",
+		"@electron-forge/maker-squirrel": "^6.1.1",
+		"@electron-forge/maker-zip": "^6.1.1",
+		"electron": "^9.4.1"
 	},
 	"dependencies": {
 		"concurrently": "^5.3.0",
@@ -39,8 +38,5 @@
 		"electron-unhandled": "^3.0.2",
 		"serve": "^11.3.2",
 		"wait-on": "^5.2.1"
-	},
-	"config": {
-		"forge": "./forge.config.js"
 	}
 }

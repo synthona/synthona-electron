@@ -487,6 +487,12 @@ const registerAppMenu = () => {
 						shell.showItemInFolder(dataFolderPath);
 					},
 				},
+				{
+					label: 'Show Config',
+					click: async () => {
+						shell.showItemInFolder(configPath);
+					},
+				},
 				{ role: 'toggledevtools', visible: false },
 			],
 		},

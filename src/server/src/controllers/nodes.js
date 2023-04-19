@@ -1,8 +1,8 @@
 const path = require('path');
 var fs = require('fs');
 // bring in data models.
-const { node, association } = require('../db/models');
-const { Op } = require('sequelize');
+const { node, association, sequelize } = require('../db/models');
+const { Op, Sequelize } = require('sequelize');
 // custom code
 const { validationResult } = require('express-validator/check');
 const context = require('../util/context');
@@ -34,8 +34,6 @@ exports.createNode = async (req, res, next) => {
 		// create node
 		const result = await node.create({
 			isFile: isFile,
-			hidden: false,
-			searchable: true,
 			type: type,
 			name: name,
 			path: path,
@@ -102,8 +100,6 @@ exports.getNodeByUUID = async (req, res, next) => {
 			attributes: [
 				'uuid',
 				'isFile',
-				'hidden',
-				'searchable',
 				'comment',
 				'metadata',
 				'type',
@@ -134,6 +130,45 @@ exports.getNodeByUUID = async (req, res, next) => {
 		}
 		next(err);
 	}
+};
+
+exports.getRandomNode = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
+	// load random node
+	const result = await node.findOne({
+		where: {
+			creator: userId,
+		},
+		order: sequelize.random(),
+		limit: 1,
+		attributes: [
+			'uuid',
+			'isFile',
+			'comment',
+			'metadata',
+			'type',
+			'name',
+			'preview',
+			'content',
+			'path',
+			'pinned',
+			'updatedAt',
+		],
+	});
+	if (!result) {
+		const error = new Error('Could not find  node');
+		error.statusCode = 404;
+		throw error;
+	}
+	// add full file url
+	if (result.isFile || result.type === 'user') {
+		result.preview = result.preview
+			? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
+			: null;
+	}
+	// send response
+	res.status(200).json({ node: result });
 };
 
 exports.markNodeView = async (req, res, next) => {
@@ -184,13 +219,10 @@ exports.updateNode = async (req, res, next) => {
 		}
 		// update any values that have been changed
 		existingNode.name = req.body.name ? req.body.name : existingNode.name;
-		existingNode.preview = req.body.preview ? req.body.preview : existingNode.preview;
+		existingNode.preview =
+			req.body.preview || req.body.preview === '' ? req.body.preview : existingNode.preview;
 		existingNode.path = req.body.path ? req.body.path : existingNode.path;
 		existingNode.content = req.body.content ? req.body.content : existingNode.content;
-		existingNode.hidden =
-			typeof req.body.hidden === 'boolean' ? req.body.hidden : existingNode.hidden;
-		existingNode.searchable =
-			typeof req.body.searchable === 'boolean' ? req.body.searchable : existingNode.searchable;
 		existingNode.pinned =
 			typeof req.body.pinned === 'boolean' ? req.body.pinned : existingNode.pinned;
 		// save and store result
@@ -226,7 +258,8 @@ exports.searchNodes = async (req, res, next) => {
 		}
 		// process request
 		var currentPage = req.query.page || 1;
-		var perPage = 15;
+		// var perPage = 15;
+		var perPage = 30;
 		var type = req.query.type || null;
 		var searchQuery = req.query.searchQuery || '';
 		var pinned = req.query.pinned || null;
@@ -285,23 +318,13 @@ exports.searchNodes = async (req, res, next) => {
 					content: { [Op.like]: '%' + searchQuery + '%' },
 				},
 			];
-			// if there is a search query only return searchable items
-			whereStatement.searchable = true;
-		} else {
-			// in an open request do not return hidden items
-			whereStatement.hidden = { [Op.not]: true };
 		}
 		if (type) whereStatement.type = type;
 		if (pinned) whereStatement.pinned = true;
 		// // make sure the only nodes retrieved are from the logged in user
 		whereStatement.creator = userId;
-		// get the total node count
+		// retreive nodes and get the count as well
 		const data = await node.findAndCountAll({
-			where: whereStatement,
-		});
-		// retrieve nodes for the requested page
-		const totalItems = data.count;
-		const result = await node.findAll({
 			where: whereStatement,
 			offset: (currentPage - 1) * perPage,
 			limit: perPage,
@@ -309,6 +332,9 @@ exports.searchNodes = async (req, res, next) => {
 			attributes: ['uuid', 'isFile', 'name', 'path', 'type', 'preview', 'views', 'updatedAt'],
 			raw: true,
 		});
+		// retrieve nodes for the requested page
+		const totalItems = data.count;
+		const result = data.rows;
 		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
 		// i got way ahead of myself refactoring today and basically created a huge mess
 		const results = result.map((item) => {
@@ -387,7 +413,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 		// if the node is a file, check if we need to delete from the file system
 		if (nodeToDelete.isFile && nodeToDelete.path) {
 			var filePath = path.join(nodeToDelete.path);
-			// remove the file if it exists & is in the core data directory
+			// remove the file if it exists & is in the synthona core data directory
 			if (fs.existsSync(filePath) && filePath.includes(__coreDataDir)) {
 				fs.unlinkSync(filePath);
 				// clean up any empty folders created by this deletion
@@ -422,7 +448,7 @@ exports.getGraphData = async (req, res, next) => {
 			throw error;
 		}
 		// process request
-		const perPage = process.env.GRAPH_RENDER_LIMIT || 100;
+		const perPage = req.query.graphRenderLimit || 100;
 		const anchorNode = req.query.anchorNode;
 		let nodeList;
 		let nodeIdList = [];
@@ -443,11 +469,11 @@ exports.getGraphData = async (req, res, next) => {
 			const originalList = await association.findAll({
 				where: {
 					creator: userId,
-					[Op.or]: [{ nodeUUID: anchorNode }, { linkedNodeUUID: anchorNode }],
+					nodeUUID: anchorNode,
 				},
 				limit: perPage,
 				// sort by linkStrength
-				order: [['linkStrength', 'DESC']],
+				order: [['updatedAt', 'DESC']],
 				attributes: [
 					'id',
 					'nodeId',
@@ -495,7 +521,6 @@ exports.getGraphData = async (req, res, next) => {
 			nodeList = await node.findAll({
 				where: {
 					creator: userId,
-					hidden: { [Op.not]: true },
 				},
 				limit: perPage,
 				raw: true,
@@ -516,7 +541,7 @@ exports.getGraphData = async (req, res, next) => {
 				[Op.and]: [{ nodeId: { [Op.in]: nodeIdList } }, { linkedNode: { [Op.in]: nodeIdList } }],
 			},
 			raw: true,
-			order: [['linkStrength', 'DESC']],
+			order: [['updatedAt', 'DESC']],
 			attributes: [
 				'id',
 				'nodeId',

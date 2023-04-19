@@ -31,8 +31,6 @@ router.patch(
 	[
 		body('uuid').exists().isUUID(),
 		body('name').optional().isString(),
-		body('hidden').optional().isBoolean(),
-		body('searchable').optional().isBoolean(),
 		body('preview').optional().isString(),
 		body('path').optional().isString(),
 		body('content').optional().isString(),
@@ -51,6 +49,9 @@ router.patch(
 
 // fetch a node by uuid
 router.get('/', isAuth, [query('uuid').exists().isUUID()], nodeController.getNodeByUUID);
+
+// fetch a random node
+router.get('/random', isAuth, nodeController.getRandomNode);
 
 // mark a node as viewed
 router.patch('/viewed', isAuth, [body('uuid').exists().isUUID()], nodeController.markNodeView);
@@ -78,6 +79,7 @@ router.get(
 	[
 		query('anchorNode').optional().isUUID(),
 		query('type').optional().isString(),
+		query('graphRenderLimit').optional().isInt(),
 		query('searchQuery').optional().isString(),
 	],
 	nodeController.getGraphData

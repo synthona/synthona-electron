@@ -19,7 +19,7 @@
 		"url": "synthona"
 	},
 	"author": "synthona",
-	"license": "GPL-2.0-or-later",
+	"license": "MIT",
 	"devDependencies": {
 		"@electron-forge/cli": "^6.1.1",
 		"@electron-forge/maker-deb": "^6.1.1",

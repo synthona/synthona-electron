@@ -82,6 +82,7 @@ serverProcess.on('message', (message) => {
 		// check for updates
 		checkForUpdates();
 	} else {
+		console.log(message);
 		// HERE
 		// this is where we recieve messages from the server, ANY message!
 		// this is how we can take a string command from the server to, say, spawn a file-picker

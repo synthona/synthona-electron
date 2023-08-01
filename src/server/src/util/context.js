@@ -1,14 +1,11 @@
 const { Op } = require('sequelize');
 const { node, association } = require('../db/models');
+const knex = require('../db/knex/knex');
 
 // util function to delete associations for a node
 exports.deleteAssociations = async (id) => {
 	try {
-		await association.destroy({
-			where: {
-				[Op.or]: [{ nodeId: id }, { linkedNode: id }],
-			},
-		});
+		await knex('association').where({ nodeId: id }).orWhere({ linkedNode: id }).delete();
 	} catch (err) {
 		err.statusCode = 500;
 		err.message = 'Failed to delete associations';

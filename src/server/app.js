@@ -11,8 +11,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 // import database code.
-const db = require('./src/db/models');
-const dbUpdater = require('./src/db/updater');
+const initKnex = require('./src/db/knex/setup');
 // import routes
 const nodeRoutes = require('./src/routes/nodes');
 const authRoutes = require('./src/routes/auth');
@@ -26,9 +25,6 @@ const portRoutes = require('./src/routes/port');
 const fileRoutes = require('./src/routes/file');
 
 const debug = false;
-// WARNING: setting this to TRUE will erase the
-// database on the next server restart
-const eraseDatabaseOnSync = false;
 
 // create data directory if it does not exist
 let dataDirectory = path.join(__coreDataDir, 'data');
@@ -36,8 +32,11 @@ if (!fs.existsSync(dataDirectory)) {
 	fs.mkdirSync(dataDirectory);
 }
 
-// run database updates
-dbUpdater.checkForDatabaseUpdates(db);
+// handle case for sequelize CLI
+require('dotenv').config();
+global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
+// initialize knex and run DB migrations if there are any
+initKnex.initializeKnex();
 
 // set up express app
 const app = express();
@@ -141,18 +140,8 @@ if (debug) {
 // 	console.log(message);
 // });
 
-// TODO: i should not be calling sequelize.sync on every single server start.
-// it should only be called intentionally on like...setup? all other changes
-// should be applied via migrations
 // start server
-db.sequelize
-	.sync({ force: eraseDatabaseOnSync })
-	.then(async () => {
-		app.listen(process.env.PORT, () => {
-			console.log(`✔ ${process.env.APP_NAME} is listening on port ${process.env.PORT}!`);
-			process.send('server-started');
-		});
-	})
-	.catch((err) => {
-		console.log(err);
-	});
+app.listen(process.env.PORT, () => {
+	console.log(`✔ ${process.env.APP_NAME} is listening on port ${process.env.PORT}!`);
+	process.send('server-started');
+});

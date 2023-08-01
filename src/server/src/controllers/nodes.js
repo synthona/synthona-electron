@@ -1,8 +1,9 @@
 const path = require('path');
 var fs = require('fs');
 // bring in data models.
-const { node, association, sequelize } = require('../db/models');
-const { Op, Sequelize } = require('sequelize');
+const knex = require('../db/knex/knex');
+const uuid = require('uuid');
+const day = require('dayjs');
 // custom code
 const { validationResult } = require('express-validator/check');
 const context = require('../util/context');
@@ -31,8 +32,10 @@ exports.createNode = async (req, res, next) => {
 				: null;
 		// userId comes from the is-auth middleware
 		const userId = req.user.uid;
-		// create node
-		const result = await node.create({
+		// honestly i probably dont need moment js i could probably write 1 util function that would be like 6 lines of code
+		// so i should probably just do that tomorrow or whatever. sounds good!
+		let newNode = {
+			uuid: uuid.v4(),
 			isFile: isFile,
 			type: type,
 			name: name,
@@ -40,38 +43,34 @@ exports.createNode = async (req, res, next) => {
 			preview: preview,
 			content: content,
 			creator: userId,
-		});
+			createdAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+			updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+		};
+		// create node
+		const result = await knex('node').insert(newNode);
 		// if there is a linkedNode passed in, associate it
 		if (linkedNode) {
 			// make sure linkedNode exists
-			const nodeB = await node.findOne({
-				where: {
-					uuid: linkedNode.uuid,
-				},
-			});
-			// throw error if it is empty
+			const nodeB = await knex('node').select().where({ uuid: linkedNode.uuid }).first();
+			// make sure we got a result
 			if (nodeB) {
 				// create association
-				await association.create({
-					nodeId: result.dataValues.id,
-					nodeUUID: result.dataValues.uuid,
-					nodeType: result.dataValues.type,
+				await knex('association').insert({
+					nodeId: result[0],
+					nodeUUID: newNode.uuid,
+					nodeType: newNode.type,
 					linkedNode: nodeB.id,
 					linkedNodeUUID: nodeB.uuid,
 					linkedNodeType: nodeB.type,
 					linkStrength: 1,
 					creator: userId,
+					createdAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+					updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
 				});
 			}
 		}
-		// remove values that don't need to be returned
-		delete result.dataValues.isFile;
-		delete result.dataValues.color;
-		delete result.dataValues.impressions;
-		delete result.dataValues.views;
-		delete result.dataValues.createdFrom;
 		// send response
-		res.status(200).json({ node: result });
+		res.status(200).json({ node: newNode });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -93,11 +92,8 @@ exports.getNodeByUUID = async (req, res, next) => {
 		// process request
 		const uuid = req.query.uuid;
 		// load node
-		const result = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-			attributes: [
+		const result = await knex('node')
+			.select(
 				'uuid',
 				'isFile',
 				'comment',
@@ -108,9 +104,12 @@ exports.getNodeByUUID = async (req, res, next) => {
 				'content',
 				'path',
 				'pinned',
-				'updatedAt',
-			],
-		});
+				'updatedAt'
+			)
+			.where({ uuid: uuid })
+			.first()
+			.limit(1);
+		// make sure we have a result
 		if (!result) {
 			const error = new Error('Could not find  node');
 			error.statusCode = 404;
@@ -133,42 +132,49 @@ exports.getNodeByUUID = async (req, res, next) => {
 };
 
 exports.getRandomNode = async (req, res, next) => {
-	// this comes from the is-auth middleware
-	const userId = req.user.uid;
-	// load random node
-	const result = await node.findOne({
-		where: {
-			creator: userId,
-		},
-		order: sequelize.random(),
-		limit: 1,
-		attributes: [
-			'uuid',
-			'isFile',
-			'comment',
-			'metadata',
-			'type',
-			'name',
-			'preview',
-			'content',
-			'path',
-			'pinned',
-			'updatedAt',
-		],
-	});
-	if (!result) {
-		const error = new Error('Could not find  node');
-		error.statusCode = 404;
-		throw error;
+	try {
+		// this comes from the is-auth middleware
+		const userId = req.user.uid;
+		// load random node
+		const result = await knex('node')
+			.select(
+				'id',
+				'uuid',
+				'isFile',
+				'comment',
+				'metadata',
+				'type',
+				'name',
+				'preview',
+				'content',
+				'path',
+				'pinned',
+				'updatedAt'
+			)
+			.orderByRandom()
+			.where({ creator: userId })
+			.limit(1)
+			.first();
+		// make sure we got a result
+		if (!result) {
+			const error = new Error('Could not find  node');
+			error.statusCode = 404;
+			throw error;
+		}
+		// add full file url
+		if (result.isFile || result.type === 'user') {
+			result.preview = result.preview
+				? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
+				: null;
+		}
+		// send response
+		res.status(200).json({ node: result });
+	} catch (err) {
+		if (!err.statusCode) {
+			err.statusCode = 500;
+		}
+		next(err);
 	}
-	// add full file url
-	if (result.isFile || result.type === 'user') {
-		result.preview = result.preview
-			? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
-			: null;
-	}
-	// send response
-	res.status(200).json({ node: result });
 };
 
 exports.markNodeView = async (req, res, next) => {
@@ -207,35 +213,44 @@ exports.updateNode = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// load node
-		const existingNode = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-		});
+		const existingNode = await knex('node').select().where({ uuid }).first();
+		// make sure existing node exists
 		if (!existingNode) {
 			const error = new Error('Could not find node');
 			error.statusCode = 404;
 			throw error;
 		}
-		// update any values that have been changed
-		existingNode.name = req.body.name ? req.body.name : existingNode.name;
-		existingNode.preview =
+		const name = req.body.name ? req.body.name : existingNode.name;
+		const preview =
 			req.body.preview || req.body.preview === '' ? req.body.preview : existingNode.preview;
-		existingNode.path = req.body.path ? req.body.path : existingNode.path;
-		existingNode.content = req.body.content ? req.body.content : existingNode.content;
-		existingNode.pinned =
-			typeof req.body.pinned === 'boolean' ? req.body.pinned : existingNode.pinned;
-		// save and store result
-		const result = await existingNode.save({ silent: true });
+		const path = req.body.path ? req.body.path : existingNode.path;
+		const content = req.body.content ? req.body.content : existingNode.content;
+		const pinned = typeof req.body.pinned === 'boolean' ? req.body.pinned : existingNode.pinned;
+		// create object for updating in the DB
+		let updatedNode = {
+			name,
+			preview,
+			path,
+			content,
+			pinned,
+		};
+		// update in the database
+		await knex('node').where({ uuid }).update(updatedNode);
+		// update valeus that have changed for our return value
+		existingNode.name = name;
+		existingNode.preview = preview;
+		existingNode.path = path;
+		existingNode.content = content;
+		existingNode.pinned = pinned;
 		// it's an file, re-apply the baseURL
-		if (result.isFile || result.type === 'user') {
-			const fullUrl = result.preview
-				? req.protocol + '://' + req.get('host') + '/file/load/' + result.uuid
+		if (existingNode.isFile || existingNode.type === 'user') {
+			const fullUrl = existingNode.preview
+				? req.protocol + '://' + req.get('host') + '/file/load/' + existingNode.uuid
 				: null;
-			result.preview = fullUrl;
+			existingNode.preview = fullUrl;
 		}
 		// return result
-		res.status(200).json({ node: result });
+		res.status(200).json({ node: existingNode });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -296,48 +311,40 @@ exports.searchNodes = async (req, res, next) => {
 			}
 		}
 
-		var splitQuery = searchQuery.split(' ');
-		var fuzzySearch = '%';
-		// TODO. i can make this even better by adding an additional OR query to the whereStatement
-		// and just passing in the array there instead of into this cycler
-		if (splitQuery.length > 0) {
-			splitQuery.forEach((word) => {
-				if (word) {
-					fuzzySearch = fuzzySearch + word + '%';
-				}
-			});
-		}
-		// create WHERE statement
-		var whereStatement = {};
+		let fuzzySearch = '';
 		if (searchQuery) {
-			whereStatement[Op.or] = [
-				{
-					name: { [Op.like]: '%' + fuzzySearch + '%' },
-				},
-				{
-					content: { [Op.like]: '%' + searchQuery + '%' },
-				},
-			];
+			fuzzySearch = searchQuery.toLowerCase().replace(' ', '%');
 		}
-		if (type) whereStatement.type = type;
-		if (pinned) whereStatement.pinned = true;
-		// // make sure the only nodes retrieved are from the logged in user
-		whereStatement.creator = userId;
-		// retreive nodes and get the count as well
-		const data = await node.findAndCountAll({
-			where: whereStatement,
-			offset: (currentPage - 1) * perPage,
-			limit: perPage,
-			order: [[sortType, sortOrder]],
-			attributes: ['uuid', 'isFile', 'name', 'path', 'type', 'preview', 'views', 'updatedAt'],
-			raw: true,
-		});
+
+		// make our query
+		const data = await knex('node')
+			.select('uuid', 'isFile', 'name', 'path', 'type', 'preview', 'views', 'updatedAt')
+			.where({ creator: userId })
+			.modify((queryBuilder) => {
+				// add sortType and sortOrder
+				if (sortType && sortOrder) {
+					queryBuilder.orderBy(sortType, sortOrder);
+				}
+				// add pinned check if we need to
+				if (pinned) queryBuilder.andWhereLike('pinned', true);
+				// add type check if we need to
+				if (type) queryBuilder.andWhereLike('type', type);
+				// add the query in here
+				if (searchQuery) {
+					queryBuilder.andWhereLike('name', `${'%' + fuzzySearch + '%'}`);
+					queryBuilder.orWhereLike('name', `${'%' + searchQuery + '%'}`);
+					queryBuilder.orWhereLike('content', `${'%' + searchQuery + '%'}`);
+					queryBuilder.orWhereLike('content', `${'%' + fuzzySearch + '%'}`);
+				}
+			})
+			.offset((currentPage - 1) * perPage)
+			.limit(perPage);
 		// retrieve nodes for the requested page
-		const totalItems = data.count;
-		const result = data.rows;
+		const totalItems = await knex('node').count('id as count').first();
 		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
 		// i got way ahead of myself refactoring today and basically created a huge mess
-		const results = result.map((item) => {
+		const results = data.map((item) => {
+			// TODO - > can i move this step client side? it will save a lot of trouble
 			if (item.isFile || item.type === 'user') {
 				const fullUrl = item.preview
 					? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
@@ -347,7 +354,7 @@ exports.searchNodes = async (req, res, next) => {
 			return item;
 		});
 		// send response
-		res.status(200).json({ nodes: results, totalItems: totalItems });
+		res.status(200).json({ nodes: results, totalItems: totalItems.count });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -370,12 +377,7 @@ exports.clearNodePreview = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// update the node with the new full path
-		const result = await node.update(
-			{
-				preview: null,
-			},
-			{ where: { uuid: uuid }, silent: true }
-		);
+		const result = await knex('node').where({ uuid: uuid }).update({ preview: null });
 		// send response
 		res.status(200).json({ node: result });
 	} catch (err) {
@@ -400,11 +402,8 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 		// process request
 		const uuid = req.query.uuid;
 		// load text node
-		const nodeToDelete = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-		});
+		const nodeToDelete = await knex('node').where({ uuid: uuid }).first();
+		// make sure we got something here
 		if (!nodeToDelete) {
 			const error = new Error('Could not find node');
 			error.statusCode = 404;
@@ -423,7 +422,8 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 		// delete associations
 		context.deleteAssociations(nodeToDelete.id);
 		// delete node and send response
-		nodeToDelete.destroy();
+		await knex('node').where({ uuid: uuid }).first().delete();
+		// send 200 response
 		res.sendStatus(200);
 	} catch (err) {
 		if (!err.statusCode) {
@@ -450,109 +450,87 @@ exports.getGraphData = async (req, res, next) => {
 		// process request
 		const perPage = req.query.graphRenderLimit || 100;
 		const anchorNode = req.query.anchorNode;
-		let nodeList;
-		let nodeIdList = [];
-		// depending on if an anchorNode is passed in, fetch the data
+		var bidirectional = req.query.bidirectional === 'yes' ? true : false;
+		let nodeList = [];
+		let associations = [];
+		// check if there's an anchorNode or not
 		if (anchorNode) {
-			nodeList = [];
-			// grab the anchornode
-			const anchor = await node.findOne({
-				where: {
-					creator: userId,
-					uuid: anchorNode,
-				},
-			});
-			// add the anchorNode to the nodeIdList and nodeList as well
-			nodeIdList.push(anchor.dataValues.id);
-			nodeList.push(anchor.dataValues);
-			// 1. fetch the nodes
-			const originalList = await association.findAll({
-				where: {
-					creator: userId,
-					nodeUUID: anchorNode,
-				},
-				limit: perPage,
-				// sort by linkStrength
-				order: [['updatedAt', 'DESC']],
-				attributes: [
+			// load anchornode
+			const anchor = await knex('node')
+				.select(
 					'id',
-					'nodeId',
-					'nodeType',
-					'linkedNode',
-					'linkedNodeType',
-					'linkStrength',
-					'updatedAt',
-				],
-				// include whichever node is the associated one for each
-				include: [
-					{
-						model: node,
-						where: { id: { [Op.not]: anchorNode } },
-						required: false,
-						as: 'original',
-						attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'name'],
-					},
-					{
-						model: node,
-						where: { id: { [Op.not]: anchorNode } },
-						required: false,
-						as: 'associated',
-						attributes: ['id', 'uuid', 'preview', 'isFile', 'path', 'type', 'name'],
-					},
-				],
-			});
-			// 2. turn the nodelist into an array to be passed into the second query
-			originalList.map((node) => {
-				// grab the left associated nodes
-				if (node.original && node.original.dataValues.uuid !== anchor.uuid) {
-					nodeIdList.push(node.original.dataValues.id);
-					nodeList.push(node.original.dataValues);
-				}
-				// grab the right associated nodes
-				if (node.associated && node.associated.dataValues.uuid !== anchor.uuid) {
-					nodeIdList.push(node.associated.dataValues.id);
-					nodeList.push(node.associated.dataValues);
-				}
-			});
-			// // mark the anchorNode as viewed also
-			// context.markNodeView(anchor.dataValues.uuid);
+					'uuid',
+					'isFile',
+					'comment',
+					'metadata',
+					'type',
+					'name',
+					'preview',
+					'content',
+					'path',
+					'pinned',
+					'updatedAt'
+				)
+				.where({ uuid: anchorNode })
+				.andWhere({ creator: userId })
+				.first()
+				.limit(1);
+			// add it to the list
+			nodeList = nodeList.concat(anchor);
+			// fetch the nodes
+			let result = await knex
+				.select('*')
+				.from('association')
+				.where('association.creator', userId)
+				.andWhere('node.creator', userId)
+				.andWhere('association.nodeUUID', anchorNode)
+				.orWhere('association.linkedNodeUUID', anchorNode)
+				.modify((queryBuilder) => {
+					// include bidirectional results if needed
+					if (!bidirectional) {
+						queryBuilder.andWhere('association.linkStart', 1);
+					}
+				})
+				.leftJoin('node', function () {
+					this.on('node.id', '=', 'association.nodeId')
+						.andOnNotIn('node.uuid', [anchorNode])
+						.orOn('node.id', '=', 'association.linkedNode')
+						.andOnNotIn('node.uuid', [anchorNode]);
+				})
+				.limit(perPage);
+			// store our nodes and associations in the nodeList
+			nodeList = nodeList.concat(result);
 		} else {
-			// 1. fetch the nodelist
-			nodeList = await node.findAll({
-				where: {
-					creator: userId,
-				},
-				limit: perPage,
-				raw: true,
-				order: [['updatedAt', 'DESC']],
-				attributes: ['id', 'uuid', 'name', 'path', 'type', 'updatedAt'],
-			});
-			// 2. turn the nodelist into an array to be passed into the second query
-			nodeList.map((node) => {
-				if (!nodeIdList.includes(node.id)) {
-					nodeIdList.push(node.id);
-				}
-			});
+			// no anchor node
+			// 1. FETCH NODES
+			let result = await knex
+				.select('*')
+				.from('node')
+				.where('creator', userId)
+				.limit(perPage)
+				.orderBy('updatedAt', 'desc');
+			// store those values in the nodeList
+			nodeList = nodeList.concat(result);
+			// 2. FETCH ASSOCIATIONS
+			// subquery for association request
+			const subquery = knex('node')
+				.select('id')
+				.from('node')
+				.where('creator', userId)
+				.limit(perPage)
+				.orderBy('updatedAt', 'desc');
+			// retreive associations based on subquery
+			associations = await knex
+				.select('*')
+				.from('association')
+				.where({ creator: userId })
+				.andWhere('linkedNode', 'in', subquery)
+				.andWhere('nodeId', 'in', subquery)
+				.orderBy('updatedAt', 'desc');
 		}
-		// 3. retrieve the list of associations
-		const associations = await association.findAll({
-			where: {
-				creator: userId,
-				[Op.and]: [{ nodeId: { [Op.in]: nodeIdList } }, { linkedNode: { [Op.in]: nodeIdList } }],
-			},
-			raw: true,
-			order: [['updatedAt', 'DESC']],
-			attributes: [
-				'id',
-				'nodeId',
-				'nodeType',
-				'linkedNode',
-				'linkedNodeType',
-				'linkStrength',
-				'updatedAt',
-			],
-		});
+		// map through results and prepare them accordingly
 		const results = nodeList.map((item) => {
+			// add full path for files
 			if (item.isFile || item.type === 'user') {
 				const fullUrl = item.preview
 					? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
@@ -562,6 +540,10 @@ exports.getGraphData = async (req, res, next) => {
 					: null;
 				item.path = fullPath;
 				item.preview = fullUrl;
+			}
+			// create association list (if needed)
+			if (item.nodeId) {
+				associations.push({ nodeId: item.nodeId, linkedNode: item.linkedNode });
 			}
 			return item;
 		});

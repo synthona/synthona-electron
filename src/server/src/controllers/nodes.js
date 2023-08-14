@@ -32,8 +32,7 @@ exports.createNode = async (req, res, next) => {
 				: null;
 		// userId comes from the is-auth middleware
 		const userId = req.user.uid;
-		// honestly i probably dont need moment js i could probably write 1 util function that would be like 6 lines of code
-		// so i should probably just do that tomorrow or whatever. sounds good!
+		// object to store newnode
 		let newNode = {
 			uuid: uuid.v4(),
 			isFile: isFile,
@@ -233,6 +232,7 @@ exports.updateNode = async (req, res, next) => {
 			path,
 			content,
 			pinned,
+			updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
 		};
 		// update in the database
 		await knex('node').where({ uuid }).update(updatedNode);
@@ -340,9 +340,29 @@ exports.searchNodes = async (req, res, next) => {
 			.offset((currentPage - 1) * perPage)
 			.limit(perPage);
 		// retrieve nodes for the requested page
-		const totalItems = await knex('node').count('id as count').first();
-		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
-		// i got way ahead of myself refactoring today and basically created a huge mess
+		const totalItems = await knex('node')
+			.select('uuid', 'isFile', 'name', 'path', 'type', 'preview', 'views', 'updatedAt')
+			.where({ creator: userId })
+			.modify((queryBuilder) => {
+				// add sortType and sortOrder
+				if (sortType && sortOrder) {
+					queryBuilder.orderBy(sortType, sortOrder);
+				}
+				// add pinned check if we need to
+				if (pinned) queryBuilder.andWhereLike('pinned', true);
+				// add type check if we need to
+				if (type) queryBuilder.andWhereLike('type', type);
+				// add the query in here
+				if (searchQuery) {
+					queryBuilder.andWhereLike('name', `${'%' + fuzzySearch + '%'}`);
+					queryBuilder.orWhereLike('name', `${'%' + searchQuery + '%'}`);
+					queryBuilder.orWhereLike('content', `${'%' + searchQuery + '%'}`);
+					queryBuilder.orWhereLike('content', `${'%' + fuzzySearch + '%'}`);
+				}
+			})
+			.count('id as count')
+			.first();
+		// loop through the results and apply the file basis
 		const results = data.map((item) => {
 			// TODO - > can i move this step client side? it will save a lot of trouble
 			if (item.isFile || item.type === 'user') {
@@ -377,7 +397,9 @@ exports.clearNodePreview = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// update the node with the new full path
-		const result = await knex('node').where({ uuid: uuid }).update({ preview: null });
+		const result = await knex('node')
+			.where({ uuid: uuid })
+			.update({ preview: null, updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`) });
 		// send response
 		res.status(200).json({ node: result });
 	} catch (err) {

@@ -13,6 +13,9 @@ const migrationPath = path.join(__dirname, 'src/db/knex/migrations');
 module.exports = {
 	development: {
 		client: 'sqlite3',
+		// ORDER BY RANDOM()/RAND()
+		// should be whatever your DB expects
+		// it's RANDOM() for sqlite
 		randomSyntax: 'RANDOM()',
 		connection: {
 			filename: dbPath,

@@ -42,8 +42,8 @@ exports.createNode = async (req, res, next) => {
 			preview: preview,
 			content: content,
 			creator: userId,
-			createdAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
-			updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+			createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
 		};
 		// create node
 		const result = await knex('node').insert(newNode);
@@ -63,8 +63,8 @@ exports.createNode = async (req, res, next) => {
 					linkedNodeType: nodeB.type,
 					linkStrength: 1,
 					creator: userId,
-					createdAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
-					updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+					createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+					updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
 				});
 			}
 		}
@@ -232,7 +232,7 @@ exports.updateNode = async (req, res, next) => {
 			path,
 			content,
 			pinned,
-			updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+			// updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`), // something about this is not right...have to look into it. maybe just remove it. i dont think it was here before
 		};
 		// update in the database
 		await knex('node').where({ uuid }).update(updatedNode);
@@ -399,7 +399,10 @@ exports.clearNodePreview = async (req, res, next) => {
 		// update the node with the new full path
 		const result = await knex('node')
 			.where({ uuid: uuid })
-			.update({ preview: null, updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`) });
+			.update({
+				preview: null,
+				updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			});
 		// send response
 		res.status(200).json({ node: result });
 	} catch (err) {

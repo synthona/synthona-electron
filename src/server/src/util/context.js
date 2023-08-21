@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { node, association } = require('../db/models');
 const knex = require('../db/knex/knex');
+const day = require('dayjs');
 
 // util function to delete associations for a node
 exports.deleteAssociations = async (id) => {
@@ -16,15 +17,11 @@ exports.deleteAssociations = async (id) => {
 exports.markNodeView = async (uuid) => {
 	// mark the node as updated
 	try {
-		const result = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-		});
-		result.changed('updatedAt', true);
-		result.views++;
-		const updatedNode = await result.save();
-		return updatedNode;
+		// update in the database
+		await knex('node')
+			.where({ uuid })
+			.update({ updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`) });
+		return;
 	} catch (err) {
 		err.statusCode = 500;
 		err.message = 'Failed to mark view in context system';

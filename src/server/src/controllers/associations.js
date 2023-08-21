@@ -62,8 +62,8 @@ exports.createAssociation = async (req, res, next) => {
 				linkStrength: 1,
 				linkStart: null,
 				creator: userId,
-				createdAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
-				updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+				createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+				updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
 			};
 			// add this one in the database!
 			let result = await knex('association').insert(newAssociation);
@@ -320,7 +320,7 @@ exports.deleteAssociation = async (req, res, next) => {
 					linkedNode: result.nodeId,
 					linkedNodeUUID: result.nodeUUID,
 					linkedNodeType: result.nodeType,
-					updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`),
+					updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
 				};
 				// lets go ahead and update in the database
 				await knex('association').update(updatedAssociation).where({ id: result.id });

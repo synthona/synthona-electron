@@ -88,16 +88,3 @@ exports.generateUniqueFileString = (filePath, fileName) => {
 		return fileName;
 	}
 };
-
-exports.setFilePathToNullById = async (id) => {
-	try {
-		await node.update(
-			{
-				path: null,
-			},
-			{ where: { id: id }, silent: true }
-		);
-	} catch (err) {
-		console.log(err);
-	}
-};

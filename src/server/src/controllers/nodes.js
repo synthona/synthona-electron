@@ -21,7 +21,7 @@ exports.createNode = async (req, res, next) => {
 		}
 		// process request
 		const type = req.body.type;
-		const name = req.body.name;
+		const name = req.body.name !== '' ? req.body.name : 'untitled';
 		const isFile = req.body.isFile;
 		const preview = req.body.preview;
 		const content = req.body.content;

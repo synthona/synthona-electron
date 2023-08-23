@@ -10,12 +10,12 @@ const router = express.Router();
 
 // Create text node
 // TODO: add custom check to make sure it is a quilljs delta
-router.put(
-	'/',
-	isAuth,
-	[body('content').exists().isJSON(), body('name').optional().isString()],
-	textController.createText
-);
+// router.put(
+// 	'/',
+// 	isAuth,
+// 	[body('content').exists().isJSON(), body('name').optional().isString()],
+// 	textController.createText
+// );
 
 // Get text node
 router.get('/', isAuth, [query('uuid').exists().isUUID()], textController.getTextByUUID);

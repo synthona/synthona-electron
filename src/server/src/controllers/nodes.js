@@ -333,8 +333,11 @@ exports.searchNodes = async (req, res, next) => {
 				if (searchQuery) {
 					queryBuilder.andWhereLike('name', `${'%' + fuzzySearch + '%'}`);
 					queryBuilder.orWhereLike('name', `${'%' + searchQuery + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 					queryBuilder.orWhereLike('content', `${'%' + searchQuery + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 					queryBuilder.orWhereLike('content', `${'%' + fuzzySearch + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 				}
 			})
 			.offset((currentPage - 1) * perPage)
@@ -356,8 +359,11 @@ exports.searchNodes = async (req, res, next) => {
 				if (searchQuery) {
 					queryBuilder.andWhereLike('name', `${'%' + fuzzySearch + '%'}`);
 					queryBuilder.orWhereLike('name', `${'%' + searchQuery + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 					queryBuilder.orWhereLike('content', `${'%' + searchQuery + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 					queryBuilder.orWhereLike('content', `${'%' + fuzzySearch + '%'}`);
+					queryBuilder.andWhere({ creator: userId });
 				}
 			})
 			.count('id as count')

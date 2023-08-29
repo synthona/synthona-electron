@@ -1,6 +1,6 @@
 // import dependencies
 const express = require('express');
-const { query, body } = require('express-validator/check');
+const { body } = require('express-validator/check');
 // import db model
 const { node } = require('../db/models');
 // import controller

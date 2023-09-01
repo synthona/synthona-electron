@@ -473,7 +473,7 @@ exports.clearAllDataByUser = async (req, res, next) => {
 		}
 		// remove all nodes created by the logged in user which are not of type user
 		// delete node and send response
-		await knex('node').where({ creator: uid }).andWhereNot({ type: 'user ' }).delete();
+		await knex('node').where({ creator: uid }).andWhereNot({ type: 'user' }).delete();
 		await knex('association').where({ creator: uid }).delete();
 		// clean up the data folder as well
 		fs.readdir(path.join(__coreDataDir, 'data', uid), (err, files) => {

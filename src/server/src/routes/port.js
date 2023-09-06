@@ -18,7 +18,7 @@ router.put('/export/all', isAuth, portController.exportAllUserData);
 router.put(
 	'/export',
 	isAuth,
-	[body('uuid').exists().isUUID()],
+	[body('uuid').exists().isUUID(), body('bidirectional').optional().isString()],
 	portController.exportFromAnchorUUID
 );
 

@@ -3,8 +3,6 @@ var fs = require('fs');
 // bring in libraries for file and directory name generation
 const crypto = require('crypto');
 const shortId = require('shortid');
-// bring in db
-const { node } = require('../db/models');
 
 // function to delete empty directories in the data folder from a file
 // NOTE: use caution editing this one

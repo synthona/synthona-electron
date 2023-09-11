@@ -2,7 +2,7 @@
 const express = require('express');
 const { body } = require('express-validator/check');
 // import db model
-const { node } = require('../db/models');
+const knex = require('../db/knex/knex');
 // import controller
 const portController = require('../controllers/port');
 // import route middleware
@@ -30,16 +30,13 @@ router.patch(
 		body('uuid')
 			.exists()
 			.isUUID()
-			.custom((value, { req }) => {
-				return node
-					.findOne({
-						where: { uuid: value },
-					})
-					.then((node) => {
-						if (!(node && node.metadata && node.metadata.expanded)) {
-							return Promise.reject('package is not expanded');
-						}
-					});
+			.custom(async (value, { req }) => {
+				let package = await knex('node').select().where({ uuid: value }).first();
+				let metadata = package.metadata ? JSON.parse(package.metadata) : null;
+				if (metadata && !metadata.expanded) {
+					return Promise.reject('package is not expanded');
+				}
+				return;
 			}),
 	],
 	portController.removeImportsByPackage

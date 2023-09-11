@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const tokens = require('../util/tokens');
-const { user } = require('../db/models');
+const knex = require('../db/knex/knex');
 
 // check authentication
 module.exports = async (req, res, next) => {
@@ -23,7 +23,8 @@ module.exports = async (req, res, next) => {
 		} catch (err) {
 			// if the main token is expired try the refresh token
 			try {
-				let profile = await user.findOne({ where: { id: uid } });
+				// let profile = await user.findOne({ where: { id: uid } });
+				let profile = await knex('user').select().where({ id: uid }).first();
 				if (profile) {
 					decodedRefreshToken = jwt.verify(
 						refreshToken,

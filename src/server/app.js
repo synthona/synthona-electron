@@ -32,7 +32,6 @@ if (!fs.existsSync(dataDirectory)) {
 	fs.mkdirSync(dataDirectory);
 }
 
-// handle case for sequelize CLI
 require('dotenv').config();
 global.__coreDataDir = process.env.CORE_DATA_DIRECTORY;
 // initialize knex and run DB migrations if there are any

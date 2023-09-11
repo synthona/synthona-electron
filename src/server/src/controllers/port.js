@@ -2,8 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const { validationResult } = require('express-validator/check');
 // bring in data models.
-const { node, association, user } = require('../db/models');
-const { Op } = require('sequelize');
 const knex = require('../db/knex/knex');
 const uuid = require('uuid');
 const day = require('dayjs');
@@ -295,7 +293,7 @@ exports.exportFromAnchorUUID = async (req, res, next) => {
 
 		// retrieve all the nodes associated with the anchornode
 		const query1 = await knex('association')
-			.select('node.*')
+			.select('node.*', 'association.*')
 			.where('association.creator', userId)
 			.modify((queryBuilder) => {
 				if (bidirectional) {
@@ -435,23 +433,26 @@ exports.removeImportsByPackage = async (req, res, next) => {
 		const uid = req.user.uid;
 		// uuid of the import package node
 		const packageUUID = req.body.uuid;
-		// remove all the nodes and associations metadata created by this package
-		await node.destroy({
-			where: {
-				[Op.and]: [{ importId: packageUUID }, { creator: uid }],
-			},
-		});
-		await association.destroy({
-			where: { [Op.and]: [{ importId: packageUUID }, { creator: uid }] },
-		});
-		await node.update(
-			{
-				metadata: null,
-			},
-			{
-				where: { [Op.and]: [{ uuid: packageUUID }, { creator: uid }] },
-			}
-		);
+		/* 
+			1. delete all the associations including connected associations. via subquery
+			2. go back and delete nodes
+			3. update the package itself
+			4. done!
+		*/
+		// subquery to get a list of associations for deletion
+		const associationSubquery = knex('node').select('node.id').where({ importId: packageUUID });
+		// delete all the associations related to the subquery
+		await knex('association')
+			.whereIn('nodeId', associationSubquery)
+			.orWhereIn('linkedNode', associationSubquery)
+			.delete();
+		// delete all the associations related to this package
+		await knex('node').where({ importId: packageUUID }).delete();
+		// update the package node itself with the corrected data
+		await knex('node')
+			.where({ uuid: packageUUID })
+			.andWhere({ creator: uid })
+			.update({ metadata: null });
 		// send response
 		res.sendStatus(200);
 	} catch (err) {
@@ -488,10 +489,11 @@ exports.unpackImport = async (req, res, next) => {
 			fs.mkdirSync(userDirectoryPath);
 		}
 		// fetch the package node from the DB
-		const packageNode = await node.findOne({
-			where: { [Op.and]: [{ uuid: packageUUID }, { creator: userId }] },
-			raw: true,
-		});
+		const packageNode = await knex('node')
+			.select()
+			.where({ uuid: packageUUID })
+			.andWhere({ creator: userId })
+			.first();
 		// check that the node is not already expanded
 		if (packageNode.metadata && packageNode.metadata.expanded) {
 			err = new Error('package is already expanded');
@@ -499,16 +501,10 @@ exports.unpackImport = async (req, res, next) => {
 			throw err;
 		}
 		// mark the import package as expanded so undo is possible even if the operation fails or is interrupted
-		await node.update(
-			{
-				metadata: { expanded: true, importing: true },
-			},
-			{
-				where: {
-					uuid: packageUUID,
-				},
-			}
-		);
+		await knex('node')
+			.where({ uuid: packageUUID })
+			.andWhere({ creator: userId })
+			.update({ metadata: JSON.stringify({ expanded: true, importing: true }) });
 		// send a 200 response to let the frontend know we've started the import process
 		// since it will probably take a while, and the browser may duplicate the request
 		// TODO: switch over to websockets or something so we can stream
@@ -516,19 +512,14 @@ exports.unpackImport = async (req, res, next) => {
 		// having to use this workaround
 		res.sendStatus(200);
 		// fetch the logged in user from the DB
-		const loggedInUser = await user.findOne({
-			where: {
-				id: userId,
-			},
-		});
+		const loggedInUser = await knex('user').select().where({ id: userId }).first();
 		// get the node for the logged in user
-		const loggedInUserNode = await node.findOne({
-			where: {
-				path: loggedInUser.username,
-				creator: userId,
-				type: 'user',
-			},
-		});
+		const loggedInUserNode = await knex('node')
+			.select()
+			.where({ path: loggedInUser.username })
+			.andWhere({ creator: userId })
+			.andWhere({ type: 'user' })
+			.first();
 		// get the fileUrl
 		const packageUrl = path.join(packageNode.path);
 		// check zip buffer size before unzipping
@@ -556,6 +547,7 @@ exports.unpackImport = async (req, res, next) => {
 					throw err;
 				}
 				let newNode = {};
+				let result;
 				let newNodeIdList = [];
 				// iterate through the JSON data
 				for (let nodeImport of jsonData) {
@@ -572,6 +564,7 @@ exports.unpackImport = async (req, res, next) => {
 						const fileEntry = zip.getEntry(nodeImport.uuid + extension);
 						let filePath;
 						let dbFilePath;
+						// TODO! i want to actually save the files as a human readable name. with that (2)+ for duplicates
 						if (fileEntry && fileEntry.name) {
 							// lets make sure the file doesnt already exist before we make another copy
 							if (fs.existsSync(nodeImport.path)) {
@@ -595,22 +588,22 @@ exports.unpackImport = async (req, res, next) => {
 						}
 						const previewPath = nodeImport.type === 'image' ? dbFilePath : null;
 						// generate node
-						newNode = await node.create(
-							{
-								isFile: nodeImport.isFile,
-								type: nodeImport.type,
-								name: nodeImport.name,
-								preview: previewPath,
-								content: nodeImport.content,
-								path: dbFilePath,
-								creator: userId,
-								pinned: nodeImport.pinned,
-								createdAt: nodeImport.createdAt,
-								updatedAt: nodeImport.updatedAt,
-								importId: packageUUID,
-							},
-							{ silent: true }
-						);
+						newNode = {
+							uuid: uuid.v4(),
+							isFile: nodeImport.isFile,
+							type: nodeImport.type,
+							name: nodeImport.name,
+							preview: previewPath,
+							content: nodeImport.content,
+							path: dbFilePath,
+							creator: userId,
+							pinned: nodeImport.pinned,
+							createdAt: nodeImport.createdAt,
+							updatedAt: nodeImport.updatedAt,
+							importId: packageUUID,
+						};
+						result = await knex('node').insert(newNode);
+						newNode.id = result[0];
 					}
 					// default import code
 					else {
@@ -619,22 +612,22 @@ exports.unpackImport = async (req, res, next) => {
 							nodeImport.preview = loggedInUserNode.preview;
 						}
 						// generate node
-						newNode = await node.create(
-							{
-								isFile: nodeImport.isFile,
-								type: nodeImport.type,
-								name: nodeImport.name,
-								preview: nodeImport.preview,
-								content: nodeImport.content,
-								path: nodeImport.path,
-								creator: userId,
-								pinned: nodeImport.pinned,
-								createdAt: nodeImport.createdAt,
-								updatedAt: nodeImport.updatedAt,
-								importId: packageUUID,
-							},
-							{ silent: true }
-						);
+						newNode = {
+							uuid: uuid.v4(),
+							isFile: nodeImport.isFile,
+							type: nodeImport.type,
+							name: nodeImport.name,
+							preview: nodeImport.preview,
+							content: nodeImport.content,
+							path: nodeImport.path,
+							creator: userId,
+							pinned: nodeImport.pinned,
+							createdAt: nodeImport.createdAt,
+							updatedAt: nodeImport.updatedAt,
+							importId: packageUUID,
+						};
+						result = await knex('node').insert(newNode);
+						newNode.id = result[0];
 					}
 					// if the node in question has associations, process them
 					if (nodeImport.original) {
@@ -644,23 +637,22 @@ exports.unpackImport = async (req, res, next) => {
 							// nodeId and nodeUUID to the new values. linkedNode
 							// and linkedNodeUUID will temporarily have the wrong values. this will
 							// be corrected at a second pass later in the import
-							await association.create(
-								{
-									nodeId: newNode.id,
-									nodeUUID: newNode.uuid,
-									nodeType: newNode.type,
-									linkedNode: associationImport.linkedNode,
-									linkedNodeUUID: associationImport.linkedNodeUUID,
-									linkedNodeType: associationImport.linkedNodeType,
-									linkStrength: associationImport.linkStrength,
-									linkStart: associationImport.linkStart,
-									creator: userId,
-									importId: packageUUID,
-									createdAt: associationImport.createdAt,
-									updatedAt: associationImport.updatedAt,
-								},
-								{ silent: true }
-							);
+							console.log(newNode.id);
+							let newAssociation = {
+								nodeId: newNode.id,
+								nodeUUID: newNode.uuid,
+								nodeType: newNode.type,
+								linkedNode: associationImport.linkedNode,
+								linkedNodeUUID: associationImport.linkedNodeUUID,
+								linkedNodeType: associationImport.linkedNodeType,
+								linkStrength: associationImport.linkStrength,
+								linkStart: associationImport.linkStart,
+								creator: userId,
+								importId: packageUUID,
+								createdAt: associationImport.createdAt,
+								updatedAt: associationImport.updatedAt,
+							};
+							await knex('association').insert(newAssociation);
 						}
 						// store the old and new UUIDs and IDs here to be re-processed
 						// with the linkedNode and linkedNodeUUID columns at the end
@@ -678,26 +670,12 @@ exports.unpackImport = async (req, res, next) => {
 				}
 				// process the linkedNode and linkedNodeUUID columns
 				for (let value of newNodeIdList) {
-					// update the UUIDs in all text content to reflect new post-import values
-					// for testing only
-					// await portUtil.findAndReplaceTextNodeUUID(value.oldUUID, value.newUUID, packageUUID);
 					// replace the temporary values with the correct values for associations
-					association.update(
-						{
-							linkedNode: value.newId,
-							linkedNodeUUID: value.newUUID,
-						},
-						{
-							where: {
-								[Op.and]: [
-									{ linkedNode: value.oldId },
-									{ linkedNodeUUID: value.oldUUID },
-									{ importId: packageUUID },
-								],
-							},
-						},
-						{ silent: true }
-					);
+					await knex('association')
+						.where({ linkedNode: value.oldId })
+						.andWhere({ linkedNodeUUID: value.oldUUID })
+						.andWhere({ importId: packageUUID })
+						.update({ linkedNode: value.newId, linkedNodeUUID: value.newUUID });
 				}
 				// synthesize the imported user information with the loggedInUser
 				await portUtil.transferImportedUserData(packageUUID, loggedInUserNode);
@@ -737,166 +715,40 @@ exports.unpackImport = async (req, res, next) => {
 				const headerDbFilePath = path.join(headerFilePath, headerFileEntry.name);
 				// update the logged in user with the imported data
 				console.log('update logged in user object');
-				await user.update(
-					{
+				await knex('user')
+					.where({ id: userId })
+					.update({
 						displayName: userImport.displayName,
 						bio: userImport.bio,
 						avatar: avatarDbFilePath || null,
 						header: headerDbFilePath || null,
-					},
-					{
-						where: {
-							id: userId,
-						},
-					}
-				);
+					});
 				console.log('update logged in user node');
 				// update the logged in user node as well
-				await node.update(
-					{
-						preview: avatarDbFilePath,
-						content: userImport.bio,
-					},
-					{
-						where: {
-							creator: userId,
-							type: 'user',
-						},
-					}
-				);
+				await knex('node')
+					.where({ creator: userId })
+					.andWhere({ type: 'user ' })
+					.update({ preview: avatarDbFilePath, content: userImport.bio });
 			}
 		}
 		// generate the collection previews for all imports
-		// get a list of nodes which are files so the associated files can be removed
-		const collectionList = await node.findAll({
-			where: {
-				[Op.and]: [{ importId: packageUUID }, { creator: userId }, { type: 'collection' }],
-			},
-			silent: true,
-		});
-		console.log('regenerating collection previews');
-		for (collection of collectionList) {
-			const result = await association.findAll({
-				where: {
-					creator: userId,
-					[Op.or]: [{ nodeId: collection.id }, { linkedNode: collection.id }],
-				},
-				limit: 4,
-				silent: true,
-				// sort by linkStrength
-				order: [['linkStrength', 'DESC']],
-				attributes: [
-					'id',
-					'nodeId',
-					'nodeType',
-					'linkedNode',
-					'linkedNodeType',
-					'linkStrength',
-					'updatedAt',
-				],
-				// include whichever node is the associated one for
-				include: [
-					{
-						model: node,
-						where: {
-							[Op.and]: { id: { [Op.not]: collection.id }, type: { [Op.not]: 'collection' } },
-						},
-						required: false,
-						as: 'original',
-						attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
-					},
-					{
-						model: node,
-						where: {
-							[Op.and]: { id: { [Op.not]: collection.id }, type: { [Op.not]: 'collection' } },
-						},
-						required: false,
-						as: 'associated',
-						attributes: ['id', 'uuid', 'isFile', 'type', 'preview', 'name'],
-					},
-				],
-			});
-			var collectionPreview = [];
-			var nodePreview = null;
-			console.log('\n' + '=================================');
-			console.log(collection.name);
-			console.log('=================================');
-			for (value of result) {
-				if (value.original) {
-					console.log(value.original.name);
-					// store instance url in the collection preview if it is a file
-					if (value.original.isFile) {
-						nodePreview = value.original.preview
-							? req.protocol + '://' + req.get('host') + '/file/load/' + value.original.uuid
-							: null;
-					} else {
-						nodePreview = value.original.preview;
-					}
-					// push the preview for this particular node onto the collection preview
-					collectionPreview.push({ type: value.original.type, preview: nodePreview });
-				}
-				if (value.associated) {
-					console.log(value.associated.name);
-					// store instance url in the collection preview if it is a file
-					if (value.associated.isFile) {
-						nodePreview = value.associated.preview
-							? req.protocol + '://' + req.get('host') + '/file/load/' + value.associated.uuid
-							: null;
-					} else {
-						nodePreview = value.associated.preview;
-					}
-					// push the preview for this particular node onto the collection preview
-					collectionPreview.push({
-						type: value.associated.type,
-						preview: nodePreview,
-					});
-				}
-			}
-			// update the preview
-			await node.update(
-				{
-					preview: JSON.stringify(collectionPreview),
-				},
-				{
-					where: {
-						id: collection.id,
-						creator: userId,
-					},
-					silent: true,
-				}
-			);
-		}
+		await context.regenerateCollectionPreviews(userId, req);
 		console.log('\n=================================');
 		console.log('finishing up');
 		console.log('=================================');
-		// await portUtil.countBrokenAssociations();
 		// mark the import package as successfully expanded
-		await node.update(
-			{
-				metadata: { expanded: true, success: true, importing: false },
-			},
-			{
-				where: {
-					uuid: packageUUID,
-				},
-			}
-		);
+		await knex('node')
+			.where({ uuid: packageUUID })
+			.update({ metadata: JSON.stringify({ expanded: true, success: true, importing: false }) });
 		console.log('\n');
 		console.log('=================================');
 		console.log('import successfully completed');
 		console.log('=================================');
 	} catch (err) {
 		// mark the import package as done importing so it can be undone
-		await node.update(
-			{
-				metadata: { expanded: true, success: false, importing: false },
-			},
-			{
-				where: {
-					uuid: req.body.uuid,
-				},
-			}
-		);
+		await knex('node')
+			.where({ uuid: req.body.uuid })
+			.update({ metadata: JSON.stringify({ expanded: true, success: false, importing: false }) });
 		if (!err.statusCode) {
 			err.statusCode = 500;
 		}

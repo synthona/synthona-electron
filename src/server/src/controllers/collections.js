@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator/check');
 const knex = require('../db/knex/knex');
 const uuid = require('uuid');
 const day = require('dayjs');
+const { regenerateCollectionPreviews } = require('../util/context');
 
 // i dont think this is even being used tbh
 exports.createCollection = async (req, res, next) => {
@@ -55,49 +56,12 @@ exports.regenerateCollectionPreviews = async (req, res, next) => {
 			error.data = errors.array();
 			throw error;
 		}
-		// fetch all the collection nodes so we can process them...
-		let nodeData = await knex('node').select().where({ type: 'collection', creator: userId });
-		// loop through the collections so we can updat ethem :)
-		for (let collection of nodeData) {
-			const collectionUUID = collection.uuid;
-			// fetch the top 4 associated nodes with the collection so we can use them for the preview
-			const associationResult = await knex('association')
-				.select()
-				.where('association.nodeUUID', collectionUUID)
-				.andWhere('association.creator', userId)
-				.whereIn('node.type', ['image', 'text', 'url'])
-				.orWhere('association.linkedNodeUUID', collectionUUID)
-				.where('association.creator', userId)
-				.whereIn('node.type', ['image', 'text', 'url'])
-				.leftJoin('node', function () {
-					this.onNotIn('node.uuid', collectionUUID)
-						.on('association.nodeId', '=', 'node.id')
-						.orOn('association.linkedNode', '=', 'node.id')
-						.onNotIn('node.uuid', collectionUUID);
-				})
-				.orderBy('association.linkStrength', 'desc')
-				.limit(4);
-			// create the new preview array
-			let updatedPreview = [];
-			// loop through the associations to create the new preview array
-			for (let association of associationResult) {
-				let newPreviewPath = association.preview ? association.preview : '';
-				// make sure we set the url correctly for files
-				if (association.isFile) {
-					newPreviewPath =
-						req.protocol + '://' + req.get('host') + '/file/load/' + association.uuid;
-				}
-				updatedPreview.push({ type: association.type, preview: newPreviewPath });
-			}
-			// go ahead and set the updated preview for this particular collectionUUID
-			await knex('node')
-				.where({ uuid: collectionUUID })
-				.update({ preview: JSON.stringify(updatedPreview) });
-		}
+		await regenerateCollectionPreviews(userId, req);
 		// UM! okay :) i think this works. nice job!
 		// send back 200 status
 		res.sendStatus(200);
 	} catch (err) {
+		console.log('uh something went wrong..');
 		if (!err.statusCode) {
 			err.statusCode = 500;
 		}

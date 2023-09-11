@@ -637,7 +637,6 @@ exports.unpackImport = async (req, res, next) => {
 							// nodeId and nodeUUID to the new values. linkedNode
 							// and linkedNodeUUID will temporarily have the wrong values. this will
 							// be corrected at a second pass later in the import
-							console.log(newNode.id);
 							let newAssociation = {
 								nodeId: newNode.id,
 								nodeUUID: newNode.uuid,
@@ -735,15 +734,12 @@ exports.unpackImport = async (req, res, next) => {
 		await context.regenerateCollectionPreviews(userId, req);
 		console.log('\n=================================');
 		console.log('finishing up');
-		console.log('=================================');
 		// mark the import package as successfully expanded
 		await knex('node')
 			.where({ uuid: packageUUID })
 			.update({ metadata: JSON.stringify({ expanded: true, success: true, importing: false }) });
-		console.log('\n');
 		console.log('=================================');
 		console.log('import successfully completed');
-		console.log('=================================');
 	} catch (err) {
 		// mark the import package as done importing so it can be undone
 		await knex('node')

@@ -3,8 +3,6 @@ var fs = require('fs');
 // bring in libraries for file and directory name generation
 const crypto = require('crypto');
 const shortId = require('shortid');
-// bring in db
-const { node } = require('../db/models');
 
 // function to delete empty directories in the data folder from a file
 // NOTE: use caution editing this one
@@ -86,18 +84,5 @@ exports.generateUniqueFileString = (filePath, fileName) => {
 		return uniqueName + extension;
 	} else {
 		return fileName;
-	}
-};
-
-exports.setFilePathToNullById = async (id) => {
-	try {
-		await node.update(
-			{
-				path: null,
-			},
-			{ where: { id: id }, silent: true }
-		);
-	} catch (err) {
-		console.log(err);
 	}
 };

@@ -9,7 +9,8 @@
 		"mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=dist/mac --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
 		"windows": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=build/synthona.ico --prune=true --out=dist/windows --ignore=\"/server/data|/server/database.sqlite3|/node_modules/electron-packager\"",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "electron-forge start",
+		"start": "electron .",
+		"forge": "electron-forge start",
 		"dev": "nodemon --watch * --exec 'npm run start'",
 		"package": "electron-forge package",
 		"make": "electron-forge make"

@@ -218,6 +218,7 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 			})
 			.offset((currentPage - 1) * perPage)
 			// .orderBy('node.updatedAt', 'desc')
+			// .orderBy('node.views', 'desc')
 			.orderBy('association.linkStrength', 'desc')
 			.limit(perPage);
 

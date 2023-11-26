@@ -96,56 +96,43 @@ exports.linkFiles = async (req, res, next) => {
 		// grab the input values from the request
 		const fileList = JSON.parse(req.body.fileList);
 		const linkedNode = req.body.linkedNode ? JSON.parse(req.body.linkedNode) : null;
-		// determine which mimeTypes match with which nodeTypes
-		const imageMimetypes = [
-			'image/png',
-			'image/jpg',
-			'image/jpeg',
-			'image/gif',
-			'image/webp',
-			'image/heic',
-		];
-		const audioMimetypes = ['audio/mpeg', 'audio/x-m4a', 'audio/wav'];
+		// determine which filetypes match with which nodeTypes
+		const supportedImageTypes = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.heic'];
+		const supportedAudioTypes = ['.mp3,', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.aiff'];
 		let resultList = [];
 		// iterate through the passed-in file list
 		for (var file of fileList) {
 			// set the nodeType value for this file
 			let nodeType = null;
+			let isFile = null;
 			let preview = null;
 			let extension = file.name.substring(file.name.lastIndexOf('.'));
-			if (imageMimetypes.includes(file.type)) {
+			// set the cnodetype
+			if (supportedImageTypes.includes(extension)) {
 				nodeType = 'image';
+				isFile = true;
 				preview = file.path;
-			} else if (audioMimetypes.includes(file.type)) {
+			} else if (supportedAudioTypes.includes(extension)) {
 				nodeType = 'audio';
-			} else if (file.type === 'application/zip' && !(extension === '.synth')) {
+				isFile = true;
+			} else if (extension === '.zip' && !(extension === '.synth')) {
 				nodeType = 'zip';
+				isFile = true;
 			} else if (extension === '.synth') {
 				nodeType = 'package';
-			} else if (process.platform === 'darwin' && file.path.includes('.app/')) {
-				// we are doing a little magic here to auto-generate a shortcut
-				// launcher path on mac for applications if u select any file within them
-				// TODO: make this a little more user friendly by integrating electron file-dialogue
-				// and making it so selecting "packages" on mac treats them as files
-				let appDirPath = file.path.substring(0, file.path.lastIndexOf('.app') + 4);
-				// set the file path to that .app path
-				file.path = appDirPath;
-				// attempt to extract the App Name from the end of the path, & before the .app extension
-				let appName = appDirPath.substring(
-					appDirPath.lastIndexOf('/') + 1,
-					appDirPath.lastIndexOf('.app')
-				);
-				file.name = appName;
-				// set the node type to file still
-				nodeType = 'file';
+				isFile = true;
+			} else if (!extension.includes('.')) {
+				nodeType = 'folder';
+				isFile = false;
 			} else {
 				// catchall for adding any other files at all
 				nodeType = 'file';
+				isFile = true;
 			}
 			// object to store newnode
 			let newNode = {
 				uuid: uuid.v4(),
-				isFile: true,
+				isFile: isFile,
 				type: nodeType,
 				name: file.name,
 				preview: preview,

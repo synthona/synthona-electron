@@ -33,8 +33,7 @@ router.put(
 					const isValidObject =
 						typeof file === 'object' &&
 						typeof file.name === 'string' &&
-						typeof file.path === 'string' &&
-						typeof file.type === 'string';
+						typeof file.path === 'string';
 					// if the object is not valid, reject promise
 					if (!isValidObject) {
 						return Promise.reject('Passed In File List Failed Validation!');

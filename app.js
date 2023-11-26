@@ -3,6 +3,7 @@ const fs = require('fs');
 const {
 	app,
 	session,
+	dialog,
 	shell,
 	globalShortcut,
 	BrowserWindow,
@@ -249,6 +250,41 @@ ipcMain.on('toMain', (event, args) => {
 				return;
 			case 'hide-search':
 				BrowserWindow.getFocusedWindow().webContents.stopFindInPage('clearSelection');
+				return;
+			case 'show-file-picker':
+				if (BrowserWindow.getFocusedWindow()) {
+					dialog
+						.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+							buttonLabel: 'link',
+							properties: ['openFile', 'multiSelections'],
+						})
+						.then(({ canceled, filePaths }) => {
+							if (!canceled) {
+								BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+									files: filePaths,
+									message: 'file-pick-success',
+								});
+							}
+						});
+				}
+				return;
+			case 'show-folder-picker':
+				console.log('directory folder time!');
+				if (BrowserWindow.getFocusedWindow()) {
+					dialog
+						.showOpenDialog(BrowserWindow.getFocusedWindow(), {
+							buttonLabel: 'link',
+							properties: ['openDirectory', 'multiSelections'],
+						})
+						.then(({ canceled, filePaths }) => {
+							if (!canceled) {
+								BrowserWindow.getFocusedWindow().webContents.send('fromMain', {
+									files: filePaths,
+									message: 'folder-pick-success',
+								});
+							}
+						});
+				}
 				return;
 			case 'get-backend-config':
 				BrowserWindow.getFocusedWindow().webContents.send('fromMain', {

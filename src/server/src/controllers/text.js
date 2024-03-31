@@ -1,7 +1,7 @@
 // custom code
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require("express-validator/check");
 // bring in data models.
-const knex = require('../db/knex/knex');
+const knex = require("../db/knex/knex");
 
 // load a single text node
 exports.getTextByUUID = async (req, res, next) => {
@@ -9,7 +9,7 @@ exports.getTextByUUID = async (req, res, next) => {
 		// catch validation errors
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -17,14 +17,14 @@ exports.getTextByUUID = async (req, res, next) => {
 		// process request
 		const uuid = req.query.uuid;
 		// load text node
-		const textNode = await knex('node')
-			.select('uuid', 'name', 'type', 'preview', 'content', 'updatedAt')
+		const textNode = await knex("node")
+			.select("uuid", "name", "type", "preview", "content", "updatedAt")
 			.where({ uuid: uuid })
 			.first()
 			.limit(1);
 		// make sure we got a result
 		if (!textNode) {
-			const error = new Error('Could not find text node');
+			const error = new Error("Could not find text node");
 			error.statusCode = 404;
 			throw error;
 		}
@@ -44,7 +44,7 @@ exports.setText = async (req, res, next) => {
 		// catch validation errors
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -52,17 +52,17 @@ exports.setText = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// load text node
-		let textNode = await knex('node').select().where({ uuid: uuid }).first().limit(1);
+		let textNode = await knex("node").select().where({ uuid: uuid }).first().limit(1);
 		// make sure we got a result
 		if (!textNode) {
-			const error = new Error('Could not find text node');
+			const error = new Error("Could not find text node");
 			error.statusCode = 404;
 			throw error;
 		}
 		// update any values that have been changed
 		let updatedContent = req.body.content ? req.body.content : textNode.content;
 		// update in the database
-		await knex('node').where({ uuid }).update({ content: updatedContent });
+		await knex("node").where({ uuid }).update({ content: updatedContent });
 		// set up return value
 		textNode.content = updatedContent;
 		const result = textNode;
@@ -81,7 +81,7 @@ exports.processText = async (req, res, next) => {
 		// catch validation errors
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -89,17 +89,17 @@ exports.processText = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// load text node
-		const textNode = await knex('node').select().where({ uuid: uuid }).first().limit(1);
+		const textNode = await knex("node").select().where({ uuid: uuid }).first().limit(1);
 		// make sure we got a result
 		if (!textNode) {
-			const error = new Error('Could not find text node');
+			const error = new Error("Could not find text node");
 			error.statusCode = 404;
 			throw error;
 		}
 		// update any values that have been changed
 		let updatedPreview = req.body.preview ? req.body.preview : textNode.preview;
 		// update in the database
-		await knex('node').where({ uuid }).update({ preview: updatedPreview });
+		await knex("node").where({ uuid }).update({ preview: updatedPreview });
 		// set up return value
 		textNode.preview = updatedPreview;
 		const result = textNode;

@@ -13,15 +13,15 @@
 
 creating a new migration
 
-    $ knex migrate:make migration_name
+    $ npx knex migrate:make migration_name
 
 testing your next migration *(they will also be run when you start the server)*
 
-    $ knex migrate:up
+    $ npx knex migrate:up
 
 rolling back migrations during development
 
-    $ knex migrate:down
+    $ npx knex migrate:down
 
 ---
 

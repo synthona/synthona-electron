@@ -211,13 +211,6 @@ app.on("ready", () => {
 			);
 		}
 	});
-	globalShortcut.register("CommandOrControl+M", () => {
-		if (BrowserWindow.getFocusedWindow()) {
-			BrowserWindow.getFocusedWindow().loadURL(
-				"http://" + config.CLIENT_BASE + ":" + config.CLIENT_PORT + "/phrase"
-			);
-		}
-	});
 	globalShortcut.register("CommandOrControl+G", () => {
 		if (BrowserWindow.getFocusedWindow()) {
 			BrowserWindow.getFocusedWindow().loadURL(

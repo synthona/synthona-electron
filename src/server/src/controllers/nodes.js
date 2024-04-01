@@ -110,28 +110,28 @@ exports.contextualCreate = async (req, res, next) => {
 			fuzzySearch = name.toLowerCase().replace(" ", "%");
 		}
 		// get a list of nodes to exclude from the results to prevent duplicates
-		const exclusionSubquery = knex("association")
-			.select("node.id")
-			.where("association.nodeUUID", linkedNodeUUID)
-			.orWhere("association.linkedNodeUUID", linkedNodeUUID)
-			.leftJoin("node", function () {
-				this.on("association.nodeId", "=", "node.id").orOn(
-					"association.linkedNode",
-					"=",
-					"node.id"
-				);
-			});
+		// const exclusionSubquery = knex("association")
+		// 	.select("node.id")
+		// 	.where("association.nodeUUID", linkedNodeUUID)
+		// 	.orWhere("association.linkedNodeUUID", linkedNodeUUID)
+		// 	.leftJoin("node", function () {
+		// 		this.on("association.nodeId", "=", "node.id").orOn(
+		// 			"association.linkedNode",
+		// 			"=",
+		// 			"node.id"
+		// 		);
+		// 	});
 
 		// load node
 		let resultNode = await knex("node")
 			.select()
 			.where({ name: name, creator: userId })
 			.whereNot({ uuid: linkedNodeUUID })
-			.whereNotIn("node.id", exclusionSubquery)
+			// .whereNotIn("node.id", exclusionSubquery)
 			.orWhereLike("name", `${"%" + fuzzySearch + "%"}`)
 			.andWhere({ creator: userId })
 			.whereNot({ uuid: linkedNodeUUID })
-			.whereNotIn("node.id", exclusionSubquery)
+			// .whereNotIn("node.id", exclusionSubquery)
 			.orderBy("updatedAt", "desc")
 			.first()
 			.limit(1);

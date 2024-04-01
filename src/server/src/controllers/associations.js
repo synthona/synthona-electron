@@ -160,7 +160,7 @@ exports.associationAutocomplete = async (req, res, next) => {
 			})
 			.whereNotIn("node.id", exclusionSubquery)
 			.whereNotIn("node.uuid", [nodeUUID])
-			.orderBy("node.createdAt", "desc")
+			.orderBy("node.updatedAt", "desc")
 			.limit(resultLimit);
 		// send response
 		res.status(200).json({ nodes: result });

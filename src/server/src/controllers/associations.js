@@ -189,7 +189,8 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 		var currentPage = req.query.page || 1;
 		var nodeUUID = req.query.nodeUUID;
 		var bidirectional = req.query.bidirectional === "yes" ? true : false;
-		var sortOrder = req.query.sortOrder || "last accessed";
+		var sortType = req.query.sortType || "last accessed";
+		var sortOrder = req.query.sortOrder || "desc";
 		var perPage = 30;
 		// go ahead and make our query
 		const nodeResult = await knex("association")
@@ -219,18 +220,18 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 			})
 			.offset((currentPage - 1) * perPage)
 			.modify((queryBuilder) => {
-				switch (sortOrder) {
+				switch (sortType) {
 					case "last accessed":
-						queryBuilder.orderBy("node.updatedAt", "desc");
+						queryBuilder.orderBy("node.updatedAt", sortOrder);
 						break;
 					case "created at":
-						queryBuilder.orderBy("node.createdAt", "desc");
+						queryBuilder.orderBy("node.createdAt", sortOrder);
 						break;
 					case "link strength":
-						queryBuilder.orderBy("association.linkStrength", "desc");
+						queryBuilder.orderBy("association.linkStrength", sortOrder);
 						break;
 					default:
-						queryBuilder.orderBy("node.updatedAt", "desc");
+						queryBuilder.orderBy("node.updatedAt", sortOrder);
 						break;
 				}
 			})

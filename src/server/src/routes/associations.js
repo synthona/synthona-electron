@@ -26,6 +26,7 @@ router.get(
 		query("page").optional().isNumeric(),
 		query("bidirectional").optional().isString(),
 		query("sortOrder").optional().isString(),
+		query("sortType").optional().isString(),
 	],
 	associationController.getAssociationsByUUID
 );

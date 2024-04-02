@@ -200,10 +200,12 @@ app.on("ready", () => {
 	globalShortcut.register("CommandOrControl+E", () => {
 		app.showEmojiPanel();
 	});
-	globalShortcut.register("CommandOrControl+;", () => {
-		let mainWindow = BrowserWindow.getAllWindows()[0];
-		mainWindow.show();
-	});
+	if (config.SUMMONING_KEY !== "none") {
+		globalShortcut.register("CommandOrControl+" + config.SUMMONING_KEY, () => {
+			let mainWindow = BrowserWindow.getAllWindows()[0];
+			mainWindow.show();
+		});
+	}
 	globalShortcut.register("CommandOrControl+H", () => {
 		if (BrowserWindow.getFocusedWindow()) {
 			BrowserWindow.getFocusedWindow().loadURL(

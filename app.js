@@ -563,7 +563,7 @@ const registerAppMenu = () => {
 				{
 					label: "Patreon",
 					click: async () => {
-						await shell.openExternal("https://www.patreon.com/hyperpoints");
+						await shell.openExternal("https://www.patreon.com/synthona");
 					},
 				},
 				{

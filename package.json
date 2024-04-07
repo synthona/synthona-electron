@@ -1,6 +1,6 @@
 {
 	"name": "synthona",
-	"version": "1.2.8",
+	"version": "1.2.9",
 	"description": "synthona",
 	"main": "app.js",
 	"scripts": {
@@ -13,7 +13,8 @@
 		"forge": "electron-forge start",
 		"dev": "nodemon --watch * --exec 'npm run start'",
 		"package": "electron-forge package",
-		"make": "electron-forge make"
+		"make": "electron-forge make",
+		"m1-make": "sudo arch -x86_64 npm run make"
 	},
 	"repository": {
 		"type": "git",
@@ -29,7 +30,7 @@
 		"@electron-forge/maker-rpm": "^6.1.1",
 		"@electron-forge/maker-squirrel": "^6.1.1",
 		"@electron-forge/maker-zip": "^6.1.1",
-		"electron": "^29.1.6",
+		"electron": "^29.2.0",
 		"node-abi": "^3.57.0"
 	},
 	"dependencies": {

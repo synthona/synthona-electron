@@ -32,6 +32,7 @@ router.put(
 		body("name").exists().isString(),
 		body("content").exists().isString(),
 		body("linkedNodeUUID").optional().isUUID(),
+		body("exclusionList").optional().isArray(),
 	],
 	nodeController.contextualCreate
 );

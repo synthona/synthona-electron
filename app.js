@@ -158,12 +158,14 @@ const mainWindow = (initUrl) => {
 	// set the localhost URL for the app to load
 	newWindow.loadURL("http://" + config.CLIENT_BASE + ":" + config.CLIENT_PORT);
 	// set behaviour for opening a link in new tab
-	newWindow.webContents.on("new-window", function (e, url) {
+	newWindow.webContents.setWindowOpenHandler(({ url }) => {
 		if (config.OPEN_URLS_IN_BROWSER) {
-			e.preventDefault();
 			// open url in user's default browser
 			shell.openExternal(url);
 		}
+		return {
+			action: "deny",
+		};
 	});
 	// mark window as created and electron as ready
 	electronReady = true;
@@ -352,12 +354,14 @@ const createNewWindowAtURL = (initUrl) => {
 	// set the localhost URL for the app to load
 	newWindow.loadURL(initUrl);
 	// set behaviour for opening a link in new tab
-	newWindow.webContents.on("new-window", function (e, url) {
+	newWindow.webContents.setWindowOpenHandler(({ url }) => {
 		if (config.OPEN_URLS_IN_BROWSER) {
-			e.preventDefault();
 			// open url in user's default browser
 			shell.openExternal(url);
 		}
+		return {
+			action: "deny",
+		};
 	});
 	// clear the webcontents
 	if (config.CLEAR_CACHE_ON_START) {

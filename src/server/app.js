@@ -48,14 +48,7 @@ app.use((req, res, next) => {
 	// disable cors (second parameter is a string for which URLs. * is for all, possible to seperate with commas within the string)
 	// IDEA: so right now i have the client stored in URL but eventually it will probably be * or at least optional
 	// res.setHeader('Access-Control-Allow-Origin', '*');
-	const whitelist = [
-		process.env.CLIENT_URL,
-		"http://127.0.0.1:3000",
-		"http://127.0.0.1:9000",
-		"http://localhost:3000",
-		"http://localhost:9000",
-		"http://localhost:9000",
-	];
+	const whitelist = [process.env.CLIENT_URL];
 
 	// detect if the request is internal, within this device,
 	// or external, from another IP address

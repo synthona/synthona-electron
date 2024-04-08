@@ -40,7 +40,6 @@
 		"electron-squirrel-startup": "^1.0.0",
 		"electron-unhandled": "^3.0.2",
 		"serve": "^11.3.2",
-		"sqlite3": "^5.1.7",
 		"wait-on": "^5.2.1"
 	}
 }

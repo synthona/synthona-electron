@@ -1,6 +1,6 @@
 // import dependencies
 const express = require('express');
-const { body, query } = require('express-validator/check');
+const { body } = require('express-validator/check');
 // import controller
 const collectionController = require('../controllers/collections');
 // import route middleware
@@ -11,10 +11,10 @@ const router = express.Router();
 
 // Create collection
 router.put(
-  '/',
-  isAuth,
-  [body('name').exists().isString(), body('content').optional().isString()],
-  collectionController.createCollection
+	'/',
+	isAuth,
+	[body('name').exists().isString(), body('content').optional().isString()],
+	collectionController.createCollection
 );
 
 router.patch('/regenerate', isAuth, collectionController.regenerateCollectionPreviews);

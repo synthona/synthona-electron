@@ -1,11 +1,10 @@
 const { validationResult } = require('express-validator/check');
 // import node dependencies
-const path = require('path');
 const fs = require('fs');
 // bring in data models.
-const { node, association } = require('../db/models');
-// bring in fsUtil
-const fsUtil = require('../util/fsUtil');
+const knex = require('../db/knex/knex');
+const uuid = require('uuid');
+const day = require('dayjs');
 
 exports.createFile = async (req, res, next) => {
 	// this comes from the is-auth middleware
@@ -30,8 +29,9 @@ exports.createFile = async (req, res, next) => {
 		const nodeType = req.file.nodeType;
 		const originalName = req.body.name || req.file.originalname;
 		const linkedNode = req.body.linkedNode ? JSON.parse(req.body.linkedNode) : null;
-		// create node in the context system
-		const result = await node.create({
+		// create new node
+		const newNode = {
+			uuid: uuid.v4(),
 			isFile: true,
 			type: nodeType,
 			name: originalName,
@@ -39,32 +39,31 @@ exports.createFile = async (req, res, next) => {
 			path: fileUrl,
 			content: originalName,
 			creator: userId,
-		});
+			createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+		};
+		// create new node
+		let result = await knex('node').insert(newNode);
 		// if there is a linkedNode passed in, associate it
 		if (linkedNode) {
 			// make sure linkedNode exists
-			const nodeB = await node.findOne({
-				where: {
-					uuid: linkedNode.uuid,
-				},
-			});
-			// throw error if it is empty
-			if (!nodeB) {
-				const error = new Error('Could not find both nodes');
-				error.statusCode = 404;
-				throw error;
+			const nodeB = await knex('node').select().where({ uuid: linkedNode.uuid }).first();
+			// make sure we got a result
+			if (nodeB) {
+				// create association
+				await knex('association').insert({
+					nodeId: result[0],
+					nodeUUID: newNode.uuid,
+					nodeType: newNode.type,
+					linkedNode: nodeB.id,
+					linkedNodeUUID: nodeB.uuid,
+					linkedNodeType: nodeB.type,
+					linkStrength: 1,
+					creator: userId,
+					createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+					updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+				});
 			}
-			// create association
-			await association.create({
-				nodeId: result.dataValues.id,
-				nodeUUID: result.dataValues.uuid,
-				nodeType: result.dataValues.type,
-				linkedNode: nodeB.id,
-				linkedNodeUUID: nodeB.uuid,
-				linkedNodeType: nodeB.type,
-				linkStrength: 1,
-				creator: userId,
-			});
 		}
 		// add the baseURL of the server instance back in
 		if (result.isFile) {
@@ -97,88 +96,75 @@ exports.linkFiles = async (req, res, next) => {
 		// grab the input values from the request
 		const fileList = JSON.parse(req.body.fileList);
 		const linkedNode = req.body.linkedNode ? JSON.parse(req.body.linkedNode) : null;
-		// determine which mimeTypes match with which nodeTypes
-		const imageMimetypes = [
-			'image/png',
-			'image/jpg',
-			'image/jpeg',
-			'image/gif',
-			'image/webp',
-			'image/heic',
-		];
-		const audioMimetypes = ['audio/mpeg', 'audio/x-m4a', 'audio/wav'];
+		// determine which filetypes match with which nodeTypes
+		const supportedImageTypes = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.heic'];
+		const supportedAudioTypes = ['.mp3,', '.m4a', '.wav', '.aac', '.ogg', '.flac', '.aiff'];
 		let resultList = [];
 		// iterate through the passed-in file list
 		for (var file of fileList) {
 			// set the nodeType value for this file
 			let nodeType = null;
+			let isFile = null;
 			let preview = null;
 			let extension = file.name.substring(file.name.lastIndexOf('.'));
-			if (imageMimetypes.includes(file.type)) {
+			// set the cnodetype
+			if (supportedImageTypes.includes(extension)) {
 				nodeType = 'image';
+				isFile = true;
 				preview = file.path;
-			} else if (audioMimetypes.includes(file.type)) {
+			} else if (supportedAudioTypes.includes(extension)) {
 				nodeType = 'audio';
-			} else if (file.type === 'application/zip' && !(extension === '.synth')) {
+				isFile = true;
+			} else if (extension === '.zip' && !(extension === '.synth')) {
 				nodeType = 'zip';
+				isFile = true;
 			} else if (extension === '.synth') {
 				nodeType = 'package';
-			} else if (process.platform === 'darwin' && file.path.includes('.app/')) {
-				// we are doing a little magic here to auto-generate a shortcut
-				// launcher path on mac for applications if u select any file within them
-				// TODO: make this a little more user friendly by integrating electron file-dialogue
-				// and making it so selecting "packages" on mac treats them as files
-				let appDirPath = file.path.substring(0, file.path.lastIndexOf('.app') + 4);
-				// set the file path to that .app path
-				file.path = appDirPath;
-				// attempt to extract the App Name from the end of the path, & before the .app extension
-				let appName = appDirPath.substring(
-					appDirPath.lastIndexOf('/') + 1,
-					appDirPath.lastIndexOf('.app')
-				);
-				file.name = appName;
-				// set the node type to file still
-				nodeType = 'file';
+				isFile = true;
+			} else if (!extension.includes('.')) {
+				nodeType = 'folder';
+				isFile = false;
 			} else {
 				// catchall for adding any other files at all
 				nodeType = 'file';
+				isFile = true;
 			}
-			// create the corresponding node in the database
-			const result = await node.create({
-				isFile: true,
+			// object to store newnode
+			let newNode = {
+				uuid: uuid.v4(),
+				isFile: isFile,
 				type: nodeType,
 				name: file.name,
 				preview: preview,
 				path: file.path,
-				content: null,
+				content: file.name,
 				creator: userId,
-			});
-			resultList.push(result);
+				createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+				updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			};
+			// create the corresponding node in the database
+			const result = await knex('node').insert(newNode);
+			resultList.push(newNode);
 			// if there is a linkedNode passed in, associate it
 			if (linkedNode) {
 				// make sure linkedNode exists
-				const nodeB = await node.findOne({
-					where: {
-						uuid: linkedNode.uuid,
-					},
-				});
-				// throw error if it is empty
-				if (!nodeB) {
-					const error = new Error('Could not find both nodes');
-					error.statusCode = 404;
-					throw error;
+				const nodeB = await knex('node').select().where({ uuid: linkedNode.uuid }).first();
+				// make sure we got a result
+				if (nodeB) {
+					// create association
+					await knex('association').insert({
+						nodeId: result[0],
+						nodeUUID: newNode.uuid,
+						nodeType: newNode.type,
+						linkedNode: nodeB.id,
+						linkedNodeUUID: nodeB.uuid,
+						linkedNodeType: nodeB.type,
+						linkStrength: 1,
+						creator: userId,
+						createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+						updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+					});
 				}
-				// create association
-				await association.create({
-					nodeId: result.dataValues.id,
-					nodeUUID: result.dataValues.uuid,
-					nodeType: result.dataValues.type,
-					linkedNode: nodeB.id,
-					linkedNodeUUID: nodeB.uuid,
-					linkedNodeType: nodeB.type,
-					linkStrength: 1,
-					creator: userId,
-				});
 			}
 		}
 		// fix the preview URLs...
@@ -208,32 +194,27 @@ exports.loadFileByUUID = async (req, res, next) => {
 	try {
 		const uuid = req.params.uuid;
 		// load node
-		const result = await node.findOne({
-			where: {
-				uuid: uuid,
-				creator: userId,
-			},
-			attributes: ['id', 'type', 'preview', 'path', 'name'],
-		});
-		// check for issues
+		const result = await knex('node')
+			.select('id', 'type', 'preview', 'path', 'name')
+			.where({ uuid: uuid, creator: userId })
+			.first()
+			.limit(1);
+		// make sure we got a result
 		if (!result) {
 			const error = new Error('node does not exist, maybe it was deleted');
 			error.statusCode = 404;
 			throw error;
 		}
 		// set path variable
-		const filePath = result.dataValues.path;
+		const filePath = result.path;
 		const fileExists = fs.existsSync(filePath);
 		// check to see if the file exists
-		if (!fileExists && result.dataValues.type !== 'user') {
-			console.log('path for ' + result.dataValues.name + ' is messed up');
-			// await fsUtil.setFilePathToNullById(result.dataValues.id);
+		if (!fileExists && result.type !== 'user') {
+			console.log('file at path ' + result.path + ' is broken');
 		}
 		// make sure there is a preview and then respond
 		if (result && result.preview) {
 			const filePreview = result.preview;
-			const basename = path.basename(filePreview);
-			// const extension = basename.substring(basename.lastIndexOf('.'));
 			res.download(filePreview, result.name);
 		} else {
 			res.sendStatus(404);
@@ -247,6 +228,8 @@ exports.loadFileByUUID = async (req, res, next) => {
 };
 
 exports.openShortcutInExplorer = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -259,12 +242,11 @@ exports.openShortcutInExplorer = async (req, res, next) => {
 		// verify that the logged in user is the one who created the shortcut
 		const uuid = req.body.uuid;
 		// load node
-		const result = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-			attributes: ['id', 'uuid', 'path', 'creator'],
-		});
+		const result = await knex('node')
+			.select('id', 'uuid', 'path', 'creator')
+			.where({ uuid: uuid, creator: userId })
+			.first()
+			.limit(1);
 		// make sure there is a result
 		if (!result) {
 			const error = new Error('there was a problem launching the shortcut');
@@ -272,13 +254,10 @@ exports.openShortcutInExplorer = async (req, res, next) => {
 			throw error;
 		}
 		// set path variable
-		const filePath = result.dataValues.path;
+		const filePath = result.path;
 		const fileExists = fs.existsSync(filePath);
 		// check to see if the file exists
-		if (!fileExists) {
-			await fsUtil.setFilePathToNullById(result.dataValues.id);
-			res.sendStatus(404);
-		} else {
+		if (fileExists) {
 			var exec = require('child_process').exec;
 			// surround the path with double-quotes to avoid any issues to do with spaces in file paths
 			const stringPath = ' "' + filePath + '"';
@@ -286,6 +265,9 @@ exports.openShortcutInExplorer = async (req, res, next) => {
 			exec(openInExplorerCode() + stringPath);
 			// send 200 status to interface
 			res.sendStatus(200);
+		} else {
+			console.log('file at path ' + result.path + ' is broken');
+			res.sendStatus(404);
 		}
 	} catch (err) {
 		if (!err.statusCode) {
@@ -296,6 +278,8 @@ exports.openShortcutInExplorer = async (req, res, next) => {
 };
 
 exports.launchShortcut = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -308,26 +292,22 @@ exports.launchShortcut = async (req, res, next) => {
 		// verify that the logged in user is the one who created the shortcut
 		const uuid = req.body.uuid;
 		// load node
-		const result = await node.findOne({
-			where: {
-				uuid: uuid,
-			},
-			attributes: ['id', 'uuid', 'path', 'creator'],
-		});
-		// check for issues
+		const result = await knex('node')
+			.select('id', 'uuid', 'path', 'creator')
+			.where({ uuid: uuid, creator: userId })
+			.first()
+			.limit(1);
+		// make sure there is a result
 		if (!result) {
-			const error = new Error('that node does not exist');
+			const error = new Error('there was a problem launching the shortcut');
 			error.statusCode = 404;
 			throw error;
 		}
 		// set path variable
-		const filePath = result.dataValues.path;
+		const filePath = result.path;
 		const fileExists = fs.existsSync(filePath);
 		// check to see if the file exists
-		if (!fileExists) {
-			await fsUtil.setFilePathToNullById(result.dataValues.id);
-			res.sendStatus(404);
-		} else {
+		if (fileExists) {
 			var exec = require('child_process').exec;
 			// surround the path with double-quotes to avoid any issues to do with spaces in file paths
 			const stringPath = ' "' + filePath + '"';
@@ -335,6 +315,9 @@ exports.launchShortcut = async (req, res, next) => {
 			exec(getLaunchCode() + stringPath);
 			// send 200 status to interface
 			res.sendStatus(200);
+		} else {
+			console.log('file at path ' + result.path + ' is broken');
+			res.sendStatus(404);
 		}
 	} catch (err) {
 		if (!err.statusCode) {

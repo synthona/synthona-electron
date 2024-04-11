@@ -1,34 +1,40 @@
 {
 	"name": "synthona",
-	"version": "1.2.8",
+	"version": "1.2.9",
 	"description": "synthona",
+	"author": "synthona",
 	"main": "app.js",
+	"license": "MIT",
+	"funding": {
+		"type": "patreon",
+		"url": "https://www.patreon.com/synthona"
+	},
 	"scripts": {
-		"pack": "electron-builder --dir",
-		"dist": "electron-builder build",
-		"mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=build/synthona.icns --prune=true --out=dist/mac --ignore='(/server/data|/node_modules/electron-packager|/server/database.sqlite3)'",
-		"windows": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=build/synthona.ico --prune=true --out=dist/windows --ignore=\"/server/data|/server/database.sqlite3|/node_modules/electron-packager\"",
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "electron-forge start",
+		"start": "electron .",
+		"forge": "electron-forge start",
 		"dev": "nodemon --watch * --exec 'npm run start'",
 		"package": "electron-forge package",
-		"make": "electron-forge make"
+		"make": "electron-forge make",
+		"mac_arm64": "npm run make -- --arch=arm64 --platform=darwin",
+		"mac_x64": "npm run make -- --arch=x64 --platform=darwin",
+		"linux_arm64": "npm run make -- --arch=arm64 --platform=linux",
+		"linux_x64": "npm run make -- --arch=x64 --platform=linux"
 	},
 	"repository": {
 		"type": "git",
 		"url": "synthona"
 	},
-	"author": "synthona",
-	"license": "MIT",
 	"devDependencies": {
 		"@electron-forge/cli": "^6.1.1",
 		"@electron-forge/maker-deb": "^6.1.1",
 		"@electron-forge/maker-dmg": "^6.1.1",
 		"@electron-forge/maker-pkg": "^6.1.1",
 		"@electron-forge/maker-rpm": "^6.1.1",
-		"@electron-forge/maker-squirrel": "^6.1.1",
+		"@electron-forge/maker-squirrel": "^7.4.0",
 		"@electron-forge/maker-zip": "^6.1.1",
-		"electron": "^9.4.1"
+		"electron": "^29.2.0",
+		"node-abi": "^3.57.0"
 	},
 	"dependencies": {
 		"concurrently": "^5.3.0",
@@ -38,5 +44,8 @@
 		"electron-unhandled": "^3.0.2",
 		"serve": "^11.3.2",
 		"wait-on": "^5.2.1"
+	},
+	"optionalDependencies": {
+		"appdmg": "^0.6.6"
 	}
 }

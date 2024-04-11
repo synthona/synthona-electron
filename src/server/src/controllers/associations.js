@@ -1,8 +1,7 @@
-const { Op } = require('sequelize');
-// custom code
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require("express-validator/check");
 // bring in data models.
-const { node, association } = require('../db/models');
+const knex = require("../db/knex/knex");
+const day = require("dayjs");
 
 exports.createAssociation = async (req, res, next) => {
 	// this comes from the is-auth middleware
@@ -11,7 +10,7 @@ exports.createAssociation = async (req, res, next) => {
 	try {
 		// catch validation errors
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -19,104 +18,74 @@ exports.createAssociation = async (req, res, next) => {
 		// process request
 		const nodeUUID = req.body.nodeUUID;
 		const linkedNodeUUID = req.body.linkedNodeUUID;
-		// prevent self association
+		// prevent self association ?
+		// hmm i might actually remove this
 		if (nodeUUID === linkedNodeUUID) {
-			const error = new Error('Cannot associate node to itself');
+			const error = new Error("Cannot associate node to itself");
 			error.statusCode = 500;
 			throw error;
 		}
-		// check database to make sure both nodes exist
-		const nodeA = await node.findOne({
-			where: {
-				uuid: nodeUUID,
-			},
-		});
-		const nodeB = await node.findOne({
-			where: {
-				uuid: linkedNodeUUID,
-			},
-		});
+		// we're going to make sure both nodes exist. we should have 2 results
+		const node = await knex("node").where({ uuid: nodeUUID }).first();
+		const linkedNode = await knex("node").where({ uuid: linkedNodeUUID }).first();
 		// throw error if either is empty
-		if (!nodeA || !nodeB) {
-			const error = new Error('Could not find both nodes');
+		if (!node || !linkedNode) {
+			const error = new Error("Could not find both nodes");
 			error.statusCode = 404;
 			throw error;
 		}
 		// check to see if association already exists
-		const existingAssociation = await association.findOne({
-			where: {
-				[Op.and]: [
-					{ nodeId: { [Op.or]: [nodeA.id, nodeB.id] } },
-					{ linkedNode: { [Op.or]: [nodeA.id, nodeB.id] } },
-				],
-			},
-		});
-
+		const existingAssociation = await knex("association")
+			.whereIn("nodeId", [node.id, linkedNode.id])
+			.whereIn("linkedNode", [node.id, linkedNode.id])
+			.first();
 		let newAssociation;
-		// handle case where there is an inverse association of what we're trying to create already existing
-		if (existingAssociation && existingAssociation.dataValues.linkedNodeUUID === nodeUUID) {
+		// if association already exists update linkStart to be 1
+		if (existingAssociation) {
+			// set the linkStart value
 			existingAssociation.linkStart = 1;
-			newAssociation = await existingAssociation.save({ silent: true });
-		}
-		// handle case where association already exists
-		else if (existingAssociation) {
-			const error = new Error('an association already exists');
-			console.log(existingAssociation);
-			error.statusCode = 500;
-			throw error;
+			// set the newAssociation value to the updated associaiotn value
+			newAssociation = existingAssociation;
+			// store this in the DB too (havent tested this yet)
+			await knex("association").update({ linkStart: 1 }).where({ id: existingAssociation.id });
 		}
 		// handle case where there are no current matches
 		else {
 			// create association
-			newAssociation = await association.create({
-				nodeId: nodeA.id,
-				nodeUUID: nodeA.uuid,
-				nodeType: nodeA.type,
-				linkedNode: nodeB.id,
-				linkedNodeUUID: nodeB.uuid,
-				linkedNodeType: nodeB.type,
+			newAssociation = {
+				nodeId: node.id,
+				nodeUUID: node.uuid,
+				nodeType: node.type,
+				linkedNode: linkedNode.id,
+				linkedNodeUUID: linkedNode.uuid,
+				linkedNodeType: linkedNode.type,
 				linkStrength: 1,
 				linkStart: null,
 				creator: userId,
-			});
+				createdAt: day().add(5, "hour").format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+				updatedAt: day().add(5, "hour").format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			};
+			// add this one in the database!
+			let result = await knex("association").insert(newAssociation);
+			newAssociation.id = result[0];
 		}
-		// load new association with node info for the linked node
-		const result = await association.findOne({
-			where: {
-				[Op.and]: [
-					{ nodeId: { [Op.or]: [nodeA.id, nodeB.id] } },
-					{ linkedNode: { [Op.or]: [nodeA.id, nodeB.id] } },
-				],
-			},
-			attributes: ['id', 'nodeId', 'linkedNode'],
-			include: [
-				{
-					model: node,
-					as: 'original',
-					where: {
-						id: newAssociation.nodeId,
-					},
-					attributes: ['uuid', 'isFile', 'path', 'type', 'preview', 'name'],
-				},
-				{
-					model: node,
-					as: 'associated',
-					where: {
-						id: newAssociation.linkedNode,
-					},
-					attributes: ['uuid', 'isFile', 'path', 'type', 'preview', 'name'],
-				},
-			],
-		});
-		// re-apply baseURL if node is a file
-		if (result.associated.isFile || result.associated.type === 'user') {
-			const fullUrl = result.associated.preview
-				? req.protocol + '://' + req.get('host') + '/' + 'file/load/' + result.associated.uuid
+		// re-apply baseURL if linkedNode is a file
+		if (linkedNode.isFile || linkedNode.type === "user") {
+			const fullUrl = linkedNode.preview
+				? req.protocol + "://" + req.get("host") + "/" + "file/load/" + linkedNode.uuid
 				: null;
-			result.associated.preview = fullUrl;
+			linkedNode.preview = fullUrl;
+		}
+		// re-apply baseURL if node is a file
+		if (node.isFile || node.type === "user") {
+			const fullUrl = node.preview
+				? req.protocol + "://" + req.get("host") + "/" + "file/load/" + node.uuid
+				: null;
+			node.preview = fullUrl;
 		}
 		// send response with values
-		res.status(200).json({ association: result });
+		res.status(200).json({ association: newAssociation, linkedNode, node });
+		// res.status(200);
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -133,102 +102,66 @@ exports.associationAutocomplete = async (req, res, next) => {
 		// catch validation errors
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
 		}
 		// store request variables
 		var resultLimit = 23;
-		var searchQuery = req.query.searchQuery || '';
+		var searchQuery = req.query.searchQuery || "";
 		var nodeUUID = req.query.nodeUUID;
-		// fetch the node to get the internal ID
-		var specificNode = await node.findOne({ where: { uuid: nodeUUID } });
-		var nodeId = specificNode.id;
-		var bidirectional = req.query.bidirectional === 'yes' ? true : false;
-		// create the basis for the exclusion where statement
-		var whereFoundation = {
-			creator: userId,
-		};
-		if (bidirectional) {
-			// treat all links as bidirectional
-			whereFoundation[Op.or] = [{ [Op.or]: [{ nodeId: nodeId }, { linkedNode: nodeId }] }];
-		} else {
-			// treat all links as unidirectional
-			whereFoundation[Op.or] = [
-				{ nodeId: nodeId },
-				{ [Op.and]: [{ linkStart: 1 }, { linkedNode: nodeId }] },
-			];
-		}
-		// make a request to association table to get list of nodes to exclude
-		const exclusionValues = await association.findAll({
-			where: whereFoundation,
-			attributes: ['id', 'nodeId', 'linkedNode'],
-			raw: true,
-		});
-		// create exclusionList to prevent re-association
-		var exclusionList = [];
-		exclusionValues.map((value) => {
-			if (!exclusionList.includes(value.nodeId)) {
-				exclusionList.push(value.nodeId);
-			}
-			if (!exclusionList.includes(value.linkedNode)) {
-				exclusionList.push(value.linkedNode);
-			}
-			return;
-		});
-		// prevent self-association
-		if (!exclusionList.includes(nodeId)) {
-			exclusionList.push(nodeId);
-		}
-		// create WHERE statement for request to node table
-		var whereStatement = {};
-		var orderStatement = [];
-		// set searchQuery
-		if (searchQuery) {
-			var splitQuery = searchQuery.split(' ');
-			var fuzzySearch = '%';
-			// TODO. i can make this even better by adding an additional OR query to the whereStatement
-			// and just passing in the array there instead of into this cycler
-			if (splitQuery.length > 0) {
-				splitQuery.forEach((word) => {
-					if (word) {
-						fuzzySearch = fuzzySearch + word + '%';
+		var bidirectional = req.query.bidirectional === "yes" ? true : false;
+		// get a list of nodes to exclude from the autocomplete
+		const exclusionSubquery = knex("association")
+			.select("node.id")
+			.modify((queryBuilder) => {
+				if (bidirectional) {
+					// if bidirectional mode is enabled exclude any nodes already in association with us
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID);
+				} else {
+					// unidirectional mode..we're pickier here.
+					// we only want (linkStart == null && nodeUUID == nodeUUID) or
+					// (linkStart == 1 && linkedNodeUUID == nodeUUID) for autocomplete
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID)
+						.andWhere("association.linkStart", 1);
+				}
+			})
+			.leftJoin("node", function () {
+				this.on("association.nodeId", "=", "node.id").orOn(
+					"association.linkedNode",
+					"=",
+					"node.id"
+				);
+			});
+
+		const result = await knex("node")
+			.select()
+			.where({ creator: userId })
+			.modify((queryBuilder) => {
+				if (searchQuery) {
+					if (searchQuery) {
+						var splitQuery = searchQuery.split(" ");
+						var fuzzySearch = "%";
+						if (splitQuery.length > 0) {
+							splitQuery.forEach((word) => {
+								if (word) {
+									fuzzySearch = fuzzySearch + word + "%";
+								}
+							});
+						}
+						queryBuilder.andWhereLike("node.name", fuzzySearch);
 					}
-				});
-			}
-			whereStatement[Op.and] = [
-				// look for text match for the name
-				{
-					name: { [Op.like]: '%' + fuzzySearch + '%' },
-				},
-				// prevent association with exclusionList
-				{
-					id: { [Op.not]: exclusionList },
-				},
-			];
-			orderStatement = [['name', 'ASC']];
-		} else {
-			// prevent association with exclusionList
-			whereStatement[Op.and] = [
-				{
-					id: { [Op.not]: exclusionList },
-				},
-			];
-			// if there is no search query, provide
-			// the most recent nodes by default
-			orderStatement = [['updatedAt', 'DESC']];
-		}
-		// limit results to those created by yourself????
-		// TODO: revisit this and think about how it works on multiuser server
-		whereStatement.creator = userId;
-		// retrieve nodes for the requested page
-		const result = await node.findAll({
-			where: whereStatement,
-			limit: resultLimit,
-			order: orderStatement,
-			attributes: ['uuid', 'name'],
-		});
+				}
+			})
+			.whereNotIn("node.id", exclusionSubquery)
+			.whereNotIn("node.uuid", [nodeUUID])
+			.orderBy("node.updatedAt", "desc")
+			.limit(resultLimit);
 		// send response
 		res.status(200).json({ nodes: result });
 	} catch (err) {
@@ -247,7 +180,7 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 		// catch validation errors
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -255,103 +188,98 @@ exports.getAssociationsByUUID = async (req, res, next) => {
 		// process request
 		var currentPage = req.query.page || 1;
 		var nodeUUID = req.query.nodeUUID;
-		var bidirectional = req.query.bidirectional === 'yes' ? true : false;
+		var bidirectional = req.query.bidirectional === "yes" ? true : false;
+		var sortType = req.query.sortType || "last accessed";
+		var sortOrder = req.query.sortOrder || "desc";
 		var perPage = 30;
-		// fetch the node to get the internal ID
-		var specificNode = await node.findOne({ where: { uuid: nodeUUID } });
-		if (!specificNode) {
-			const error = new Error('Could not find  node');
-			error.statusCode = 404;
-			throw error;
-		}
-		var nodeId = specificNode.id;
-		// set up where statement
-		var whereStatement = {
-			creator: userId,
-		};
-		if (bidirectional) {
-			// treat all links as bidirectional
-			whereStatement[Op.or] = [{ nodeId: nodeId }, { linkedNode: nodeId }];
-		} else {
-			// treat all links as unidirectional
-			whereStatement[Op.or] = [
-				{ nodeId: nodeId },
-				{ [Op.and]: [{ linkedNode: nodeId }, { linkStart: 1 }] },
-			];
-		}
-		// retrieve nodes and get the count as well
-		const data = await association.findAndCountAll({
-			where: whereStatement,
-			offset: (currentPage - 1) * perPage,
-			limit: perPage,
-			attributes: ['id'],
-			// include whichever node is the associated one for
-			include: [
-				{
-					model: node,
-					where: { id: { [Op.not]: nodeId } },
-					required: false,
-					as: 'original',
-					attributes: ['id'],
-				},
-				{
-					model: node,
-					where: { id: { [Op.not]: nodeId } },
-					required: false,
-					as: 'associated',
-					attributes: ['id'],
-				},
-			],
-		});
+		// go ahead and make our query
+		const nodeResult = await knex("association")
+			.select()
+			.where("association.creator", userId)
+			.modify((queryBuilder) => {
+				if (bidirectional) {
+					// if bidirectional mode is enabled exclude any nodes already in association with us
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID);
+				} else {
+					// unidirectional mode..we're pickier here.
+					// we only want (linkStart == null && nodeUUID == nodeUUID) or
+					// (linkStart == 1 && linkedNodeUUID == nodeUUID) for autocomplete
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID)
+						.andWhere("association.linkStart", 1);
+				}
+			})
+			.leftJoin("node", function () {
+				this.onNotIn("node.uuid", nodeUUID)
+					.on("association.nodeId", "=", "node.id")
+					.orOn("association.linkedNode", "=", "node.id")
+					.onNotIn("node.uuid", nodeUUID);
+			})
+			.offset((currentPage - 1) * perPage)
+			.modify((queryBuilder) => {
+				switch (sortType) {
+					case "last accessed":
+						queryBuilder.orderBy("node.updatedAt", sortOrder);
+						break;
+					case "created at":
+						queryBuilder.orderBy("node.createdAt", sortOrder);
+						break;
+					case "link strength":
+						queryBuilder.orderBy("association.linkStrength", sortOrder);
+						break;
+					default:
+						queryBuilder.orderBy("node.updatedAt", sortOrder);
+						break;
+				}
+			})
+			// .orderBy('node.views', 'desc')
+			// .orderBy('association.linkStrength', 'desc')
+			.limit(perPage);
 
-		let totalItems = data.count;
-		const result = data.rows;
-
-		var associations = [];
-		// condense results to one list
-		result.forEach(async (value) => {
-			if (value.original) {
-				associations.push(value.original.id);
-			} else if (value.associated) {
-				associations.push(value.associated.id);
-			} else {
-				// there are some cases where an association
-				// is missing the nodes it refers to, in which
-				// case we should just clean that up here
-				// by sweeping up the broken association
-				// and updating the totalItems count
-				totalItems--;
-				let brokenLink = await association.findOne({
-					where: {
-						creator: userId,
-						id: value.id,
-					},
-				});
-				await brokenLink.destroy();
-			}
-		});
-		// do a second query to properly order our results
-		const nodeResult = await node.findAll({
-			where: {
-				id: {
-					[Op.in]: associations,
-				},
-			},
-			order: [['updatedAt', 'DESC']],
-		});
-		// TODO!!!! re-apply the base of the image URL (this shouldn't be here lmao. this is only text nodes)
-		// i got way ahead of myself refactoring today and basically created a huge mess
+		// we have to make a separate query to the get the count
+		const countResult = await knex("association")
+			.select()
+			.where("association.creator", userId)
+			.modify((queryBuilder) => {
+				if (bidirectional) {
+					// if bidirectional mode is enabled exclude any nodes already in association with us
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID);
+				} else {
+					// unidirectional mode..we're pickier here.
+					// we only want (linkStart == null && nodeUUID == nodeUUID) or
+					// (linkStart == 1 && linkedNodeUUID == nodeUUID) for autocomplete
+					queryBuilder
+						.where("association.nodeUUID", nodeUUID)
+						.orWhere("association.linkedNodeUUID", nodeUUID)
+						.andWhere("association.linkStart", 1);
+				}
+			})
+			.leftJoin("node", function () {
+				this.onNotIn("node.uuid", nodeUUID)
+					.on("association.nodeId", "=", "node.id")
+					.orOn("association.linkedNode", "=", "node.id")
+					.onNotIn("node.uuid", nodeUUID);
+			})
+			.count("node.id as count")
+			.distinct("node.uuid")
+			.first();
+		// go ahead and apply the baseURL for images and files
 		const results = nodeResult.map((item) => {
-			if (item.isFile || item.type === 'user') {
+			if (item.isFile || item.type === "user") {
 				const fullUrl = item.preview
-					? req.protocol + '://' + req.get('host') + '/file/load/' + item.uuid
+					? req.protocol + "://" + req.get("host") + "/file/load/" + item.uuid
 					: null;
 				item.preview = fullUrl;
 			}
 			return item;
 		});
 		// send response
-		res.status(200).json({ associations: results, totalItems: totalItems });
+		res.status(200).json({ associations: results, totalItems: countResult.count });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -367,7 +295,7 @@ exports.deleteAssociation = async (req, res, next) => {
 	try {
 		// catch validation errors
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -375,76 +303,56 @@ exports.deleteAssociation = async (req, res, next) => {
 		// store variables from request
 		const nodeA = req.query.nodeA;
 		const nodeB = req.query.nodeB;
-		const bidirectionalDelete = req.query.bidirectional === 'yes' ? true : false;
-		// find the association in question
-		const result = await association.findOne({
-			where: {
-				creator: userId,
-				[Op.and]: [
-					{ nodeUUID: { [Op.or]: [nodeA, nodeB] } },
-					{ linkedNodeUUID: { [Op.or]: [nodeA, nodeB] } },
-				],
-			},
-			attributes: [
-				'id',
-				'nodeId',
-				'nodeUUID',
-				'nodeType',
-				'linkedNode',
-				'linkedNodeUUID',
-				'linkedNodeType',
-				'linkStart',
-			],
-		});
+		const bidirectionalDelete = req.query.bidirectional === "yes" ? true : false;
+		// fetch the association
+		const result = await knex("association")
+			.select()
+			.where({ creator: userId })
+			.whereIn("nodeUUID", [nodeA, nodeB])
+			.whereIn("linkedNodeUUID", [nodeA, nodeB])
+			.first();
+
 		// handle null case
 		if (!result) {
-			const error = new Error('Could not find any associations matching ' + nodeA + ' or ' + nodeB);
+			const error = new Error("Could not find any associations matching " + nodeA + " or " + nodeB);
 			error.statusCode = 404;
 			throw error;
 		}
 		// if it was bidirectional we need to set it back to unidirectional and set nodeUUID and nodeID to the values from
 		// whichever node nodeB is if nodeB is not already the anchornode/nodeId column
-		if (result.dataValues.linkStart === 1 && !bidirectionalDelete) {
+		if (result.linkStart === 1 && !bidirectionalDelete) {
 			// if nodeB is already the anchor nodeId, all we have to do is update linkStart to null
-			if (result.dataValues.nodeUUID === nodeB) {
+			if (result.nodeUUID === nodeB) {
 				// lets go ahead and set linkStart to null in the database
-				await result.update({
-					linkStart: null,
-				});
+				await knex("association").update({ linkStart: null }).where({ id: result.id });
 			}
 			// if nodeB is not the anchor node (nodeId), we need to swap them since nodeId is always
 			// expected to be the anchor for unidirectional links
 			else {
-				// new node values
-				let newNodeID = result.dataValues.linkedNode;
-				let newNodeUUID = result.dataValues.linkedNodeUUID;
-				let newNodeType = result.dataValues.linkedNodeType;
-				// new linkedNode values
-				let newlinkedNode = result.dataValues.nodeId;
-				let newLinkedNodeUUID = result.dataValues.nodeUUID;
-				let newLinkedNodeType = result.dataValues.nodeType;
-				// lets go ahead and update in the database
-				await result.update({
+				// updated data object
+				let updatedAssociation = {
 					linkStart: null,
-					nodeId: newNodeID,
-					nodeUUID: newNodeUUID,
-					nodeType: newNodeType,
-					linkedNode: newlinkedNode,
-					linkedNodeUUID: newLinkedNodeUUID,
-					linkedNodeType: newLinkedNodeType,
-				});
+					nodeId: result.linkedNode,
+					nodeUUID: result.linkedNodeUUID,
+					nodeType: result.linkedNodeType,
+					linkedNode: result.nodeId,
+					linkedNodeUUID: result.nodeUUID,
+					linkedNodeType: result.nodeType,
+					updatedAt: day().add(5, "hour").format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+				};
+				// lets go ahead and update in the database
+				await knex("association").update(updatedAssociation).where({ id: result.id });
 			}
 		}
 		// if there's a link and it only goes one way we can delete it
 		else {
 			// delete the association from the database
-			result.destroy();
+			await knex("association").where({ id: result.id }).delete();
 		}
 		// set deletedId
 		var deletedUUID = nodeB;
-
 		// send response with success message
-		res.status(200).json({ message: 'deleted association', deletedUUID });
+		res.status(200).json({ message: "deleted association", deletedUUID });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;
@@ -460,7 +368,7 @@ exports.updateLinkStrength = async (req, res, next) => {
 	try {
 		// catch validation errors
 		if (!errors.isEmpty()) {
-			const error = new Error('Validation Failed');
+			const error = new Error("Validation Failed");
 			error.statusCode = 422;
 			error.data = errors.array();
 			throw error;
@@ -468,27 +376,28 @@ exports.updateLinkStrength = async (req, res, next) => {
 		// store variables from request
 		const nodeA = req.body.nodeA;
 		const nodeB = req.body.nodeB;
-		// find the association in question
-		const result = await association.findOne({
-			where: {
-				creator: userId,
-				[Op.and]: [
-					{ nodeUUID: { [Op.or]: [nodeA, nodeB] } },
-					{ linkedNodeUUID: { [Op.or]: [nodeA, nodeB] } },
-				],
-			},
-		});
+		// fetch the association
+		const result = await knex("association")
+			.select()
+			.where({ creator: userId })
+			.whereIn("nodeUUID", [nodeA, nodeB])
+			.whereIn("linkedNodeUUID", [nodeA, nodeB])
+			.first();
+
+		// take our result and increment the linkStrength value
 		if (result) {
-			// increment it by 1
-			result.linkStrength++;
-			result.save();
+			await knex("association")
+				.increment("linkStrength", 1)
+				.where({ creator: userId })
+				.whereIn("nodeUUID", [nodeA, nodeB])
+				.whereIn("linkedNodeUUID", [nodeA, nodeB]);
 		} else {
-			const error = new Error('Could not find association between ' + nodeA + ' and ' + nodeB);
+			const error = new Error("Could not find association between " + nodeA + " and " + nodeB);
 			error.statusCode = 422;
 			throw error;
 		}
 		// send response with success message
-		res.status(200).json({ message: 'updated link strength' });
+		res.status(200).json({ message: "updated link strength" });
 	} catch (err) {
 		if (!err.statusCode) {
 			err.statusCode = 500;

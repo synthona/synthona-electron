@@ -6,7 +6,9 @@ const bcrypt = require('bcryptjs');
 // custom code
 const tokens = require('../util/tokens');
 // bring in data models.
-const { user, node } = require('../db/models');
+const knex = require('../db/knex/knex');
+const uuid = require('uuid');
+const day = require('dayjs');
 
 exports.signup = async (req, res, next) => {
 	try {
@@ -24,20 +26,26 @@ exports.signup = async (req, res, next) => {
 		const password = req.body.password.trim();
 		// set header, bio, and avatar defaults
 		const bio = 'new user';
-
 		// process request.
 		const hash = await bcrypt.hash(password, 12);
+		const userUUID = uuid.v4();
 		// create account
-		const account = await user.create({
+		const newUser = {
+			nodeId: userUUID,
 			email: email,
 			password: hash,
-			bio: bio,
-			displayName: username,
 			username: username,
-		});
+			displayName: username,
+			bio: bio,
+			createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+		};
+		// create node
+		const result = await knex('user').insert(newUser);
+		const userId = result[0];
 		// generate token
-		const token = tokens.generateToken(account);
-		const refreshToken = tokens.generateRefreshToken(account);
+		const token = tokens.generateToken({ id: userId });
+		const refreshToken = tokens.generateRefreshToken({ id: userId, password });
 		// set the jwt cookies
 		res.cookie('jwt', token, {
 			httpOnly: true,
@@ -50,23 +58,25 @@ exports.signup = async (req, res, next) => {
 			expires: new Date(Date.now() + 60 * 60000 * 24 * 3),
 		});
 		// create node in the context system
-		const contextNode = await node.create({
+		const newNode = {
+			uuid: userUUID,
 			isFile: false,
 			type: 'user',
-			name: account.displayName,
-			path: account.username,
-			comment: account.bio,
-			creator: account.id,
-		});
-		// set the nodeId
-		account.nodeId = contextNode.uuid;
-		await account.save();
+			name: username,
+			path: username,
+			comment: bio,
+			creator: userId,
+			createdAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+			updatedAt: day().add(5, 'hour').format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
+		};
+		// create node
+		await knex('node').insert(newNode);
 		// send the response
 		res.status(201).json({
-			email: account.email,
-			username: account.username,
-			displayName: account.displayName,
-			bio: account.bio,
+			email: email,
+			username: username,
+			displayName: username,
+			bio: bio,
 		});
 	} catch (err) {
 		if (!err.statusCode) {
@@ -87,12 +97,10 @@ exports.login = async (req, res, next) => {
 			throw error;
 		}
 		// process request
-		const email = req.body.email;
+		const requestEmail = req.body.email;
 		const password = req.body.password;
 		// retrieve account
-		const account = await user.findOne({
-			where: { email: email },
-		});
+		const account = await knex('user').select().where({ email: requestEmail }).first().limit(1);
 		// catch error if no account is found
 		if (!account) {
 			const error = new Error('A user with this email could not be found');
@@ -161,9 +169,7 @@ exports.changePassword = async (req, res, next) => {
 		// NOTE: this info is generated server side in is-auth.js
 		// so doesn't need to be validated here
 		const uid = req.user.uid;
-		const account = await user.findOne({
-			where: { id: uid },
-		});
+		const account = await knex('user').select().where({ id: uid }).first().limit(1);
 		// catch error if no account is found
 		if (!account) {
 			const error = new Error('A user with this uid could not be found');
@@ -182,11 +188,14 @@ exports.changePassword = async (req, res, next) => {
 		}
 		// update password
 		const hash = await bcrypt.hash(newPassword, 12);
-		account.password = hash;
-		const result = await account.save();
+		const updatedUser = {
+			...account,
+			password: hash,
+		};
+		await knex('user').where({ id: uid }).update({ password: hash });
 		// generate new token
-		const newToken = tokens.generateToken(result);
-		const newRefreshToken = tokens.generateRefreshToken(account);
+		const newToken = tokens.generateToken(updatedUser);
+		const newRefreshToken = tokens.generateRefreshToken(updatedUser);
 		// set the jwt cookie
 		res.cookie('jwt', newToken, {
 			httpOnly: true,
@@ -219,7 +228,7 @@ exports.forgotPassword = async (req, res, next) => {
 			throw error;
 		}
 		// get data from req
-		const email = req.body.email;
+		const requestEmail = req.body.email;
 		const newPassword = req.body.newPassword.trim();
 		const confirmNewPassword = req.body.confirmNewPassword.trim();
 		// check that passwords match
@@ -230,9 +239,7 @@ exports.forgotPassword = async (req, res, next) => {
 			throw error;
 		}
 		// fetch the account so we can modify it
-		const account = await user.findOne({
-			where: { email: email },
-		});
+		const account = await knex('user').select().where({ email: requestEmail }).first().limit(1);
 		// catch error if no account is found
 		if (!account) {
 			const error = new Error('A user with this uid could not be found');
@@ -241,11 +248,14 @@ exports.forgotPassword = async (req, res, next) => {
 		}
 		// // update password
 		const hash = await bcrypt.hash(newPassword, 12);
-		account.password = hash;
-		const result = await account.save();
+		const updatedUser = {
+			...account,
+			password: hash,
+		};
+		await knex('user').where({ email: requestEmail }).update({ password: hash });
 		// generate new token
-		const newToken = tokens.generateToken(result);
-		const newRefreshToken = tokens.generateRefreshToken(account);
+		const newToken = tokens.generateToken(updatedUser);
+		const newRefreshToken = tokens.generateRefreshToken(updatedUser);
 		// set the jwt cookie
 		res.cookie('jwt', newToken, {
 			httpOnly: true,
@@ -270,9 +280,7 @@ exports.forgotPassword = async (req, res, next) => {
 exports.isAuthenticated = async (req, res, next) => {
 	const uid = req.user.uid;
 	try {
-		const account = await user.findOne({
-			where: { id: uid },
-		});
+		const account = await knex('user').select().where({ id: uid }).first().limit(1);
 		if (!account) {
 			const error = new Error('A user with this uid could not be found');
 			error.statusCode = 401;

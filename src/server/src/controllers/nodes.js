@@ -202,6 +202,8 @@ exports.contextualCreate = async (req, res, next) => {
 };
 
 exports.getNodeByUUID = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -228,7 +230,7 @@ exports.getNodeByUUID = async (req, res, next) => {
 				"pinned",
 				"updatedAt"
 			)
-			.where({ uuid: uuid })
+			.where({ uuid: uuid, creator: userId })
 			.first()
 			.limit(1);
 		// make sure we have a result
@@ -323,6 +325,8 @@ exports.markNodeView = async (req, res, next) => {
 };
 
 exports.updateNode = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -335,7 +339,7 @@ exports.updateNode = async (req, res, next) => {
 		// process request
 		const uuid = req.body.uuid;
 		// load node
-		const existingNode = await knex("node").select().where({ uuid }).first();
+		const existingNode = await knex("node").select().where({ uuid, creator: userId }).first();
 		// make sure existing node exists
 		if (!existingNode) {
 			const error = new Error("Could not find node");
@@ -358,7 +362,7 @@ exports.updateNode = async (req, res, next) => {
 			// updatedAt: day().format(`YYYY-MM-DD HH:mm:ss.sssZ`), // something about this is not right...have to look into it. maybe just remove it. i dont think it was here before
 		};
 		// update in the database
-		await knex("node").where({ uuid }).update(updatedNode);
+		await knex("node").where({ uuid, creator: userId }).update(updatedNode);
 		// update valeus that have changed for our return value
 		existingNode.name = name;
 		existingNode.preview = preview;
@@ -514,6 +518,8 @@ exports.searchNodes = async (req, res, next) => {
 
 // delete a single node and any associations
 exports.clearNodePreview = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -527,7 +533,7 @@ exports.clearNodePreview = async (req, res, next) => {
 		const uuid = req.body.uuid;
 		// update the node with the new full path
 		const result = await knex("node")
-			.where({ uuid: uuid })
+			.where({ uuid: uuid, creator: userId })
 			.update({
 				preview: null,
 				updatedAt: day().add(5, "hour").format(`YYYY-MM-DD HH:mm:ss.SSS +00:00`),
@@ -544,6 +550,8 @@ exports.clearNodePreview = async (req, res, next) => {
 
 // delete a single node and any associations
 exports.deleteNodeByUUID = async (req, res, next) => {
+	// this comes from the is-auth middleware
+	const userId = req.user.uid;
 	try {
 		// catch validation errors
 		const errors = validationResult(req);
@@ -556,7 +564,7 @@ exports.deleteNodeByUUID = async (req, res, next) => {
 		// process request
 		const uuid = req.query.uuid;
 		// load text node
-		const nodeToDelete = await knex("node").where({ uuid: uuid }).first();
+		const nodeToDelete = await knex("node").where({ uuid: uuid, creator: userId }).first();
 		// make sure we got something here
 		if (!nodeToDelete) {
 			const error = new Error("Could not find node");

@@ -85,7 +85,7 @@ exports.upgradeConfigVersion = () => {
 exports.checkForUpdates = (reportNegative) => {
 	const { net } = require("electron");
 	const request = net.request(
-		"https://raw.githubusercontent.com/synthona/synthona-electron/master/package.json"
+		"https://raw.githubusercontent.com/synthona/synthona-electron/main/package.json"
 	);
 	request.on("response", (response) => {
 		if (response) {

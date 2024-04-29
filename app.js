@@ -203,7 +203,8 @@ app.on("ready", () => {
 		app.showEmojiPanel();
 	});
 	if (config.SUMMONING_KEY !== "none") {
-		globalShortcut.register("CommandOrControl+" + config.SUMMONING_KEY, () => {
+		let summoning_key = config && config.SUMMONING_KEY ? config.SUMMONING_KEY : ";";
+		globalShortcut.register("CommandOrControl+" + summoning_key, () => {
 			let mainWindow = BrowserWindow.getAllWindows()[0];
 			mainWindow.show();
 		});
